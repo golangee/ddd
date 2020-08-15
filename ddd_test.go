@@ -24,6 +24,16 @@ func TestDDD(t *testing.T) {
 								Out(),
 							),
 						),
+						Interface("BookStore",
+							Method("ReadPDF",
+								"...opens a book to read",
+								In(Param("file", "...is the filename", String)),
+								Out(
+									Return(Reader),
+									Return(Error),
+								),
+							),
+						),
 						Interface("DashboardRepository",
 							Method("FindAll",
 								"...returns all entries.",
@@ -76,7 +86,22 @@ func TestDDD(t *testing.T) {
 						),
 					),
 					Implementations(
-						SQL(),
+						MySQL("BookStore",
+							Schema(
+								Migrate(20200815153330,
+									`CREATE TABLE books (id binary(16), name VARCHAR(255)) PRIMARY KEY (id);
+										-- and many more stuff
+
+										`,
+
+								),
+								Migrate(20200815153330, "ALTER TABLE books ADD COLUMN isbn BIGINT"),
+							),
+							Implement("FindOne", Statement("SELECT id, name FROM books WHERE id=:id")),
+							Implement("Insert", DefaultCreate("books")),
+							Implement("Remove", DefaultDelete("books")),
+						),
+						Filesystem("BookStore"),
 					),
 				),
 			),

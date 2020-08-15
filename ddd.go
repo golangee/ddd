@@ -7,6 +7,8 @@ const (
 	String TypeName = "string"
 	UUID TypeName = "uuid"
 	Error TypeName = "error"
+	Reader TypeName = "io.Reader"
+	Writer TypeName = "io.Writer"
 )
 
 func List(t TypeName)TypeName{
@@ -91,7 +93,45 @@ func Implementations(impls...*ImplementationSpec)*ImplementationSpecs{
 
 }
 
-func SQL()*ImplementationSpec{}
+func MySQL(name TypeName,migrations *MigrationSpecs,methods...*MethodImplSpec)*ImplementationSpec{
+
+}
+
+func Filesystem(name TypeName)*ImplementationSpec{
+
+}
+
+
+type Body struct{}
+
+func Statement(query string)*Body{
+
+}
+
+func DefaultCreate(table string)*Body{}
+
+func DefaultDelete(table string)*Body{}
+
+type MethodImplSpec struct {}
+
+func Implement(method string, body *Body)*MethodImplSpec{
+
+}
+
+func SQL(migrations *MigrationSpecs)*ImplementationSpec{}
+
+type MigrationSpec struct{}
+
+func Schema(migrations...*MigrationSpec)*MigrationSpecs{
+
+}
+
+// in yyyyMMddHHmmss format
+func Migrate(dateTime uint64,sql string)*MigrationSpec{
+
+}
+
+type MigrationSpecs struct{}
 
 type TypesSpecification struct{}
 
