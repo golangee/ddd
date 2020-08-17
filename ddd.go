@@ -5,18 +5,20 @@ type TypeName string
 const (
 	Int64  TypeName = "int64"
 	String TypeName = "string"
-	UUID TypeName = "uuid"
-	Error TypeName = "error"
+	UUID   TypeName = "uuid"
+	Error  TypeName = "error"
 	Reader TypeName = "io.Reader"
 	Writer TypeName = "io.Writer"
 )
 
-func List(t TypeName)TypeName{
-	return "[]"+t
+func Int32(name string, comment ...string) *ParamSpec {
+
 }
 
-type RepositorySpecification struct {
+func List(t TypeName) TypeName {
+	return "[]" + t
 }
+
 
 type ApplicationBuilder struct {
 }
@@ -28,21 +30,15 @@ func (a *ApplicationBuilder) Generate() error {
 type MethodSpecification struct {
 }
 
-type DomainSpecification struct {
-}
-
 type DomainsSpecification struct {
 }
 
-func Domains(domains ...*DomainSpecification) *DomainsSpecification {
+func BoundedContexts(domains ...*DomainSpec) *DomainsSpecification {
 
 }
 
-func Domain(name string, comment string,builder *PersistenceSpecification) *DomainSpecification {
 
-}
-
-func Method(name string, comment string,inSpec *ParamSpecs,outSpec *ParamSpecs) *MethodSpecification {
+func Func(name string, comment string, inSpec *ParamSpecs, outSpec *ParamSpecs) *MethodSpecification {
 
 }
 
@@ -50,90 +46,90 @@ type ParamSpec struct{}
 
 type ParamSpecs struct{}
 
-func In(params...*ParamSpec)*ParamSpecs{
+func In(params ...*ParamSpec) *ParamSpecs {
 
 }
 
-func Out(params...*ParamSpec)*ParamSpecs{
+func Out(params ...*ParamSpec) *ParamSpecs {
 
 }
 
-func Param(name,comment string, typ TypeName)*ParamSpec{
+func Var(name, typ TypeName, comment ...string) *ParamSpec {
 
 }
 
-func Return(typ TypeName)*ParamSpec{
+func Return(typ TypeName) *ParamSpec {
 
 }
 
 
+type InterfaceSpecs struct{}
 
-func Interface(name string, methods ...*MethodSpecification) *RepositorySpecification {
-
-}
-
-type RepositoriesSpecification struct{}
-
-func Repositories(repos ...*RepositorySpecification) *RepositoriesSpecification {
-
-}
-func Persistence(repos *RepositoriesSpecification, types *TypesSpecification,impls*ImplementationSpecs) *PersistenceSpecification {
+func Repositories(repos ...*InterfaceSpec) *InterfaceSpecs {
 
 }
 
-type ImplementationSpec struct{
+func Requires(repos ...*InterfaceSpec) *InterfaceSpecs {
+
+}
+func Persistence(repos *InterfaceSpecs, types *TypeSpecs, impls *ImplementationSpecs) *PersistenceSpec {
 
 }
 
-type ImplementationSpecs struct{
+type ImplementationSpec struct {
+}
+
+type ImplementationSpecs struct {
+}
+
+func Implementations(impls ...*ImplementationSpec) *ImplementationSpecs {
 
 }
 
-func Implementations(impls...*ImplementationSpec)*ImplementationSpecs{
+func MySQL(name TypeName, migrations *MigrationSpecs, methods ...*MethodImplSpec) *ImplementationSpec {
 
 }
 
-func MySQL(name TypeName,migrations *MigrationSpecs,methods...*MethodImplSpec)*ImplementationSpec{
+func Filesystem(name TypeName) *ImplementationSpec {
 
 }
-
-func Filesystem(name TypeName)*ImplementationSpec{
-
-}
-
 
 type Body struct{}
 
-func Statement(query string)*Body{
+func Statement(query string) *Body {
 
 }
 
-func DefaultCreate(table string)*Body{}
+func DefaultCreate(table string) *Body {}
 
-func DefaultDelete(table string)*Body{}
+func DefaultDelete(table string) *Body {}
 
-type MethodImplSpec struct {}
+type MethodImplSpec struct{}
 
-func Implement(method string, body *Body)*MethodImplSpec{
+func Implement(method string, body *Body) *MethodImplSpec {
 
 }
 
-func SQL(migrations *MigrationSpecs)*ImplementationSpec{}
+func SQL(migrations *MigrationSpecs) *ImplementationSpec {}
 
 type MigrationSpec struct{}
 
-func Schema(migrations...*MigrationSpec)*MigrationSpecs{
+func Schema(migrations ...*MigrationSpec) *MigrationSpecs {
+
+}
+
+func Bla(str string) {
 
 }
 
 // in yyyyMMddHHmmss format
-func Migrate(dateTime uint64,sql string)*MigrationSpec{
+func Migrate(dateTime uint64, sql string) *MigrationSpec {
 
 }
 
 type MigrationSpecs struct{}
 
-type TypesSpecification struct{}
+type TypeSpecs struct{}
 
 type TypeSpecification struct{}
 
@@ -151,17 +147,17 @@ func Field(name string, comment string, typ TypeName) *FieldSpec {
 
 }
 
-func Type(name string, fields *FieldSpecs) *TypeSpecification {
+func Type(name string, fields ...*FieldSpec) *TypeSpecification {
 
 }
 
-func Types(types ...*TypeSpecification) *TypesSpecification {
+func Types(types ...*TypeSpecification) *TypeSpecs {
 
 }
 
-type PersistenceSpecification struct {
+type PersistenceSpec struct {
 }
 
-func Application(name string, domains *DomainsSpecification) *ApplicationBuilder {
+func ApplicationDomain(name string, domains *DomainsSpecification) *ApplicationBuilder {
 
 }
