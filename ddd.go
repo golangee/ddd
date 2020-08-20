@@ -11,6 +11,16 @@ const (
 	Writer TypeName = "io.Writer"
 )
 
+type StructOrInterface interface {
+	Name() string
+	structOrInterface()
+}
+
+type FuncOrStruct interface {
+	Name() string
+	funcOrStruct()
+}
+
 func Int32(name string, comment ...string) *ParamSpec {
 
 }
@@ -18,7 +28,6 @@ func Int32(name string, comment ...string) *ParamSpec {
 func List(t TypeName) TypeName {
 	return "[]" + t
 }
-
 
 type ApplicationBuilder struct {
 }
@@ -28,6 +37,15 @@ func (a *ApplicationBuilder) Generate() error {
 }
 
 type MethodSpecification struct {
+	name string
+}
+
+func (m *MethodSpecification) funcOrStruct() {
+	panic("implement me")
+}
+
+func (m *MethodSpecification) Name() string {
+	return m.name
 }
 
 type DomainsSpecification struct {
@@ -36,7 +54,6 @@ type DomainsSpecification struct {
 func BoundedContexts(domains ...*DomainSpec) *DomainsSpecification {
 
 }
-
 
 func Func(name string, comment string, inSpec *ParamSpecs, outSpec *ParamSpecs) *MethodSpecification {
 
@@ -62,10 +79,13 @@ func Return(typ TypeName) *ParamSpec {
 
 }
 
-
 type InterfaceSpecs struct{}
 
 func Repositories(repos ...*InterfaceSpec) *InterfaceSpecs {
+
+}
+
+func Contracts(repos ...*InterfaceSpec) *InterfaceSpecs {
 
 }
 
@@ -127,11 +147,37 @@ func Migrate(dateTime uint64, sql string) *MigrationSpec {
 
 }
 
+func API(specs ...StructOrInterface) []StructOrInterface {
+	return specs
+}
+
+type MethodSpecs struct {
+	specs []*MethodSpecification
+}
+
+func Factories(specs ...FuncOrStruct) []FuncOrStruct {
+	return specs
+}
+
 type MigrationSpecs struct{}
 
 type TypeSpecs struct{}
 
-type TypeSpecification struct{}
+type TypeSpecification struct {
+	name string
+}
+
+func (s *TypeSpecification) funcOrStruct() {
+	panic("implement me")
+}
+
+func (s *TypeSpecification) structOrInterface() {
+	panic("implement me")
+}
+
+func (s *TypeSpecification) Name() string {
+	return s.name
+}
 
 type FieldSpecs struct {
 }
@@ -143,7 +189,7 @@ func Fields(fields ...*FieldSpec) *FieldSpecs {
 
 }
 
-func Field(name string, comment string, typ TypeName) *FieldSpec {
+func Field(name string, typ TypeName, comment ...string) *FieldSpec {
 
 }
 
@@ -151,7 +197,15 @@ func Type(name string, fields ...*FieldSpec) *TypeSpecification {
 
 }
 
+func Struct(name string, fields ...*FieldSpec) *TypeSpecification {
+
+}
+
 func Types(types ...*TypeSpecification) *TypeSpecs {
+
+}
+
+func DataTypes(types ...*TypeSpecification) *TypeSpecs {
 
 }
 

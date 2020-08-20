@@ -3,6 +3,6 @@ package ddd
 type DomainSpec struct {
 }
 
-func Context(name string, comment string,requires *InterfaceSpecs, usecases *UseCaseSpecs, types *TypeSpecs, presentationSpec *PresentationSpecs, service *ServiceSpec, persistence *PersistenceSpec) *DomainSpec {
+func Context(name string, comment string, domainCore ...*LayerSpec) *DomainSpec {
 	return &DomainSpec{}
 }
