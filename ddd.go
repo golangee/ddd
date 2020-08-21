@@ -11,6 +11,14 @@ const (
 	Writer TypeName = "io.Writer"
 )
 
+type MimeType string
+
+const (
+	MimeTypeJson MimeType = "application/json"
+	MimeTypeXml  MimeType = "application/xml"
+	MimeTypeText MimeType = "application/text"
+)
+
 type StructOrInterface interface {
 	Name() string
 	structOrInterface()
@@ -198,6 +206,13 @@ func Type(name string, fields ...*FieldSpec) *TypeSpecification {
 }
 
 func Struct(name string, fields ...*FieldSpec) *TypeSpecification {
+
+}
+
+// CopyStruct really issues a copy to ensure that layers are not polluted. E.g. a REST model may be the same
+// as the database model or domain model, but actually they must not have much in common and may contain
+// undesired internal things, which must not be presented to the outside.
+func CopyStruct(from string, name TypeName) *TypeSpecification {
 
 }
 
