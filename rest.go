@@ -68,7 +68,7 @@ func XML(typeName TypeName) *ResponseFormatSpec {
 	return ForMimeType(MimeTypeXml, typeName)
 }
 
-func Binary(typeName TypeName) *ResponseFormatSpec {
+func BinaryStream(typeName TypeName) *ResponseFormatSpec {
 	return ForMimeType("application/octetstream", typeName)
 }
 

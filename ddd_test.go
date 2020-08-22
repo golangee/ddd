@@ -2,6 +2,7 @@ package ddd_test
 
 import (
 	. "github.com/golangee/ddd"
+	. "github.com/golangee/ddd/sql"
 	"testing"
 )
 
@@ -120,7 +121,7 @@ func TestDDD(t *testing.T) {
 											Text(List("Book")),
 											XML(List("Book")),
 											JPEG("io.Reader"),
-											Binary(List("byte")),
+											BinaryStream(List("byte")),
 										),
 									),
 									Response(404, "book not found",
@@ -133,7 +134,7 @@ func TestDDD(t *testing.T) {
 						),
 						Resource("/books/{id}",
 							"Resource to manage a single book",
-							GET("Returns a single book.", In(), Out()),
+							GET("Returns a single book.", In(), Responses()),
 							DELETE("Removes a single book"),
 							PUT("Updates a book"),
 							POST("Creates a new book"),
@@ -146,6 +147,30 @@ func TestDDD(t *testing.T) {
 						),
 
 						CopyStruct("UseCases", "Book"),
+					),
+				),
+				MySQL(
+					Migrations(
+						Migrate("2006-01-02T15:04:05",
+							CreateTable("users",
+								Columns(
+									Int("id", 11, AutoIncrement()),
+									Varchar("name", 255, NotNull()),
+									Binary("uuid", 16),
+								),
+								PrimaryKey("id", "name"),
+								ForeignKey("uuid", "objects", "id"),
+							),
+							AlterTable("users",
+								AddColumns(
+									Int("num", 3, NotNull()),
+								),
+								DropColumns("name"),
+							),
+						),
+						Migrate("2006-01-02T15:04:06",
+							Statement("CREATE TABLE ..."),
+						),
 					),
 				),
 			),

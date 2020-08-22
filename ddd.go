@@ -114,9 +114,6 @@ func Implementations(impls ...*ImplementationSpec) *ImplementationSpecs {
 
 }
 
-func MySQL(name TypeName, migrations *MigrationSpecs, methods ...*MethodImplSpec) *ImplementationSpec {
-
-}
 
 func Filesystem(name TypeName) *ImplementationSpec {
 
@@ -124,9 +121,6 @@ func Filesystem(name TypeName) *ImplementationSpec {
 
 type Body struct{}
 
-func Statement(query string) *Body {
-
-}
 
 func DefaultCreate(table string) *Body {}
 
@@ -138,22 +132,7 @@ func Implement(method string, body *Body) *MethodImplSpec {
 
 }
 
-func SQL(migrations *MigrationSpecs) *ImplementationSpec {}
 
-type MigrationSpec struct{}
-
-func Schema(migrations ...*MigrationSpec) *MigrationSpecs {
-
-}
-
-func Bla(str string) {
-
-}
-
-// in yyyyMMddHHmmss format
-func Migrate(dateTime uint64, sql string) *MigrationSpec {
-
-}
 
 func API(specs ...StructOrInterface) []StructOrInterface {
 	return specs
@@ -167,7 +146,6 @@ func Factories(specs ...FuncOrStruct) []FuncOrStruct {
 	return specs
 }
 
-type MigrationSpecs struct{}
 
 type TypeSpecs struct{}
 
