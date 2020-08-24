@@ -1,1 +1,0 @@
-CREATE TABLE books (id BINARY(16))

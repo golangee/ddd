@@ -1,6 +1,6 @@
 package ddd
 
-import "github.com/golangee/ddd/sql"
+import "github.com/golangee/architecture/sql"
 
 func MySQL(migrations []*sql.MigrationSpec, structs []*StructSpec, genSpecs []*GenSpec) *LayerSpec {
 	return nil

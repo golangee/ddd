@@ -1,7 +1,7 @@
 package sql_test
 
 import (
-	. "github.com/golangee/ddd/sql"
+	. "github.com/golangee/architecture/sql"
 	"testing"
 )
 

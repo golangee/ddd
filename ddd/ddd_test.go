@@ -1,8 +1,8 @@
 package ddd_test
 
 import (
-	. "github.com/golangee/ddd"
-	. "github.com/golangee/ddd/sql"
+	. "github.com/golangee/architecture/ddd"
+	. "github.com/golangee/architecture/sql"
 	"testing"
 )
 
