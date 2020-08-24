@@ -204,6 +204,21 @@ func TestDDD(t *testing.T) {
 						),
 					),
 				),
+
+				S3(
+					Bucket("BookCoverImages"),
+					Bucket("MyEbookBucketRepo"),
+				),
+
+				Filesystem(
+					Folder("MyFolderRepo"),
+					Folder("MyOtherFolderRepo"),
+				),
+
+				DependencyInjection(
+					ConvertStruct("mysql", "User", "core", "User"),
+					ConvertStruct("rest", "User", "core", "User"),
+				),
 			),
 		),
 	).Generate()
