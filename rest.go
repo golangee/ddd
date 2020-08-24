@@ -1,7 +1,7 @@
 package ddd
 
 // REST is a driven port and directly uses the UseCases API
-func REST(version string, resources []*HttpResourceSpec, types *TypeSpecs) *LayerSpec {
+func REST(version string, resources []*HttpResourceSpec, types []*StructSpec) *LayerSpec {
 	return nil
 }
 
@@ -19,7 +19,7 @@ func Resources(resources ...*HttpResourceSpec) []*HttpResourceSpec {
 	return resources
 }
 
-func GET(comment string, in *ParamSpecs, responses []*HttpResponseSpec) *VerbSpec {
+func GET(comment string, in []*ParamSpec, responses []*HttpResponseSpec) *VerbSpec {
 	return nil
 }
 

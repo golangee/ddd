@@ -9,6 +9,3 @@ type PresentationSpecs struct {
 	presentations []*PresentationSpec
 }
 
-func Presentations(presentations ...*PresentationSpec) *PresentationSpecs {
-	return &PresentationSpecs{presentations: presentations}
-}
