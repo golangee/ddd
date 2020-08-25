@@ -1,8 +1,7 @@
 package ddd
 
-import "github.com/golangee/architecture/sql"
 
-func MySQL(migrations []*sql.MigrationSpec,  genSpecs []*GenSpec) *UseCaseLayerSpec {
+func MySQL(migrations []*MigrationSpec,  genSpecs []*GenSpec) *UseCaseLayerSpec {
 	return nil
 }
 

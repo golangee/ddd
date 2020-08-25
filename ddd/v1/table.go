@@ -1,4 +1,4 @@
-package sql
+package ddd
 
 type ColumnOption struct {
 }

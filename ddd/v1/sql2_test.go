@@ -1,7 +1,7 @@
-package sql_test
+package ddd_test
 
 import (
-	. "github.com/golangee/architecture/sql"
+	. "github.com/golangee/architecture/ddd/v1"
 	"testing"
 )
 
