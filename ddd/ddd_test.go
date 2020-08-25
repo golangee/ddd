@@ -7,61 +7,84 @@ import (
 )
 
 func TestDDD(t *testing.T) {
-	err := ApplicationDomain("BookLibrary",
+	app := Application("BookLibrary",
 		BoundedContexts(
 			Context(
 				"BookLending",
 				"... is all about renting a book.",
-				DomainCore(
+
+				//This layer cannot have any dependencies to other layers.
+				Core(
 					API(
-						Struct("Book",
+						Struct("Book", "...represents a virtual book",
 							Field("ID", UUID, "unique id of a book"),
 							Field("ISBN", Int64, "multiple books share the same ISBN"),
 						),
 
-						Struct("Reader",
+						Struct("Reader", "...is a human reader.",
 							Field("ID", UUID, "unique id of a library user"),
 							Field("FirstName", String, "first name of user"),
 							Field("LastName", String, "last name of user"),
 						),
 
-						Struct("Loan",
+						Struct("Loan", "...is what a human does when renting a book",
 							Field("ID", UUID, "unique id of a loan"),
 							Field("BookId", UUID, "which book has been loaned"),
 							Field("UserId", UUID, "which user has loaned it"), // überhaupt notwendig? oder
 						),
 
-						Interface("ReadBookService",
+						Interface("ReadBookService", "... is a service for books.",
 							Func("ReadBook",
 								"... represents the use case, where a Reader reads a book in the library.",
 								In(Var("bookId", UUID)),
 								Out(Return("Book")),
 							),
 						),
-					),
-					Factories(),
-				),
 
-				UseCases(
-					API(
-						Struct("Book",
-							Field("ID", UUID, "unique id of a book"),
-							Field("ISBN", Int64, "multiple books share the same ISBN"),
+						Interface("BookRepo", "...is a repo with books.",
+							Func("FindBook",
+								"... finds one book by its unique id.",
+								In(Var("bookId", UUID)),
+								Out(Return("Book")),
+							),
+
+							Func("FindAllByName",
+								"... returns all books with a name like text.",
+								In(Var("text", String)),
+								Out(Return(List("Book"))),
+							),
 						),
 
-						Struct("Reader",
+						Interface("EBookRepo", "...contains the books in PDF.",
+							Func("FindBook",
+								"...finds a unique pdf book",
+								In(Var("id", UUID)),
+								Out(Return(Reader)),
+							),
+						),
+					),
+					Factories(
+						Func("NewReadBookService",
+							"...creates a domain instance for the book service",
+							In(Var("repo", "BookRepo")),
+							Out(Return("ReadBookService")),
+						),
+					),
+				),
+
+				// this layer has only dependencies on the domain core
+				UseCases(
+					API(
+
+						Struct("LoanReader", "...is a use case specific model.",
 							Field("ID", UUID, "unique id of a library user"),
 							Field("FirstName", String, "first name of user"),
 							Field("LastName", String, "last name of user"),
-						),
-
-						Struct("Loan",
-							Field("ID", UUID, "unique id of a loan"),
 							Field("BookId", UUID, "which book has been loaned"),
 							Field("UserId", UUID, "which user has loaned it"), // überhaupt notwendig? oder
 						),
 
-						Interface("ReadBookUseCase",
+						Interface("ReadBookUseCase", "...represents the use case around reading a book",
 							Func("ReadBookInLibrary",
 								"... represents the use case, where a Reader reads a book in the library.",
 								In(Var("bookId", UUID)),
@@ -69,7 +92,7 @@ func TestDDD(t *testing.T) {
 							),
 						),
 
-						Interface("BorrowBookUseCase",
+						Interface("BorrowBookUseCase", "...represents the use case tbd.",
 							Func("BorrowBook",
 								"... represents the use case, where a Reader loans a physical book.",
 								In(Var("bookId", UUID), Var("readerId", UUID)),
@@ -79,11 +102,11 @@ func TestDDD(t *testing.T) {
 							Func("BorrowEbook",
 								"... represents the use case, where a Reader loans an ebook.",
 								In(Var("bookId", UUID), Var("readerId", UUID)),
-								Out(Return("Book")),
+								Out(Return("{{.Core}}.Book")), //TODO uses the models and services from domain core, automatically in our scope???
 							),
 						),
 
-						Interface("StatisticUseCase",
+						Interface("StatisticUseCase", "...represents the use case tbd.",
 							Func("AllLoaners",
 								"...represents the use case, to show all loaners to the inventory executor",
 								In(),
@@ -93,7 +116,7 @@ func TestDDD(t *testing.T) {
 					),
 
 					Factories(
-						Struct("FactoryOptions",
+						Struct("FactoryOptions", "...is the options struct for the factory, which is implemented by the dev",
 							Field("flag", Int64),
 						),
 						Func("NewStatisticUseCase",
@@ -103,6 +126,8 @@ func TestDDD(t *testing.T) {
 						),
 					),
 				),
+
+				// the REST layer is a presentation layer and has only dependencies to the use case layer and therefore also to the domain layer.
 				REST(
 					"v1.1.1",
 					Resources(
@@ -140,15 +165,9 @@ func TestDDD(t *testing.T) {
 							POST("Creates a new book"),
 						),
 					),
-					Types(
-						Struct("Book",
-							Field("ID", UUID, "unique id of a book"),
-							Field("ISBN", Int64, "multiple books share the same ISBN"),
-						),
-
-						CopyStruct("UseCases", "Book", Fields()),
-					),
 				),
+
+				// a concrete implementation layer has only dependencies on the domainCore, especially the Repository interface and models. Does not depend on the use case or presentation.
 				MySQL(
 					Migrations(
 						Migrate("2006-01-02T15:04:05",
@@ -172,47 +191,24 @@ func TestDDD(t *testing.T) {
 							Statement("CREATE TABLE ..."),
 						),
 					),
-					Types(
-						CopyStruct("UseCases", "Book",
-							Fields(
-								Field("PKId", Int64, "autoincrement mysql id"),
-								RemoveField("ID"),
-							),
-						),
-					),
+
+					// can only use domain core
 					Generate(
-						Repository("Users",
-							"... manages a lot of user stuff.",
-							StatementFunc("FindAll",
-								"...finds all users.",
-								"SELECT * FROM users",
-								In(),
-								Out(Return(List("Book"))),
+						From("BookRepo",
+							StatementFunc("FindBook", "SELECT * FROM books"),
+							StatementFunc("FindAllByName",
+								"SELECT * FROM users WHERE name like :text",
 							),
-							StatementFunc("FindAllById",
-								"...finds all users with a name.",
-								"SELECT * FROM users WHERE name = :name",
-								In(Var("name", String, "...is the name to find.")),
-								Out(Return(List("Book"))),
-							),
-						),
-						CRUDRepository("CRUDUsers",
-							"...is an auto-implemented crud repository",
-							"users",
-							"Book",
-							ReadAll|CountAll,
 						),
 					),
 				),
 
 				S3(
-					Bucket("BookCoverImages"),
-					Bucket("MyEbookBucketRepo"),
+					From("EBookRepo"), // TODO can only auto-implement trivial methods?
 				),
 
 				Filesystem(
-					Folder("MyFolderRepo"),
-					Folder("MyOtherFolderRepo"),
+					From("EBookRepo"), // TODO can only auto-implement trivial methods?
 				),
 
 				DependencyInjection(
@@ -221,9 +217,7 @@ func TestDDD(t *testing.T) {
 				),
 			),
 		),
-	).Generate()
+	)
 
-	if err != nil {
-		t.Fatal(err)
-	}
+	_ = app
 }

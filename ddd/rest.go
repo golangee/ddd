@@ -1,8 +1,45 @@
 package ddd
 
-// REST is a driven port and directly uses the UseCases API
-func REST(version string, resources []*HttpResourceSpec, types []*StructSpec) *LayerSpec {
-	return nil
+import (
+	"golang.org/x/mod/semver"
+)
+
+// A RestLayerSpec represents a stereotyped PRESENTATION layer.
+type RestLayerSpec struct {
+	name        string
+	version     string
+	description string
+	resources   []*HttpResourceSpec
+}
+
+// Name of the Layer
+func (r *RestLayerSpec) Name() string {
+	return r.name
+}
+
+// Description of the layer
+func (r *RestLayerSpec) Description() string {
+	return r.description
+}
+
+// Stereotype of the layer
+func (r *RestLayerSpec) Stereotype() Stereotype {
+	return PRESENTATION
+}
+
+// REST is a driven port and directly uses the UseCases API. It does normally not define any further models
+// than the use cases it imports. Because of transitivity, it has also access to the CORE layer API models.
+// Version must be a semantic version string like "v1.2.3".
+func REST(version string, resources []*HttpResourceSpec) *RestLayerSpec {
+	major := semver.Major(version)
+	name := "rest" + major
+	return &RestLayerSpec{
+		name:    name,
+		version: version,
+		description: "Package " + name + " contains the REST specific implementation for the current bounded context.\n" +
+			"It depends only from the usecases and transitivley on the core API.",
+		resources: resources,
+	}
 }
 
 type HttpResourceSpec struct {

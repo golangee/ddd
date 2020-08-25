@@ -2,14 +2,14 @@ package ddd
 
 import "github.com/golangee/architecture/sql"
 
-func MySQL(migrations []*sql.MigrationSpec, structs []*StructSpec, genSpecs []*GenSpec) *LayerSpec {
+func MySQL(migrations []*sql.MigrationSpec,  genSpecs []*GenSpec) *UseCaseLayerSpec {
 	return nil
 }
 
 type GenSpec struct {
 }
 
-func Repository(name, comment string, funcs ...*GenFuncSpec) *GenSpec {
+func From(typeName TypeName, funcs ...*GenFuncSpec) *GenSpec {
 	return &GenSpec{}
 }
 
@@ -20,6 +20,6 @@ func Generate(genSpecs ...*GenSpec) []*GenSpec {
 type GenFuncSpec struct {
 }
 
-func StatementFunc(name, comment, statement string, in []*ParamSpec, out []*ParamSpec) *GenFuncSpec {
+func StatementFunc(name, statement string) *GenFuncSpec {
 	return &GenFuncSpec{}
 }

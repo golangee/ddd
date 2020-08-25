@@ -33,12 +33,7 @@ func List(t TypeName) TypeName {
 	return "[]" + t
 }
 
-type ApplicationBuilder struct {
-}
 
-func (a *ApplicationBuilder) Generate() error {
-	panic("implement me")
-}
 
 type MethodSpecification struct {
 	name string
@@ -52,12 +47,8 @@ func (m *MethodSpecification) Name() string {
 	return m.name
 }
 
-type DomainsSpecification struct {
-}
 
-func BoundedContexts(domains ...*DomainSpec) *DomainsSpecification {
-	panic("implement me")
-}
+
 
 func Func(name string, comment string, inSpec []*ParamSpec, outSpec []*ParamSpec) *MethodSpecification {
 	panic("implement me")
@@ -137,7 +128,7 @@ func Field(name string, typ TypeName, comment ...string) *FieldSpec {
 	panic("implement me")
 }
 
-func Struct(name string, fields ...*FieldSpec) *StructSpec {
+func Struct(name, comment string, fields ...*FieldSpec) *StructSpec {
 	panic("implement me")
 }
 
@@ -155,6 +146,3 @@ func Types(types ...*StructSpec) []*StructSpec {
 type PersistenceSpec struct {
 }
 
-func ApplicationDomain(name string, domains *DomainsSpecification) *ApplicationBuilder {
-	panic("implement me")
-}

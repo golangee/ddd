@@ -7,6 +7,6 @@ func ConvertStruct(fromLayer string, fromName TypeName, toLayer string, toName T
 	return nil
 }
 
-func DependencyInjection(conversions ...*ConversionSpec) *LayerSpec {
+func DependencyInjection(conversions ...*ConversionSpec) *UseCaseLayerSpec {
 	return nil
 }

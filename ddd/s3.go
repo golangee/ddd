@@ -3,22 +3,12 @@ package ddd
 type BucketSpec struct {
 }
 
-func S3(buckets ...*BucketSpec) *LayerSpec {
+func S3(genSpecs ...*GenSpec) *UseCaseLayerSpec {
 	return nil
 }
 
-// Bucket creates a new Repository with the given type name.
-func Bucket(name TypeName) *BucketSpec {
-	return &BucketSpec{}
-}
 
-type FolderSpec struct {
-}
 
-func Folder(name TypeName) *FolderSpec {
-	return &FolderSpec{}
-}
-
-func Filesystem(folders ...*FolderSpec) *LayerSpec {
+func Filesystem(genSpecs ...*GenSpec) *UseCaseLayerSpec {
 	return nil
 }

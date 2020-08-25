@@ -1,27 +1,14 @@
 package ddd
 
-type LayerSpec struct {
-	name      string
-	comment   string
-	api       []StructOrInterface
-	factories []FuncOrStruct
-}
+// A Layer can be of very different kind. Its dependencies depends on the Stereotype and its concrete payload
+// on the actual kind of the layer. Different IMPLEMENTATION types provides distinct types.
+type Layer interface {
+	// Name of the layer
+	Name() string
 
-// UseCases can only ever import DomainCore API
-func UseCases(api []StructOrInterface, factories []FuncOrStruct) *LayerSpec {
-	return Layer("UseCases", "...all the use cases of the domain.", api, factories...)
-}
+	// Description of the layer
+	Description() string
 
-// DomainCore has never any dependencies to any other layer.
-func DomainCore(api []StructOrInterface, factories []FuncOrStruct) *LayerSpec {
-	return Layer("DomainCore", "...all the core domain API of the domain.", api, factories...)
-}
-
-func Layer(name, comment string, api []StructOrInterface, factories ...FuncOrStruct) *LayerSpec {
-	return &LayerSpec{
-		name:      name,
-		comment:   comment,
-		api:       api,
-		factories: factories,
-	}
+	// Stereotype of the layer
+	Stereotype() Stereotype
 }
