@@ -74,20 +74,36 @@ func GET(comment string, in []*ParamSpec, responses []*HttpResponseSpec) *VerbSp
 	return nil
 }
 
-type MimeType string
-
-const (
-	MimeTypeJson MimeType = "application/json"
-	MimeTypeXml  MimeType = "application/xml"
-	MimeTypeText MimeType = "application/text"
-)
-
-// DELETE is not allowed to have a request body, as defined per RFC 7231.
-func DELETE(comment string) *VerbSpec {
+func POST(description string, body *HttpRequestBodySpec) *VerbSpec {
 	return nil
 }
 
-func POST(comment string) *VerbSpec {
+type HttpRequestBodySpec struct {
+}
+
+type HttpContentSpec struct {
+}
+
+func RequestBody(required bool, content ...*ContentSpec) *HttpRequestBodySpec {
+	return nil
+}
+
+type ContentSpec struct {
+	mimeType MimeType
+	typeName TypeName
+}
+
+func Content(mime MimeType, typeName TypeName) *ContentSpec {
+	return &ContentSpec{
+		mimeType: mime,
+		typeName: typeName,
+	}
+}
+
+type HttpRequestSpec struct{}
+
+// DELETE is not allowed to have a request body, as defined per RFC 7231.
+func DELETE(comment string) *VerbSpec {
 	return nil
 }
 
@@ -96,9 +112,17 @@ func PUT(comment string) *VerbSpec {
 }
 
 // HEAD is not allowed to have a request body, as defined per RFC 7231.
-func HEAD(comment string)*VerbSpec{
+func HEAD(comment string) *VerbSpec {
 	return nil
 }
+
+type MimeType string
+
+const (
+	MimeTypeJson MimeType = "application/json"
+	MimeTypeXml  MimeType = "application/xml"
+	MimeTypeText MimeType = "application/text"
+)
 
 func Resource(path, comment string, verbs ...*VerbSpec) *HttpResourceSpec {
 	return &HttpResourceSpec{path: path, description: comment}
