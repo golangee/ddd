@@ -29,7 +29,7 @@ func (u *UseCaseLayerSpec) Name() string {
 
 // Description of the layer.
 func (u *UseCaseLayerSpec) Description() string {
-	panic("implement me")
+	return u.description
 }
 
 // Stereotype of the layer.

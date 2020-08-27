@@ -1,25 +1,45 @@
-// Copyright 2020 Torben Schinke
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     https://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+# architecture
+This *architecture* module is especially useful to
+bootstrap and maintain enterprise grade services.
+The main goal is to reduce degeneration of the 
+architecture and related documentation.
 
-package ddd_test
+## planned features
+*[ ] domain driven design, enforce correct dependency graph
+*[ ] REST service generation
+*[ ] OpenAPI generation
+*[ ] Async http client generation support for easy WASM integration
+*[ ] Ensure correct regeneration after changes
+*[ ] MySQL Repository generation and migration support
+*[ ] Generate UML and architecture Diagrams
+*[ ] ...
+
+## Alternatives
+
+Actually, only [goa](https://goa.design/) is known.
+However, *goa* neither enforces a *domain driven design*
+nor does it provide a
+meaningful, typesafe and autocompletion friendly
+DSL. It does also not support planned features,
+especially with regard to an automatic project 
+documentation, deep integrations of frontends or 
+other backend languages.
+
+## domain driven design, variant 1
+
+This is a very fluid DSL with factory methods all over the
+place which integrates nicely with your favorite IDE providing
+autocompletion.
+
+DSL-Example
+```go
+package main
 
 import (
 	. "github.com/golangee/architecture/ddd/v1"
-	"testing"
 )
 
-func TestDDD(t *testing.T) {
+func main() {
 	app := Application("BookLibrary",
 		BoundedContexts(
 			Context(
@@ -232,8 +252,8 @@ func TestDDD(t *testing.T) {
 							CreateTable("users",
 								Columns(
 									Int("id", 11, AutoIncrement()),
-									Varchar("name", 255, NotNull(), Default("unnamed")),
-									Binary("uuid", 16, Nullable()),
+									Varchar("name", 255, NotNull()),
+									Binary("uuid", 16),
 								),
 								PrimaryKey("id", "name"),
 								ForeignKey("uuid", "objects", "id"),
@@ -275,3 +295,4 @@ func TestDDD(t *testing.T) {
 
 	_ = app
 }
+```
