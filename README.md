@@ -5,14 +5,14 @@ The main goal is to reduce degeneration of the
 architecture and related documentation.
 
 ## planned features
-*[ ] domain driven design, enforce correct dependency graph
-*[ ] REST service generation
-*[ ] OpenAPI generation
-*[ ] Async http client generation support for easy WASM integration
-*[ ] Ensure correct regeneration after changes
-*[ ] MySQL Repository generation and migration support
-*[ ] Generate UML and architecture Diagrams
-*[ ] ...
+- [ ] domain driven design, enforce correct dependency graph
+- [ ] REST service generation
+- [ ] OpenAPI generation
+- [ ] Async http client generation support for easy WASM integration
+- [ ] Ensure correct regeneration after changes
+- [ ] MySQL Repository generation and migration support
+- [ ] Generate UML and architecture Diagrams
+- [ ] ...
 
 ## Alternatives
 
