@@ -19,6 +19,32 @@ type InterfaceSpec struct {
 	name    string
 	comment string
 	funcs   []*FuncSpec
+	pos     Pos
+}
+
+// Interface is a factory to create an InterfaceSpec.
+func Interface(name, comment string, methods ...*FuncSpec) *InterfaceSpec {
+	return &InterfaceSpec{
+		name:    name,
+		comment: comment,
+		funcs:   methods,
+		pos:     capturePos("Interface", 1),
+	}
+}
+
+// Walk marches over all sub objects.
+func (s *InterfaceSpec) Walk(f func(obj interface{}) error) error {
+	if err := f(s); err != nil {
+		return err
+	}
+
+	for _, obj := range s.funcs {
+		if err := obj.Walk(f); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // structOrInterface is a marker for StructOrInterface.
@@ -31,11 +57,17 @@ func (s *InterfaceSpec) Name() string {
 	return s.name
 }
 
-// Interface is a factory to create an InterfaceSpec.
-func Interface(name, comment string, methods ...*FuncSpec) *InterfaceSpec {
-	return &InterfaceSpec{
-		name:    name,
-		comment: comment,
-		funcs:   methods,
-	}
+// Comment returns the documentation of the interface.
+func (s *InterfaceSpec) Comment() string {
+	return s.comment
+}
+
+// Funcs returns the method set.
+func (s *InterfaceSpec) Funcs() []*FuncSpec {
+	return s.funcs
+}
+
+// Pos returns the debugging position.
+func (s *InterfaceSpec) Pos() Pos {
+	return s.pos
 }

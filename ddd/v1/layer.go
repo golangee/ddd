@@ -25,4 +25,7 @@ type Layer interface {
 
 	// Stereotype of the layer
 	Stereotype() Stereotype
+
+	// Walk through all nested objects, including self as root.
+	Walk(f func(obj interface{}) error) error
 }

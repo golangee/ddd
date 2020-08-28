@@ -21,6 +21,18 @@ type FuncSpec struct {
 	comment string
 	in      []*ParamSpec
 	out     []*ParamSpec
+	pos     Pos
+}
+
+// Func is a factory for a FuncSpec.
+func Func(name string, comment string, inSpec InParams, outSpec OutParams) *FuncSpec {
+	return &FuncSpec{
+		name:    name,
+		comment: comment,
+		in:      inSpec,
+		out:     outSpec,
+		pos:     capturePos("Func", 1),
+	}
 }
 
 // funcOrStruct is a marker for FuncOrStruct.
@@ -33,12 +45,42 @@ func (m *FuncSpec) Name() string {
 	return m.name
 }
 
-// Func is a factory for a FuncSpec.
-func Func(name string, comment string, inSpec InParams, outSpec OutParams) *FuncSpec {
-	return &FuncSpec{
-		name:    name,
-		comment: comment,
-		in:      inSpec,
-		out:     outSpec,
+func (m *FuncSpec) Walk(f func(obj interface{}) error) error {
+	if err := f(m); err != nil {
+		return err
 	}
+
+	for _, obj := range m.in {
+		if err := f(obj); err != nil {
+			return err
+		}
+	}
+
+	for _, obj := range m.out {
+		if err := f(obj); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// In returns the according params.
+func (m *FuncSpec) In() []*ParamSpec {
+	return m.in
+}
+
+// Out returns the according params.
+func (m *FuncSpec) Out() []*ParamSpec {
+	return m.out
+}
+
+// Comment returns functions documentation.
+func (m *FuncSpec) Comment() string {
+	return m.comment
+}
+
+// Pos returns the debugging position.
+func (m *FuncSpec) Pos() Pos {
+	return m.pos
 }

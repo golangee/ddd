@@ -22,6 +22,30 @@ type CoreLayerSpec struct {
 	factories   []FuncOrStruct
 }
 
+// Core has never any dependencies to any other layer.
+func Core(api []StructOrInterface, factories []FuncOrStruct) *CoreLayerSpec {
+	return &CoreLayerSpec{
+		name: "core",
+		description: "Package core contains all domain specific models for the current bounded context.\n" +
+			"It contains an exposed public API to be imported by other layers and an internal package \n" +
+			"private implementation accessible by factory functions.",
+		api:       api,
+		factories: factories,
+	}
+}
+
+// API returns the struct or interfaces from the API definition.
+func (c *CoreLayerSpec) API() []StructOrInterface {
+	return c.api
+}
+
+// Factories returns the constructor or factory functions for the implementation of the API. Structs are only
+// to describe parameters or factory options. The returned types must match the API interfaces and structs.
+// The actual implementation must be performed by the developer and is not defined by the DSL.
+func (c *CoreLayerSpec) Factories() []FuncOrStruct {
+	return c.factories
+}
+
 // Name of the Layer
 func (c *CoreLayerSpec) Name() string {
 	return c.name
@@ -37,14 +61,22 @@ func (c *CoreLayerSpec) Stereotype() Stereotype {
 	return CORE
 }
 
-// Core has never any dependencies to any other layer.
-func Core(api []StructOrInterface, factories []FuncOrStruct) *CoreLayerSpec {
-	return &CoreLayerSpec{
-		name: "core",
-		description: "Package core contains all domain specific models for the current bounded context.\n" +
-			"It contains an exposed public API to be imported by other layers and an internal package \n" +
-			"private implementation accessible by factory functions.",
-		api:       api,
-		factories: factories,
+func (c *CoreLayerSpec) Walk(f func(obj interface{}) error) error {
+	if err := f(c); err != nil {
+		return err
 	}
+
+	for _, obj := range c.api {
+		if err := obj.Walk(f); err != nil {
+			return err
+		}
+	}
+
+	for _, obj := range c.factories {
+		if err := obj.Walk(f); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

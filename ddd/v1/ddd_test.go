@@ -20,7 +20,7 @@ import (
 )
 
 func TestDDD(t *testing.T) {
-	app := Application("BookLibrary",
+	app := Application("BookLibrary", "A story about a book library.",
 		BoundedContexts(
 			Context(
 				"BookLending",
@@ -64,7 +64,7 @@ func TestDDD(t *testing.T) {
 							Func("FindAllByName",
 								"... returns all books with a name like text.",
 								In(Var("text", String)),
-								Out(Return(List("Book"))),
+								Out(Return(Slice("Book"))),
 							),
 						),
 
@@ -123,7 +123,7 @@ func TestDDD(t *testing.T) {
 							Func("AllLoaners",
 								"...represents the use case, to show all loaners to the inventory executor",
 								In(),
-								Out(Return(List("Reader"))),
+								Out(Return(Slice("Reader"))),
 							),
 						),
 					),
@@ -156,9 +156,9 @@ func TestDDD(t *testing.T) {
 											Var("x-RateLimit-Limit", Int64, "Request limit per hour."),
 											Var("x-RateLimit-Remaining", Int64, "The number of requests left for the time window."),
 										),
-										Content(Json, List("Book")),
-										Content("application/text", List("Book")),
-										Content(Xml, List("Book")),
+										Content(Json, Slice("Book")),
+										Content("application/text", Slice("Book")),
+										Content(Xml, Slice("Book")),
 										Content("image/png", Reader),
 										Content("image/jpg", Reader),
 										Content(Any, Reader),

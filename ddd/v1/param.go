@@ -14,11 +14,51 @@
 
 package ddd
 
+import "strings"
+
 // A ParamSpec represents an incoming or outgoing function parameter.
 type ParamSpec struct {
 	name     string
 	typeName TypeName
 	comment  []string
+	pos      Pos
+}
+
+// Var is a factory for a ParamSpec.
+func Var(name string, typeName TypeName, comment ...string) *ParamSpec {
+	return &ParamSpec{
+		name:     name,
+		typeName: typeName,
+		comment:  comment,
+		pos:      capturePos("Var", 1),
+	}
+}
+
+// Return is a factory for an unnamed and undocumented ParamSpec.
+func Return(typeName TypeName) *ParamSpec {
+	p := Var("", typeName)
+	p.pos = capturePos("Return", 1)
+	return p
+}
+
+// Name returns the name of parameter.
+func (p *ParamSpec) Name() string {
+	return p.name
+}
+
+// Comment returns the parameters documentation.
+func (p *ParamSpec) Comment() string {
+	return strings.Join(p.comment, "\n")
+}
+
+// TypeName returns the declared type of the parameter.
+func (p *ParamSpec) TypeName() TypeName {
+	return p.typeName
+}
+
+// Pos returns debugging position.
+func (p *ParamSpec) Pos() Pos {
+	return p.pos
 }
 
 // InParams is just here for type safety and auto completion.
@@ -35,18 +75,4 @@ func In(params ...*ParamSpec) InParams {
 // Out is a factory for a slice of ParamSpec converted to OutParams.
 func Out(params ...*ParamSpec) OutParams {
 	return params
-}
-
-// Var is a factory for a ParamSpec.
-func Var(name string, typeName TypeName, comment ...string) *ParamSpec {
-	return &ParamSpec{
-		name:     name,
-		typeName: typeName,
-		comment:  comment,
-	}
-}
-
-// Return is a factory for an unnamed and undocumented ParamSpec.
-func Return(typeName TypeName) *ParamSpec {
-	return Var("", typeName)
 }

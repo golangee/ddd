@@ -37,18 +37,28 @@ const (
 // StructOrInterface is a marker interface to declare a sum type of accepting either Struct or Interface types.
 type StructOrInterface interface {
 	Name() string
+	// Walk through all nested objects, including self as root.
+	Walk(f func(obj interface{}) error) error
+
 	structOrInterface()
 }
 
 // FuncOrStruct is a marker interface to declare a sum type of accepting either Struct or Func types.
 type FuncOrStruct interface {
 	Name() string
+	// Walk through all nested objects, including self as root.
+	Walk(f func(obj interface{}) error) error
 	funcOrStruct()
 }
 
-// List is generic convenience wrapper to create a slice type of t.
-func List(t TypeName) TypeName {
+// Slice is generic convenience wrapper to create a slice type of t.
+func Slice(t TypeName) TypeName {
 	return "[]" + t
+}
+
+// Optional is just a pointer to the type.
+func Optional(t TypeName) TypeName {
+	return "*" + t
 }
 
 // API is a factory for a slice of StructOrInterface types.

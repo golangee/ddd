@@ -14,17 +14,18 @@
 
 package ddd
 
+// BoundedContexts is a factory to create a slice of BoundedContextSpec from variable amount of arguments.
+func BoundedContexts(contexts ...*BoundedContextSpec) []*BoundedContextSpec {
+	return contexts
+}
+
 // A BoundedContextSpec contains the information about the layers within a bounded context. It contains different
 // layers which may dependencies with each other, depending on their stereotype.
 type BoundedContextSpec struct {
 	name        string
 	description string
 	layers      []Layer
-}
-
-// BoundedContexts is a factory to create a slice of BoundedContextSpec from variable amount of arguments.
-func BoundedContexts(contexts ...*BoundedContextSpec) []*BoundedContextSpec {
-	return contexts
+	pos         Pos
 }
 
 // Context is a factory for a BoundedContextSpec.
@@ -33,5 +34,39 @@ func Context(name string, description string, layers ...Layer) *BoundedContextSp
 		name:        name,
 		description: description,
 		layers:      layers,
+		pos:         capturePos("Context", 1),
 	}
+}
+
+func (s *BoundedContextSpec) Layers() []Layer {
+	return s.layers
+}
+
+// Name of the context.
+func (s *BoundedContextSpec) Name() string {
+	return s.name
+}
+
+// Description of the context.
+func (s *BoundedContextSpec) Description() string {
+	return s.description
+}
+
+// Pos returns debug position.
+func (s *BoundedContextSpec) Pos() Pos {
+	return s.pos
+}
+
+func (s *BoundedContextSpec) Walk(f func(obj interface{}) error) error {
+	if err := f(s); err != nil {
+		return err
+	}
+
+	for _, layer := range s.layers {
+		if err := layer.Walk(f); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
