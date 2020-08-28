@@ -26,8 +26,13 @@ func main() {
 						Interface("BookRepository",
 							"...is a repository to handle books.",
 							Func("ReadAll", "...returns all books.",
-								In(),
-								Out(Return(Slice("Book"))),
+								In(
+									Var("ctx", Ctx, "...provides the timeout handling."),
+								),
+								Out(
+									Return(Slice("Book"), "...is the list of books."),
+									Return(Error, "...returns an implementation specific failure."),
+								),
 							),
 						),
 					),

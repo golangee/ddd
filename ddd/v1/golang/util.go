@@ -3,6 +3,7 @@ package golang
 import (
 	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
+	"github.com/golangee/src"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 const (
 	maxValueCitateLength = 40
 )
-
 
 // safename returns a lowercase name which just contains a..z, nothing else.
 func safename(str string) string {
@@ -95,4 +95,22 @@ func buildErr(property, value, msg string, p ddd.Pos) error {
 		value = value[0:maxValueCitateLength-3] + "(...)"
 	}
 	return fmt.Errorf("%s.%s '%s': %s: %s:%d", p.Name, property, value, msg, p.File, p.Line)
+}
+
+// trimComment removes '...' and any whitespace afterwards.
+func trimComment(str string) string {
+	str = strings.TrimSpace(str)
+	if strings.HasPrefix(str, "...") {
+		str = str[3:]
+	}
+	return strings.TrimSpace(str)
+}
+
+// commentifyDeclName makes some readable name of it, without package qualifier etc.
+func commentifyDeclName(dec *src.TypeDecl) string {
+	tmp := dec.Qualifier().Name()
+	for _, decl := range dec.Params() {
+		tmp += commentifyDeclName(decl)
+	}
+	return tmp
 }

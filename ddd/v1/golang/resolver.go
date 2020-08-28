@@ -65,10 +65,17 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 				typeName: ddd.String,
 				typeDecl: src.NewTypeDecl("string"),
 			},
-
 			{
 				typeName: ddd.Int64,
 				typeDecl: src.NewTypeDecl("int64"),
+			},
+			{
+				typeName: ddd.Ctx,
+				typeDecl: src.NewTypeDecl("context.Context"),
+			},
+			{
+				typeName: ddd.Error,
+				typeDecl: src.NewTypeDecl("error"),
 			},
 		},
 	}

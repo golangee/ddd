@@ -3,6 +3,7 @@
 package core
 
 import (
+	context "context"
 	uuid "github.com/golangee/uuid"
 )
 
@@ -17,5 +18,11 @@ type Book struct {
 // BookRepository is a repository to handle books.
 type BookRepository interface {
 	// ReadAll returns all books.
-	ReadAll() []Book
+	//
+	// The parameter 'ctx' provides the timeout handling.
+	//
+	// The result '[]Book' is the list of books.
+	//
+	// The result 'error' returns an implementation specific failure.
+	ReadAll(ctx context.Context) ([]Book, error)
 }

@@ -25,18 +25,18 @@ type ParamSpec struct {
 }
 
 // Var is a factory for a ParamSpec.
-func Var(name string, typeName TypeName, comment ...string) *ParamSpec {
+func Var(name string, typeName TypeName, comment string) *ParamSpec {
 	return &ParamSpec{
 		name:     name,
 		typeName: typeName,
-		comment:  comment,
+		comment:  []string{comment},
 		pos:      capturePos("Var", 1),
 	}
 }
 
 // Return is a factory for an unnamed and undocumented ParamSpec.
-func Return(typeName TypeName) *ParamSpec {
-	p := Var("", typeName)
+func Return(typeName TypeName, comment string) *ParamSpec {
+	p := Var("", typeName, comment)
 	p.pos = capturePos("Return", 1)
 	return p
 }

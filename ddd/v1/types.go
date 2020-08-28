@@ -32,6 +32,7 @@ const (
 	Error   TypeName = "error"
 	Reader  TypeName = "io.Reader"
 	Writer  TypeName = "io.Writer"
+	Ctx     TypeName = "context.Context"
 )
 
 // StructOrInterface is a marker interface to declare a sum type of accepting either Struct or Interface types.

@@ -90,7 +90,7 @@ func generateInterface(rslv *resolver, scopes resolverScope, t *ddd.InterfaceSpe
 	s.SetDoc(t.Comment())
 	for _, fun := range t.Funcs() {
 		f := src.NewFunc(fun.Name())
-		f.SetDoc(fun.Comment())
+		myComment := fun.Comment()
 
 		for _, param := range fun.In() {
 			decl, err := rslv.resolveTypeName(scopes, param.TypeName())
@@ -99,6 +99,10 @@ func generateInterface(rslv *resolver, scopes resolverScope, t *ddd.InterfaceSpe
 			}
 			p := src.NewParameter(param.Name(), decl)
 			f.AddParams(p)
+
+			myComment += "\n\n"
+			myComment += "The parameter '" + param.Name() + "' "
+			myComment += trimComment(param.Comment())
 		}
 
 		for _, param := range fun.Out() {
@@ -108,9 +112,21 @@ func generateInterface(rslv *resolver, scopes resolverScope, t *ddd.InterfaceSpe
 			}
 			p := src.NewParameter(param.Name(), decl)
 			f.AddResults(p)
+
+			myComment += "\n\n"
+			myComment += "The result '"
+			if param.Name() != "" {
+				myComment += param.Name()
+			} else {
+				myComment += commentifyDeclName(decl)
+			}
+			myComment += "' "
+			myComment += trimComment(param.Comment())
 		}
 
 		s.AddMethods(f)
+
+		f.SetDoc(myComment)
 	}
 
 	return s, nil

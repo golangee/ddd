@@ -81,8 +81,8 @@ func checkName(d withName) error {
 			return nil
 		}
 
-		if !isPublicGoIdentifier(v) {
-			return buildErr(pKeyName, v, "must be a public go identifier", d)
+		if !isPrivateGoIdentifier(v) {
+			return buildErr(pKeyName, v, "must be a private go identifier", d)
 		}
 
 	default:
@@ -118,14 +118,6 @@ func checkDescription(d withDescription) error {
 
 func checkComment(d withComment) error {
 	v := d.Comment()
-
-	switch t := d.(type) {
-	case *ddd.ParamSpec:
-		// empty comment is ok for return parameters
-		if t.Pos().Name == returnParamPosName && t.Comment() == "" {
-			return nil
-		}
-	}
 
 	if v == "" {
 		return buildErr(pKeyComment, v, "must not be empty", d)
