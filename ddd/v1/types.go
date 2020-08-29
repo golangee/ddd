@@ -38,6 +38,8 @@ const (
 // StructOrInterface is a marker interface to declare a sum type of accepting either Struct or Interface types.
 type StructOrInterface interface {
 	Name() string
+
+	Comment() string
 	// Walk through all nested objects, including self as root.
 	Walk(f func(obj interface{}) error) error
 

@@ -13,9 +13,10 @@ import (
 )
 
 type genctx struct {
-	mod   mod.Modules
-	spec  *ddd.AppSpec
-	files []genfile
+	mod     mod.Modules
+	spec    *ddd.AppSpec
+	files   []genfile
+	mdFiles []mdFile
 }
 
 type genfile struct {
@@ -23,6 +24,34 @@ type genfile struct {
 	path        string
 	packagename string
 	file        *src.FileBuilder
+}
+
+type mdFile struct {
+	relName  string
+	filename string
+	md       *Markdown
+}
+
+func (g *genctx) newMarkdown(filename string) *Markdown {
+	f := mdFile{
+		relName:  filename,
+		filename: filepath.Join(g.mod.Main().Dir, filename),
+		md:       NewMarkdown(),
+	}
+	g.mdFiles = append(g.mdFiles, f)
+
+	return f.md
+}
+
+// markdown returns or creates a new named markdown file
+func (g *genctx) markdown(filename string) *Markdown {
+	for _, file := range g.mdFiles {
+		if file.relName == filename {
+			return file.md
+		}
+	}
+
+	return g.newMarkdown(filename)
 }
 
 func (g *genctx) newFile(path, fname, pkgname string) *src.FileBuilder {
@@ -60,6 +89,15 @@ func (g *genctx) emit() error {
 		if err := ioutil.WriteFile(fname, []byte(str), os.ModePerm); err != nil {
 			return err
 		}
+	}
+
+	for _, f := range g.mdFiles {
+		_ = os.MkdirAll(filepath.Dir(f.filename), os.ModePerm)
+		log.Printf("write: %s\n", f.filename)
+		if err := ioutil.WriteFile(f.filename, []byte(f.md.String()), os.ModePerm); err != nil {
+			return err
+		}
+
 	}
 
 	return nil

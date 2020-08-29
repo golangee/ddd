@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -113,4 +114,13 @@ func commentifyDeclName(dec *src.TypeDecl) string {
 		tmp += commentifyDeclName(decl)
 	}
 	return tmp
+}
+
+// makePackagePrivate converts ABc to aBc.
+func makePackagePrivate(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+
+	return string(unicode.ToLower(rune(str[0]))) + str[1:]
 }

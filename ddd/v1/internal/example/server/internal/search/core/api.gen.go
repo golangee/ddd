@@ -5,6 +5,7 @@ package core
 import (
 	context "context"
 	uuid "github.com/golangee/uuid"
+	uuid1 "github.com/google/uuid"
 )
 
 // Book is a book with meta data to index and find.
@@ -13,6 +14,10 @@ type Book struct {
 	ID uuid.UUID
 	// Title is the title for the book.
 	Title string
+	// Special is a test for importing a custom type.
+	Special uuid1.UUID
+	// Tags to describe a book.
+	Tags []string
 }
 
 // BookRepository is a repository to handle books.
@@ -25,4 +30,18 @@ type BookRepository interface {
 	//
 	// The result 'error' returns an implementation specific failure.
 	ReadAll(ctx context.Context) ([]Book, error)
+}
+
+// SearchService is the domain specific service API.
+type SearchService interface {
+	// Search inspects each book for the key words.
+	//
+	// The parameter 'ctx' provides the timeout handling.
+	//
+	// The parameter 'query' contains the query to search for.
+	//
+	// The result '[]Book' is the list of found books.
+	//
+	// The result 'error' returns an implementation specific failure.
+	Search(ctx context.Context, query string) ([]Book, error)
 }

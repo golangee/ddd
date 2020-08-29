@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 type resolverScope uint8
@@ -70,6 +71,10 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 				typeDecl: src.NewTypeDecl("int64"),
 			},
 			{
+				typeName: ddd.Bool,
+				typeDecl: src.NewTypeDecl("bool"),
+			},
+			{
 				typeName: ddd.Ctx,
 				typeDecl: src.NewTypeDecl("context.Context"),
 			},
@@ -97,6 +102,16 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 				tlayer.typeDefs = append(tlayer.typeDefs, tDef)
 			}
 
+			for _, funcOrStruct := range l.Factories() {
+				if strct, ok := funcOrStruct.(*ddd.StructSpec); ok {
+					tDef := typeDef{
+						typeName: ddd.TypeName(strct.Name()),
+						typeDecl: src.NewTypeDecl(src.Qualifier(layerPath + "." + strct.Name())),
+					}
+					tlayer.typeDefs = append(tlayer.typeDefs, tDef)
+				}
+			}
+
 			r.core = tlayer
 
 		default:
@@ -107,8 +122,24 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 	return r
 }
 
+// looksLikeFullQualifier returns true for strings like abc/xyz.Def
+func looksLikeFullQualifier(t ddd.TypeName) bool {
+	aSlash := strings.LastIndex(string(t), "/")
+	aDot := strings.LastIndex(string(t), ".")
+	quiteOk := aSlash > 0 && aDot > 0 && aDot > aSlash
+	for _, r := range src.Qualifier(t).Name() {
+		return unicode.IsUpper(r) && quiteOk
+	}
+
+	return false
+}
+
 func (r *resolver) resolveTypeName(scopes resolverScope, t ddd.TypeName) (*src.TypeDecl, error) {
 	baseType := removeGenericType(t)
+
+	if looksLikeFullQualifier(baseType) {
+		return makeGeneric(t, src.NewTypeDecl(src.Qualifier(baseType))), nil
+	}
 
 	if scopes.Has(rCore) {
 		for _, def := range r.core.typeDefs {
