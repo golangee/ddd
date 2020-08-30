@@ -98,6 +98,10 @@ func (g *genctx) emit() error {
 			return err
 		}
 
+		if err := f.md.EmitGraphics(filepath.Dir(f.filename)); err != nil {
+			return err
+		}
+
 	}
 
 	return nil

@@ -2,6 +2,25 @@
 
 This is the central service of the book library of capital city, for searching and loaning books.
 
+## Index
+
+* [BookLibrary](booklibrary)
+  * [Index](index)
+  * [Architecture](architecture)
+    * [The context *search*](the-context-search)
+      * [The domains core layer](the-domains-core-layer)
+        * [Type *Book*](type-book)
+        * [Type *BookRepository*](type-bookrepository)
+        * [Type *SearchService*](type-searchservice)
+        * [Factory *NewSearchService*](factory-newsearchservice)
+      * [UML](uml)
+    * [The context *loan*](the-context-loan)
+      * [The domains core layer](the-domains-core-layer)
+        * [Type *Book*](type-book)
+        * [Type *User*](type-user)
+      * [UML](uml)
+
+
 ## Architecture
 
 The server is organized after the domain driven design principles.
@@ -21,19 +40,23 @@ The core layer or API layer of the domain consists of 1 data types,
 
 ##### Type *Book*
 
-...is a book with meta data to index and find.
+The data class *Book* is a book with meta data to index and find.
 
 ##### Type *BookRepository*
 
-...is a repository to handle books.
+The SPI interface *BookRepository* is a repository to handle books.
 
 ##### Type *SearchService*
 
-...is the domain specific service API.
+The API interface *SearchService* is the domain specific service API.
 
 ##### Factory *NewSearchService*
 
-...is a factory to create a new SearchService.
+The API factory method *NewSearchService* is a factory to create a new SearchService.
+
+#### UML
+
+![search core API](uml-search-core-api.gen.svg?raw=true)
 
 ### The context *loan*
 
@@ -47,9 +70,13 @@ The core layer or API layer of the domain consists of 2 data types,
 
 ##### Type *Book*
 
-...is a book to loan or rent.
+The data class *Book* is a book to loan or rent.
 
 ##### Type *User*
 
-... is a library customer.
+The data class *User* is a library customer.
+
+#### UML
+
+![loan core API](uml-loan-core-api.gen.svg?raw=true)
 

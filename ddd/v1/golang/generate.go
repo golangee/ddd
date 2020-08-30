@@ -3,6 +3,7 @@ package golang
 import (
 	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
+	"github.com/golangee/plantuml"
 	"github.com/golangee/src"
 	"path/filepath"
 	"reflect"
@@ -17,6 +18,8 @@ func generateCmdSrv(ctx *genctx) error {
 	md := ctx.markdown(mainMarkdown).
 		H1(ctx.spec.Name()).
 		P(ctx.spec.Description()).
+		H2("Index").
+		TOC().
 		H2("Architecture")
 
 	md.Println("The server is organized after the domain driven design principles.")
@@ -58,6 +61,7 @@ func generateLayers(ctx *genctx) error {
 				corePath := filepath.Join(bcPath, pkgNameCore)
 				ctx.newFile(corePath, "doc", "").SetPackageDoc(l.Description())
 
+				var uml []plantuml.Renderable
 				api := ctx.newFile(corePath, "api", "")
 				for _, structOrInterface := range l.API() {
 					switch t := structOrInterface.(type) {
@@ -67,6 +71,7 @@ func generateLayers(ctx *genctx) error {
 							return fmt.Errorf("core: %w", err)
 						}
 						api.AddTypes(strct)
+						uml = append(uml, generateUML(strct))
 						dataTypes++
 					case *ddd.InterfaceSpec:
 						iface, err := generateInterface(rslv, rUniverse|rCore, t)
@@ -74,6 +79,7 @@ func generateLayers(ctx *genctx) error {
 							return fmt.Errorf("core: %w", err)
 						}
 						api.AddTypes(iface)
+						uml = append(uml, generateUML(iface))
 						ifaceTypes++
 					default:
 						panic("not yet implemented: " + reflect.TypeOf(t).String())
@@ -105,18 +111,45 @@ func generateLayers(ctx *genctx) error {
 					Printf("The core layer or API layer of the domain consists of %d data types,\n", dataTypes).
 					Printf("%d service or SPI interfaces and %d actual service implementations.\n\n", ifaceTypes, factoryFuncs)
 
+				// returned types from factories are API types, everything else is SPI
+				apiIfaceFactory := make(map[string]string)
+				for _, funcOrStruct := range l.Factories() {
+					if fun, ok := funcOrStruct.(*ddd.FuncSpec); ok {
+						for _, spec := range fun.Out() {
+							apiIfaceFactory[string(spec.TypeName())] = ""
+						}
+					}
+				}
+
 				for _, structOrInterface := range l.API() {
 					md.H5("Type *" + structOrInterface.Name() + "*")
-					md.P(structOrInterface.Comment())
+					switch structOrInterface.(type) {
+					case *ddd.StructSpec:
+						md.P("The data class *" + structOrInterface.Name() + "* " + trimComment(structOrInterface.Comment()))
+					case *ddd.InterfaceSpec:
+						_, ok := apiIfaceFactory[structOrInterface.Name()]
+						if ok {
+							md.P("The API interface *" + structOrInterface.Name() + "* " + trimComment(structOrInterface.Comment()))
+						} else {
+							md.P("The SPI interface *" + structOrInterface.Name() + "* " + trimComment(structOrInterface.Comment()))
+						}
+					}
+
 				}
 
 				for _, funcOrStruct := range l.Factories() {
 					if fun, ok := funcOrStruct.(*ddd.FuncSpec); ok {
 						md.H5("Factory *" + fun.Name() + "*")
-						md.P(fun.Comment())
+						md.P("The API factory method *" + fun.Name() + "* " + trimComment(fun.Comment()))
 					}
-
 				}
+
+				md.H4("UML")
+				diagram := md.UML(bc.Name() + " core API")
+				for _, renderable := range uml {
+					diagram.Add(renderable)
+				}
+
 			default:
 				panic("not yet implemented: " + reflect.TypeOf(l).String())
 			}
@@ -126,6 +159,47 @@ func generateLayers(ctx *genctx) error {
 	}
 
 	return nil
+}
+
+func generateUML(t *src.TypeBuilder) *plantuml.Class {
+	class := plantuml.NewClass(t.Name())
+	for _, field := range t.Fields() {
+		class.AddAttrs(plantuml.Attr{
+			Visibility: plantuml.Public,
+			Abstract:   false,
+			Static:     false,
+			Name:       field.Name(),
+			Type:       umlifyDeclName(field.Type()),
+		})
+	}
+
+	for _, fun := range t.Methods() {
+		pTmp := ""
+		for i, p := range fun.Params() {
+			pTmp += p.Name() + " " + umlifyDeclName(p.Decl())
+			if i < len(fun.Params())-1 {
+				pTmp += ","
+			}
+		}
+
+		rTmp := ""
+		for i, p := range fun.Results() {
+			rTmp += p.Name() + " " + umlifyDeclName(p.Decl())
+			if i < len(fun.Params())-1 {
+				rTmp += ","
+			}
+		}
+
+		class.AddAttrs(plantuml.Attr{
+			Visibility: plantuml.Public,
+			Abstract:   true,
+			Static:     false,
+			Name:       fun.Name() + "("+pTmp+")",
+			Type:       "("+rTmp+")",
+		})
+	}
+
+	return class
 }
 
 func generateFactoryFunc(rslv *resolver, scopes resolverScope, fun *ddd.FuncSpec) (*src.FuncBuilder, error) {

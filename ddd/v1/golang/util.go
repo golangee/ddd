@@ -69,6 +69,11 @@ func findMyFiles(rootDir string) ([]string, error) {
 			return filepath.SkipDir
 		}
 
+		if strings.HasSuffix(info.Name(), ".gen.svg") {
+			paths = append(paths, path)
+			return nil
+		}
+
 		if !strings.HasSuffix(info.Name(), ".go") {
 			return nil
 		}
@@ -112,6 +117,15 @@ func commentifyDeclName(dec *src.TypeDecl) string {
 	tmp := dec.Qualifier().Name()
 	for _, decl := range dec.Params() {
 		tmp += commentifyDeclName(decl)
+	}
+	return tmp
+}
+
+// umlifyDeclName makes some readable name of it, without package qualifier etc.
+func umlifyDeclName(dec *src.TypeDecl) string {
+	tmp := string(dec.Qualifier())
+	for _, decl := range dec.Params() {
+		tmp += umlifyDeclName(decl)
 	}
 	return tmp
 }

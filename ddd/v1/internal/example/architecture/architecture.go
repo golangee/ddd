@@ -61,7 +61,7 @@ func main() {
 								Var("repo", "BookRepository", "... is the repo implementation to use."),
 							),
 							Out(
-								Return("BookRepository", "...is a package private instance."),
+								Return("SearchService", "...is a package private instance."),
 							),
 						),
 					),

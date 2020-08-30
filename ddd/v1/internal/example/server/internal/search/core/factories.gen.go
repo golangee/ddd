@@ -14,8 +14,8 @@ type Opts struct {
 //
 // The parameter 'repo' is the repo implementation to use.
 //
-// The result 'BookRepository' is a package private instance.
-func NewSearchService(opts Opts, repo BookRepository) BookRepository {
+// The result 'SearchService' is a package private instance.
+func NewSearchService(opts Opts, repo BookRepository) SearchService {
 	// this package private function is implemented by the developer
 	return newSearchService(opts, repo)
 }

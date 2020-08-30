@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="144.7917px" preserveAspectRatio="none" style="width:612px;height:144px;" version="1.1" viewBox="0 0 612 144" width="612.5px" zoomAndPan="magnify"><defs><linearGradient id="gldavdt4p29in0" x1="50%" x2="50%" y1="0%" y2="100%"><stop offset="0%" stop-color="#59B6EC"/><stop offset="100%" stop-color="#2FA4E7"/></linearGradient><linearGradient id="gldavdt4p29in1" x1="50%" x2="50%" y1="0%" y2="100%"><stop offset="0%" stop-color="#2FA4E7"/><stop offset="100%" stop-color="#2683B9"/></linearGradient></defs><g><!--MD5=[84e3a5e42879fb3231104d3c8e592439]
+class Book--><rect fill="url(#gldavdt4p29in0)" height="125.7187" id="Book" rx="4.1667" ry="4.1667" style="stroke: #2FA4E7; stroke-width: 1.0416666666666667;" width="305.2083" x="6.25" y="8.3333"/><rect fill="url(#gldavdt4p29in1)" height="36.025" rx="4.1667" ry="4.1667" style="stroke: url(#gldavdt4p29in1); stroke-width: 1.0416666666666667;" width="305.2083" x="6.25" y="8.3333"/><rect fill="url(#gldavdt4p29in1)" height="4.1667" style="stroke: url(#gldavdt4p29in1); stroke-width: 1.0416666666666667;" width="305.2083" x="6.25" y="40.1917"/><rect fill="none" height="125.7187" id="Book" rx="4.1667" ry="4.1667" style="stroke: #2FA4E7; stroke-width: 1.0416666666666667;" width="305.2083" x="6.25" y="8.3333"/><ellipse cx="134.375" cy="26.3458" fill="#EDF0F2" rx="10.4167" ry="10.4167" style="stroke: #BABDBF; stroke-width: 1.0416666666666667;"/><path d="M136.2854,30.7709 Q135.8582,30.9906 135.3882,31.1005 Q134.9182,31.2103 134.3994,31.2103 Q132.5562,31.2103 131.5857,29.9957 Q130.6152,28.7811 130.6152,26.4862 Q130.6152,24.1852 131.5857,22.9706 Q132.5562,21.756 134.3994,21.756 Q134.9182,21.756 135.3943,21.8658 Q135.8704,21.9757 136.2854,22.1954 L136.2854,24.1974 Q135.8215,23.7701 135.3851,23.5718 Q134.9487,23.3734 134.4849,23.3734 Q133.4961,23.3734 132.9926,24.1577 Q132.489,24.942 132.489,26.4862 Q132.489,28.0243 132.9926,28.8086 Q133.4961,29.5929 134.4849,29.5929 Q134.9487,29.5929 135.3851,29.3945 Q135.8215,29.1962 136.2854,28.7689 Z "/><text fill="#FFFFFF" font-family="Verdana" font-size="12.5" lengthAdjust="spacingAndGlyphs" textLength="30.2083" x="159.375" y="31.3171">Book</text><line style="stroke: #2FA4E7; stroke-width: 1.0416666666666667;" x1="7.2917" x2="310.4167" y1="44.3583" y2="44.3583"/><ellipse cx="17.7083" cy="55.8167" fill="none" rx="3.125" ry="3.125" style="stroke: #038048; stroke-width: 1.0416666666666667;"/><text fill="#F8F9FA" font-family="Verdana" font-size="11.4583" lengthAdjust="spacingAndGlyphs" textLength="216.6667" x="31.25" y="65.2532">ID : github.com/golangee/uuid.UUID</text><ellipse cx="17.7083" cy="80.159" fill="none" rx="3.125" ry="3.125" style="stroke: #038048; stroke-width: 1.0416666666666667;"/><text fill="#F8F9FA" font-family="Verdana" font-size="11.4583" lengthAdjust="spacingAndGlyphs" textLength="72.9167" x="31.25" y="89.5955">ISBN : int64</text><ellipse cx="17.7083" cy="104.5013" fill="none" rx="3.125" ry="3.125" style="stroke: #038048; stroke-width: 1.0416666666666667;"/><text fill="#F8F9FA" font-family="Verdana" font-size="11.4583" lengthAdjust="spacingAndGlyphs" textLength="268.75" x="31.25" y="113.9379">LoanedBy : *github.com/golangee/uuid.UUID</text><line style="stroke: #2FA4E7; stroke-width: 1.0416666666666667;" x1="7.2917" x2="310.4167" y1="125.7187" y2="125.7187"/><!--MD5=[3fd616f346a44cd59a91eb10b19e157c]
+class User--><rect fill="url(#gldavdt4p29in0)" height="77.034" id="User" rx="4.1667" ry="4.1667" style="stroke: #2FA4E7; stroke-width: 1.0416666666666667;" width="253.125" x="347.9167" y="32.8125"/><rect fill="url(#gldavdt4p29in1)" height="36.025" rx="4.1667" ry="4.1667" style="stroke: url(#gldavdt4p29in1); stroke-width: 1.0416666666666667;" width="253.125" x="347.9167" y="32.8125"/><rect fill="url(#gldavdt4p29in1)" height="4.1667" style="stroke: url(#gldavdt4p29in1); stroke-width: 1.0416666666666667;" width="253.125" x="347.9167" y="64.6708"/><rect fill="none" height="77.034" id="User" rx="4.1667" ry="4.1667" style="stroke: #2FA4E7; stroke-width: 1.0416666666666667;" width="253.125" x="347.9167" y="32.8125"/><ellipse cx="451.0417" cy="50.825" fill="#EDF0F2" rx="10.4167" ry="10.4167" style="stroke: #BABDBF; stroke-width: 1.0416666666666667;"/><path d="M452.9521,55.25 Q452.5248,55.4698 452.0549,55.5796 Q451.5849,55.6895 451.0661,55.6895 Q449.2228,55.6895 448.2524,54.4749 Q447.2819,53.2603 447.2819,50.9654 Q447.2819,48.6643 448.2524,47.4497 Q449.2228,46.2351 451.0661,46.2351 Q451.5849,46.2351 452.061,46.345 Q452.537,46.4549 452.9521,46.6746 L452.9521,48.6766 Q452.4882,48.2493 452.0518,48.0509 Q451.6154,47.8526 451.1515,47.8526 Q450.1628,47.8526 449.6592,48.6369 Q449.1557,49.4212 449.1557,50.9654 Q449.1557,52.5035 449.6592,53.2878 Q450.1628,54.0721 451.1515,54.0721 Q451.6154,54.0721 452.0518,53.8737 Q452.4882,53.6753 452.9521,53.2481 Z "/><text fill="#FFFFFF" font-family="Verdana" font-size="12.5" lengthAdjust="spacingAndGlyphs" textLength="28.125" x="476.0417" y="55.7963">User</text><line style="stroke: #2FA4E7; stroke-width: 1.0416666666666667;" x1="348.9583" x2="600" y1="68.8375" y2="68.8375"/><ellipse cx="359.375" cy="80.2958" fill="none" rx="3.125" ry="3.125" style="stroke: #038048; stroke-width: 1.0416666666666667;"/><text fill="#F8F9FA" font-family="Verdana" font-size="11.4583" lengthAdjust="spacingAndGlyphs" textLength="216.6667" x="372.9167" y="89.7324">ID : github.com/golangee/uuid.UUID</text><line style="stroke: #2FA4E7; stroke-width: 1.0416666666666667;" x1="348.9583" x2="600" y1="101.5132" y2="101.5132"/><!--MD5=[d2d40d69c7c52c98e7454ba2aca91ef5]
+@startuml
+
+
+
+skinparam backgroundColor transparent
+
+
+
+
+
+
+
+skinparam defaultFontName        "Verdana"
+skinparam defaultFontSize        12
+skinparam dpi                    100
+skinparam shadowing              false
+skinparam roundcorner            8
+skinparam ParticipantPadding     40
+skinparam BoxPadding             40
+skinparam Padding                5
+skinparam ArrowColor             #868E96
+skinparam stereotype {
+    CBackgroundColor #EDF0F2
+    CBorderColor #BABDBF
+    ABackgroundColor #8FB961
+    ABorderColor #5C862E
+    IBackgroundColor #D2494E
+    IBorderColor #9F161B
+    EBackgroundColor #E47833
+    EBorderColor #B14500
+    NBackgroundColor #35638F
+    NBorderColor #02305C
+}
+skinparam title {
+	FontColor	                 #2FA4E7
+	BorderColor	                 #BABDBF
+	FontSize	    	         20
+	BorderRoundCorner            8
+	BorderThickness 	         1
+	BackgroundColor              #EDF0F2-#E9ECEF
+}
+
+
+skinparam legend {
+	BackgroundColor #E9ECEF
+	BorderColor #BABDBF
+	FontColor #343A40
+}
+
+
+skinparam activity {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	BarColor #73A839
+	StartColor #033C73
+	EndColor #033C73
+	DiamondBackgroundColor #FFF-#EDF0F2
+  	DiamondBorderColor #BABDBF
+	DiamondFontColor #343A40
+}
+
+
+skinparam participant {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	ParticipantBorderThickness 2
+}
+
+
+skinparam actor {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam arrow {
+	Thickness 3
+	Color #2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam sequence {
+	BorderColor #2FA4E7
+	TitleFontColor #2FA4E7
+	BackgroundColor transparent
+	StartColor #2FA4E7
+	EndColor #2FA4E7
+	BoxBackgroundColor #F8F9FA
+	BoxBorderColor #868E96
+	BoxFontColor #343A40
+	LifeLineBorderColor #BABDBF
+	LifeLineBorderThickness 2
+	LifeLineBackgroundColor #EDF0F2
+	GroupBorderColor #868E96
+	GroupFontColor #343A40
+	GroupHeaderFontColor #033C73
+	DividerBackgroundColor #FFF-#F8F9FA
+    DividerBorderColor #868E96
+    DividerBorderThickness 2
+    DividerFontColor #343A40
+	ReferenceBackgroundColor transparent
+	ReferenceBorderColor #868E96
+	ReferenceFontColor #343A40
+	ReferenceHeaderFontColor #033C73
+}
+
+
+skinparam partition {
+	BorderColor #2FA4E7
+	FontColor #2FA4E7
+	BackgroundColor transparent
+}
+
+
+skinparam collections {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+}
+
+
+skinparam control {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam entity {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam boundary {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam agent {
+	BackgroundColor #orange
+	BorderColor #999999
+	FontColor #333333
+}
+
+
+skinparam note {
+	BorderThickness 1
+	BackgroundColor #35638F-#033C73
+	BorderColor #033C73
+	FontColor #FFF
+}
+
+
+skinparam artifact {
+	BackgroundColor #FFF-#F8F9FA
+	BorderColor #BABDBF
+	FontColor #343A40
+}
+
+
+skinparam component {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+}
+
+
+skinparam interface {
+	BackgroundColor  #D2494E
+	BorderColor  #C71C22
+	FontColor #343A40
+}
+
+
+skinparam storage {
+	BackgroundColor #E47833-#DD5600
+  	BorderColor #DD5600
+	FontColor #FFF
+}
+
+
+skinparam node {
+	BackgroundColor #EDF0F2-#E9ECEF
+	BorderColor #E9ECEF
+	FontColor #343A40
+}
+
+
+skinparam cloud {
+	BackgroundColor #F2FCFE-#eeeeee
+	BorderColor #F2FCFE
+	FontColor #2FA4E7
+}
+
+
+skinparam database {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam class {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	HeaderBackgroundColor #2FA4E7-#2683B9
+	StereotypeFontColor #343A40
+	BorderThickness 1
+	AttributeFontColor #F8F9FA
+	AttributeFontSize 11
+}
+
+
+skinparam object {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	StereotypeFontColor #343A40
+	BorderThickness 1
+	AttributeFontColor #343A40
+	AttributeFontSize 11
+}
+
+
+skinparam usecase {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	BorderThickness 2
+	StereotypeFontColor #2FA4E7
+}
+
+
+skinparam rectangle {
+	FontColor #2FA4E7
+	BorderColor #59B6EC
+	BackgroundColor transparent
+	BorderThickness 2
+	StereotypeFontColor #2FA4E7
+}
+
+
+skinparam package {
+	FontColor #2FA4E7
+	BorderColor #59B6EC
+	BackgroundColor transparent
+	BorderThickness 2
+}
+
+
+skinparam folder {
+	BackgroundColor #FFF-#EDF0F2
+  	BorderColor #DD5600
+	FontColor #DD5600
+	BorderThickness 2
+}
+
+
+skinparam frame {
+	BackgroundColor #FFF-#EDF0F2
+  	BorderColor #033C73
+	FontColor #033C73
+	BorderThickness 2
+}
+
+
+skinparam state {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	StartColor #033C73
+	EndColor #033C73
+	AttributeFontColor #343A40
+	AttributeFontSize 11
+}
+
+
+skinparam queue {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+}
+
+
+skinparam card {
+	BackgroundColor #35638F-#033C73
+	BorderColor #033C73
+	FontColor #FFF
+}
+
+
+skinparam file {
+	BackgroundColor #EDF0F2-#E9ECEF
+	BorderColor #033C73
+	FontColor #868E96
+
+}
+
+
+class "Book" {
++ID : github.com/golangee/uuid.UUID
++ISBN : int64
++LoanedBy : *github.com/golangee/uuid.UUID
+}
+class "User" {
++ID : github.com/golangee/uuid.UUID
+}
+@enduml
+
+PlantUML version 1.2020.07(Sun Apr 19 13:42:40 CEST 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 13.0.2+8
+Operating System: Mac OS X
+Default Encoding: UTF-8
+Language: de
+Country: DE
+--></g></svg>

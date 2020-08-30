@@ -1,5 +1,9 @@
 github.com/golangee/architecture v0.0.0-20200827191848-9da6d43d38bc h1:J2JQa6QIPLtM7dIlZ2eC3M99eHyUx5fsP7WQn0/AMR4=
 github.com/golangee/architecture v0.0.0-20200827191848-9da6d43d38bc/go.mod h1:rsPhWEXERoVeWBlHai4J7V4mDQmJWb75wYHfhTXSLPs=
+github.com/golangee/plantuml v0.0.0-20200812161626-0826f0387e19 h1:4V/kczO94O/jYP+W6KuyvSL2oZaUaiYrN7qg+kusFck=
+github.com/golangee/plantuml v0.0.0-20200812161626-0826f0387e19/go.mod h1:A7wMa5SH6vmm2rZTTu+wNl2sD7OMwaoA5OO2ZsBCqm0=
+github.com/golangee/plantuml v0.0.0-20200830104319-e82fe22f07ca h1:6utnbcxQeDkhCHkAQQhY7HUau9xPk9AOFB7SsdtzLyk=
+github.com/golangee/plantuml v0.0.0-20200830104319-e82fe22f07ca/go.mod h1:A7wMa5SH6vmm2rZTTu+wNl2sD7OMwaoA5OO2ZsBCqm0=
 github.com/golangee/reflectplus v0.0.0-20200828070359-e00d658fcc60 h1:0x5kntWeoUSQ0hur4Gy1RtYtihCUBKbApTZ/YiyzUVs=
 github.com/golangee/reflectplus v0.0.0-20200828070359-e00d658fcc60/go.mod h1:Ok5QeKEh+wsOHhMdJ0exvrUlg60SqOZ1BJ0XvXQQsBI=
 github.com/golangee/src v0.0.0-20200828065743-5163d60995cf/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
