@@ -4,21 +4,21 @@ This is the central service of the book library of capital city, for searching a
 
 ## Index
 
-* [BookLibrary](booklibrary)
-  * [Index](index)
-  * [Architecture](architecture)
-    * [The context *search*](the-context-search)
-      * [The domains core layer](the-domains-core-layer)
-        * [Type *Book*](type-book)
-        * [Type *BookRepository*](type-bookrepository)
-        * [Type *SearchService*](type-searchservice)
-        * [Factory *NewSearchService*](factory-newsearchservice)
-      * [UML](uml)
-    * [The context *loan*](the-context-loan)
-      * [The domains core layer](the-domains-core-layer)
-        * [Type *Book*](type-book)
-        * [Type *User*](type-user)
-      * [UML](uml)
+* [BookLibrary](#booklibrary)
+  * [Index](#index)
+  * [Architecture](#architecture)
+    * [The context *search*](#the-context-search)
+      * [The domains core layer](#the-domains-core-layer)
+        * [Type *Book*](#type-book)
+        * [Type *BookRepository*](#type-bookrepository)
+        * [Type *SearchService*](#type-searchservice)
+        * [Factory *NewSearchService*](#factory-newsearchservice)
+      * [UML](#uml)
+    * [The context *loan*](#the-context-loan)
+      * [The domains core layer](#the-domains-core-layer)
+        * [Type *Book*](#type-book)
+        * [Type *User*](#type-user)
+      * [UML](#uml)
 
 
 ## Architecture

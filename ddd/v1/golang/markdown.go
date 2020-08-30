@@ -56,7 +56,7 @@ func (m *Markdown) Header(level int, h string) *Markdown {
 		m.toc.WriteString(" ")
 	}
 	m.toc.WriteString("* ")
-	m.toc.WriteString(fmt.Sprintf("[%s](%s)\n", h, m.escapeAnchorTitle(h)))
+	m.toc.WriteString(fmt.Sprintf("[%s](#%s)\n", h, m.escapeAnchorTitle(h)))
 	return m
 }
 
