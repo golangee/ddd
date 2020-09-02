@@ -8,13 +8,13 @@ import (
 	uuid "github.com/golangee/uuid"
 )
 
-// BookSearch provides all user stories around involved in searching books.
+// BookSearch provides all user stories involved in searching books.
 //
 // The following user stories are covered:
 //
 //   * As a searcher, I want to search for keywords, so that I must not know the title or author.
 //   * As a searcher, I want to have an autocomplete so that I get support while typing my keywords.
-//   * As a search I want to see book details, because I need have to proof the relevance of the result.
+//   * As a searcher, I want to see book details, because I need to proof the relevance of the result.
 type BookSearch interface {
 	// FindByTags searches for tags only.
 	//

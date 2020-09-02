@@ -68,8 +68,14 @@ The following use case is defined.
 
 ##### BookSearch
 
-The use case *BookSearch* provides all user stories around involved in searching books.
+The use case *BookSearch* provides all user stories involved in searching books.
+It contains 3 user stories.
 
+|As a/an|I want to...|So that...|
+|---|---|---|
+|searcher|search for keywords|I must not know the title or author|
+|searcher|have an autocomplete|I get support while typing my keywords|
+|searcher|see book details|I need to proof the relevance of the result|
 ### The context *loan*
 
 This context is about everything around loaning or renting a book.
@@ -99,4 +105,9 @@ The following use case is defined.
 ##### BookLoaning
 
 The use case *BookLoaning* provides all stories around loaning books.
+It contains 2 user stories.
 
+|As a/an|I want to...|So that...|
+|---|---|---|
+|book loaner|scan the books barcode|I can take it with me|
+|library staff|check a customers library card|I can ensure that only actual customers can enter and loan books|

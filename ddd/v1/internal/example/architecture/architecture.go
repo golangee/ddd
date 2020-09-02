@@ -71,7 +71,7 @@ func main() {
 				// the use case layer
 				UseCases(
 					UseCase("BookSearch",
-						"...provides all user stories around involved in searching books.",
+						"...provides all user stories involved in searching books.",
 						Story("As a searcher, I want to search for keywords, so that I must not know the title or author.",
 							Func("FindByTags", "...searches for tags only.",
 								In(
@@ -102,7 +102,7 @@ func main() {
 								Field("Synonyms", Slice(String), "...alternative search suggestions."),
 							),
 						),
-						Story("As a search I want to see book details, because I need have to proof the relevance of the result.",
+						Story("As a searcher, I want to see book details, because I need to proof the relevance of the result.",
 							Func("Details", "...returns the details of a book.",
 								In(
 									WithContext(),

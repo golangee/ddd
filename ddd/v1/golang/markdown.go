@@ -117,6 +117,22 @@ func (m *Markdown) H6(h string) *Markdown {
 	return m.Header(6, h)
 }
 
+func (m *Markdown) TableRow(values ...string) *Markdown {
+	m.Print("|" + strings.Join(values, "|") + "|")
+	m.Print("\n")
+	return m
+}
+
+func (m *Markdown) TableHeader(values ...string) *Markdown {
+	m.TableRow(values...)
+	m.Print("|")
+	for range values {
+		m.Print("---|")
+	}
+	m.Print("\n")
+	return m
+}
+
 func (m *Markdown) String() string {
 	buf := m.sb.String()
 	return strings.ReplaceAll(buf, tocMarker, m.toc.String())

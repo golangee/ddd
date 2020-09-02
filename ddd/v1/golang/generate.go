@@ -3,6 +3,7 @@ package golang
 import (
 	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
+	"github.com/golangee/architecture/ddd/v1/validation"
 	"github.com/golangee/plantuml"
 	"github.com/golangee/src"
 	"path/filepath"
@@ -166,14 +167,24 @@ func generateLayers(ctx *genctx) error {
 
 				for _, useCase := range l.UseCases() {
 					md.H5(useCase.Name())
-					md.P("The use case *" + useCase.Name() + "* " + trimComment(useCase.Comment()))
+					md.P("The use case *" + useCase.Name() + "* " + trimComment(useCase.Comment()) + "\n" +
+						"It contains " + strconv.Itoa(len(useCase.Stories())) + " user stories.")
 
 					api := ctx.newFile(usecasePath, strings.ToLower(useCase.Name()), "")
 					uFace := src.NewInterface(useCase.Name())
 					myDoc := useCase.Comment()
 					myDoc += "\n\nThe following user stories are covered:\n\n"
 					api.AddTypes(uFace)
+
+					md.TableHeader("As a/an", "I want to...", "So that...")
 					for _, story := range useCase.Stories() {
+						storyModel, err := validation.CheckUserStory(story.Story())
+						if err != nil {
+							panic("illegal state: must validate before")
+						}
+
+						md.TableRow(storyModel.Role, storyModel.Goal, storyModel.Reason)
+
 						fun, err := generateFactoryFunc(rslv, rUniverse|rCore|rUsecase, story.Func())
 						if err != nil {
 							return fmt.Errorf("%s: %w", layer.Name(), err)

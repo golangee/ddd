@@ -16,9 +16,9 @@ func Test_checkUserStory(t *testing.T) {
 		{
 			"As a moderator I want to create a new sprint by entering a name and an optional comment so that I can start planning the stories.",
 			userStory{
-				role:   "moderator",
-				goal:   "create a new sprint by entering a name and an optional comment",
-				reason: "I can start planning the stories",
+				Role:   "moderator",
+				Goal:   "create a new sprint by entering a name and an optional comment",
+				Reason: "I can start planning the stories",
 			},
 			false,
 		},
@@ -53,7 +53,7 @@ func Test_checkUserStory(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			got, err := checkUserStory(tt.story)
+			got, err := CheckUserStory(tt.story)
 			if err != nil {
 				fmt.Println(err.Error())
 			}

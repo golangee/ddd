@@ -61,7 +61,7 @@ func Validate(spec *ddd.AppSpec) error {
 		}
 
 		if obj, ok := obj.(withStory); ok {
-			if _, err := checkUserStory(obj.Story()); err != nil {
+			if _, err := CheckUserStory(obj.Story()); err != nil {
 				return buildErr("story", obj.Story(), err.Error(), obj)
 			}
 		}
@@ -151,14 +151,14 @@ func checkComment(d withComment) error {
 }
 
 type userStory struct {
-	role   string
-	goal   string
-	reason string
+	Role   string
+	Goal   string
+	Reason string
 }
 
 // checkUserStory validates the first sentence to be in the form of Mike Cohns user story format as shown at
 // https://www.mountaingoatsoftware.com/agile/user-stories
-func checkUserStory(story string) (userStory, error) {
+func CheckUserStory(story string) (userStory, error) {
 	usrStory := userStory{}
 	storyStart := []string{"As a", "As an"}
 	goalStart := []string{"I want to", "I need to", "I must to", "I have to"}
@@ -201,36 +201,50 @@ func checkUserStory(story string) (userStory, error) {
 			return "", fmt.Errorf("phrases likes '%s' must come after phrases like '%s'", right[0], left[0])
 		}
 
-		return strings.TrimSpace(src[leftIdx+lenLeft : rightIdx]), nil
+		return trimComma(src[leftIdx+lenLeft : rightIdx]), nil
 	}
 
 	var err error
-	usrStory.role, err = subString(firstSentence, storyStart, goalStart)
+	usrStory.Role, err = subString(firstSentence, storyStart, goalStart)
 	if err != nil {
 		return usrStory, err
 	}
 
-	if usrStory.role == "" {
+	if usrStory.Role == "" {
 		return usrStory, fmt.Errorf("role cannot be empty")
 	}
 
-	usrStory.goal, err = subString(firstSentence, goalStart, reasonStart)
+	usrStory.Goal, err = subString(firstSentence, goalStart, reasonStart)
 	if err != nil {
 		return usrStory, err
 	}
 
-	if usrStory.goal == "" {
+	if usrStory.Goal == "" {
 		return usrStory, fmt.Errorf("goal cannot be empty")
 	}
 
-	usrStory.reason, err = subString(firstSentence, reasonStart, storyEnd)
+	usrStory.Reason, err = subString(firstSentence, reasonStart, storyEnd)
 	if err != nil {
 		return usrStory, err
 	}
 
-	if usrStory.reason == "" {
+	if usrStory.Reason == "" {
 		return usrStory, fmt.Errorf("reason cannot be empty")
 	}
 
 	return usrStory, nil
+}
+
+func trimComma(str string) string {
+	str = strings.TrimSpace(str)
+
+	if strings.HasPrefix(str, ",") {
+		return strings.TrimSpace(str[1:])
+	}
+
+	if strings.HasSuffix(str, ",") {
+		return strings.TrimSpace(str[:len(str)-1])
+	}
+
+	return strings.TrimSpace(str)
 }
