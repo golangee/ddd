@@ -14,11 +14,15 @@ This is the central service of the book library of capital city, for searching a
         * [Type *SearchService*](#type-searchservice)
         * [Factory *NewSearchService*](#factory-newsearchservice)
       * [UML](#uml)
+      * [The use case or application layer](#the-use-case-or-application-layer)
+        * [BookSearch](#booksearch)
     * [The context *loan*](#the-context-loan)
       * [The domains core layer](#the-domains-core-layer)
         * [Type *Book*](#type-book)
         * [Type *User*](#type-user)
       * [UML](#uml)
+      * [The use case or application layer](#the-use-case-or-application-layer)
+        * [BookLoaning](#bookloaning)
 
 
 ## Architecture
@@ -58,6 +62,14 @@ The API factory method *NewSearchService* is a factory to create a new SearchSer
 
 ![search core API](uml-search-core-api.gen.svg?raw=true)
 
+#### The use case or application layer
+
+The following use case is defined.
+
+##### BookSearch
+
+The use case *BookSearch* provides all user stories around involved in searching books.
+
 ### The context *loan*
 
 This context is about everything around loaning or renting a book.
@@ -79,4 +91,12 @@ The data class *User* is a library customer.
 #### UML
 
 ![loan core API](uml-loan-core-api.gen.svg?raw=true)
+
+#### The use case or application layer
+
+The following use case is defined.
+
+##### BookLoaning
+
+The use case *BookLoaning* provides all stories around loaning books.
 

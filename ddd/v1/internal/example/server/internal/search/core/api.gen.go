@@ -24,11 +24,11 @@ type Book struct {
 type BookRepository interface {
 	// ReadAll returns all books.
 	//
-	// The parameter 'ctx' provides the timeout handling.
+	// The parameter 'ctx' is the context to control timeouts and cancellations.
 	//
 	// The result '[]Book' is the list of books.
 	//
-	// The result 'error' returns an implementation specific failure.
+	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
 	ReadAll(ctx context.Context) ([]Book, error)
 }
 
@@ -36,12 +36,12 @@ type BookRepository interface {
 type SearchService interface {
 	// Search inspects each book for the key words.
 	//
-	// The parameter 'ctx' provides the timeout handling.
+	// The parameter 'ctx' is the context to control timeouts and cancellations.
 	//
 	// The parameter 'query' contains the query to search for.
 	//
 	// The result '[]Book' is the list of found books.
 	//
-	// The result 'error' returns an implementation specific failure.
+	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
 	Search(ctx context.Context, query string) ([]Book, error)
 }

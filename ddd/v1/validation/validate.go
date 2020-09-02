@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
 	"strings"
 )
@@ -33,6 +34,11 @@ type withComment interface {
 	Comment() string
 }
 
+type withStory interface {
+	Pos() ddd.Pos
+	Story() string
+}
+
 // Validate inspects the AppSpec and bails out, if something does not taste.
 func Validate(spec *ddd.AppSpec) error {
 	return spec.Walk(func(obj interface{}) error {
@@ -51,6 +57,12 @@ func Validate(spec *ddd.AppSpec) error {
 		if obj, ok := obj.(withComment); ok {
 			if err := checkComment(obj); err != nil {
 				return err
+			}
+		}
+
+		if obj, ok := obj.(withStory); ok {
+			if _, err := checkUserStory(obj.Story()); err != nil {
+				return buildErr("story", obj.Story(), err.Error(), obj)
 			}
 		}
 
@@ -136,4 +148,89 @@ func checkComment(d withComment) error {
 	}
 
 	return nil
+}
+
+type userStory struct {
+	role   string
+	goal   string
+	reason string
+}
+
+// checkUserStory validates the first sentence to be in the form of Mike Cohns user story format as shown at
+// https://www.mountaingoatsoftware.com/agile/user-stories
+func checkUserStory(story string) (userStory, error) {
+	usrStory := userStory{}
+	storyStart := []string{"As a", "As an"}
+	goalStart := []string{"I want to", "I need to", "I must to", "I have to"}
+	reasonStart := []string{"so that", "because"}
+	storyEnd := []string{"."}
+
+	sentenceIdx := strings.IndexByte(story, '.')
+	if sentenceIdx < 0 {
+		return usrStory, fmt.Errorf("story must end with a . (dot)")
+	}
+
+	firstSentence := story[:sentenceIdx+1]
+
+	subString := func(src string, left, right []string) (string, error) {
+		leftIdx := -1
+		lenLeft := -1
+		for _, s := range left {
+			lenLeft = len(s)
+			leftIdx = strings.Index(src, s)
+			if leftIdx >= 0 {
+				break
+			}
+		}
+		if leftIdx == -1 {
+			return "", fmt.Errorf("expected phrase like '%s' not found", left[0])
+		}
+
+		rightIdx := -1
+		for _, s := range right {
+			rightIdx = strings.Index(src, s)
+			if rightIdx >= 0 {
+				break
+			}
+		}
+		if rightIdx == -1 {
+			return "", fmt.Errorf("expected phrase like '%s' not found", right[0])
+		}
+
+		if leftIdx > rightIdx {
+			return "", fmt.Errorf("phrases likes '%s' must come after phrases like '%s'", right[0], left[0])
+		}
+
+		return strings.TrimSpace(src[leftIdx+lenLeft : rightIdx]), nil
+	}
+
+	var err error
+	usrStory.role, err = subString(firstSentence, storyStart, goalStart)
+	if err != nil {
+		return usrStory, err
+	}
+
+	if usrStory.role == "" {
+		return usrStory, fmt.Errorf("role cannot be empty")
+	}
+
+	usrStory.goal, err = subString(firstSentence, goalStart, reasonStart)
+	if err != nil {
+		return usrStory, err
+	}
+
+	if usrStory.goal == "" {
+		return usrStory, fmt.Errorf("goal cannot be empty")
+	}
+
+	usrStory.reason, err = subString(firstSentence, reasonStart, storyEnd)
+	if err != nil {
+		return usrStory, err
+	}
+
+	if usrStory.reason == "" {
+		return usrStory, fmt.Errorf("reason cannot be empty")
+	}
+
+	return usrStory, nil
 }

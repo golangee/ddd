@@ -15,6 +15,7 @@ type resolverScope uint8
 const (
 	rCore resolverScope = 1 << iota
 	rUniverse
+	rUsecase
 )
 
 func (r resolverScope) Has(flag resolverScope) bool {
@@ -40,6 +41,7 @@ type resolver struct {
 	layers   []typeLayer
 	universe []typeDef
 	core     typeLayer
+	usecase  typeLayer
 }
 
 type typeLayer struct {
@@ -51,6 +53,10 @@ type typeLayer struct {
 type typeDef struct {
 	typeName ddd.TypeName
 	typeDecl *src.TypeDecl
+}
+
+func (t typeDef) getDecl()*src.TypeDecl{
+	return t.typeDecl.Clone()
 }
 
 func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
@@ -69,6 +75,10 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 			{
 				typeName: ddd.Int64,
 				typeDecl: src.NewTypeDecl("int64"),
+			},
+			{
+				typeName: ddd.Float32,
+				typeDecl: src.NewTypeDecl("float32"),
 			},
 			{
 				typeName: ddd.Bool,
@@ -94,26 +104,26 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 				path:  layerPath,
 			}
 
-			for _, structOrInterface := range l.API() {
-				tDef := typeDef{
-					typeName: ddd.TypeName(structOrInterface.Name()),
-					typeDecl: src.NewTypeDecl(src.Qualifier(layerPath + "." + structOrInterface.Name())),
-				}
-				tlayer.typeDefs = append(tlayer.typeDefs, tDef)
-			}
-
-			for _, funcOrStruct := range l.Factories() {
-				if strct, ok := funcOrStruct.(*ddd.StructSpec); ok {
-					tDef := typeDef{
-						typeName: ddd.TypeName(strct.Name()),
-						typeDecl: src.NewTypeDecl(src.Qualifier(layerPath + "." + strct.Name())),
-					}
-					tlayer.typeDefs = append(tlayer.typeDefs, tDef)
-				}
-			}
-
+			appendStructOrInterfaces(&tlayer, l.API())
+			appendFuncOrStructs(&tlayer, l.Factories())
 			r.core = tlayer
 
+		case *ddd.UseCaseLayerSpec:
+			layerPath := modPath + "/internal/" + safename(ctx.Name()) + "/" + pkgNameUseCase
+			tlayer := typeLayer{
+				layer: layer,
+				path:  layerPath,
+			}
+
+			for _, useCase := range l.UseCases() {
+				for _, story := range useCase.Stories() {
+					appendFuncOrStructs(&tlayer, []ddd.FuncOrStruct{story.Func()})
+					for _, strct := range story.Structs() {
+						appendFuncOrStructs(&tlayer, []ddd.FuncOrStruct{strct})
+					}
+				}
+			}
+			r.usecase = tlayer
 		default:
 			panic("not yet implemented: " + reflect.TypeOf(l).String())
 		}
@@ -122,11 +132,32 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 	return r
 }
 
+func appendStructOrInterfaces(dst *typeLayer, structOrInterfaces []ddd.StructOrInterface) {
+	for _, structOrInterface := range structOrInterfaces {
+		tDef := typeDef{
+			typeName: ddd.TypeName(structOrInterface.Name()),
+			typeDecl: src.NewTypeDecl(src.Qualifier(dst.path + "." + structOrInterface.Name())),
+		}
+		dst.typeDefs = append(dst.typeDefs, tDef)
+	}
+}
+
+func appendFuncOrStructs(dst *typeLayer, funcOrStructs []ddd.FuncOrStruct) {
+	for _, funcOrStruct := range funcOrStructs {
+		if strct, ok := funcOrStruct.(*ddd.StructSpec); ok {
+			tDef := typeDef{
+				typeName: ddd.TypeName(strct.Name()),
+				typeDecl: src.NewTypeDecl(src.Qualifier(dst.path + "." + strct.Name())),
+			}
+			dst.typeDefs = append(dst.typeDefs, tDef)
+		}
+	}
+}
+
 // looksLikeFullQualifier returns true for strings like abc/xyz.Def
 func looksLikeFullQualifier(t ddd.TypeName) bool {
-	aSlash := strings.LastIndex(string(t), "/")
 	aDot := strings.LastIndex(string(t), ".")
-	quiteOk := aSlash > 0 && aDot > 0 && aDot > aSlash
+	quiteOk := aDot > 0
 	for _, r := range src.Qualifier(t).Name() {
 		return unicode.IsUpper(r) && quiteOk
 	}
@@ -144,7 +175,7 @@ func (r *resolver) resolveTypeName(scopes resolverScope, t ddd.TypeName) (*src.T
 	if scopes.Has(rCore) {
 		for _, def := range r.core.typeDefs {
 			if def.typeName == baseType {
-				return makeGeneric(t, def.typeDecl), nil
+				return makeGeneric(t, def.getDecl()), nil
 			}
 		}
 	}
@@ -152,7 +183,15 @@ func (r *resolver) resolveTypeName(scopes resolverScope, t ddd.TypeName) (*src.T
 	if scopes.Has(rUniverse) {
 		for _, def := range r.universe {
 			if def.typeName == baseType {
-				return makeGeneric(t, def.typeDecl), nil
+				return makeGeneric(t, def.getDecl()), nil
+			}
+		}
+	}
+
+	if scopes.Has(rUsecase) {
+		for _, def := range r.usecase.typeDefs {
+			if def.typeName == baseType {
+				return makeGeneric(t, def.getDecl()), nil
 			}
 		}
 	}

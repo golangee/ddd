@@ -4,7 +4,7 @@ package core
 
 // Opts is an option type for the factory.
 type Opts struct {
-	// Flag for something.
+	// Flag is for something.
 	Flag bool
 }
 

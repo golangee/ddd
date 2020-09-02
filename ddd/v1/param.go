@@ -34,11 +34,21 @@ func Var(name string, typeName TypeName, comment string) *ParamSpec {
 	}
 }
 
+// WithContext is a shortcut to Var("ctx","context.Context", "...is the context to control timeouts and cancellations.")
+func WithContext() *ParamSpec {
+	return Var("ctx", Ctx, "...is the context to control timeouts and cancellations.")
+}
+
 // Return is a factory for an unnamed and undocumented ParamSpec.
 func Return(typeName TypeName, comment string) *ParamSpec {
 	p := Var("", typeName, comment)
 	p.pos = capturePos("Return", 1)
 	return p
+}
+
+// Err is a shortcut for Return(Error, "...is returned to indicate a violation of pre- or invariant and represents an implementation specific failure.")
+func Err() *ParamSpec {
+	return Return(Error, "...indicates a violation of pre- or invariants and represents an implementation specific failure.")
 }
 
 // Name returns the name of parameter.

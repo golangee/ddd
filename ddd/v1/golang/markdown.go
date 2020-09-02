@@ -113,6 +113,10 @@ func (m *Markdown) H5(h string) *Markdown {
 	return m.Header(5, h)
 }
 
+func (m *Markdown) H6(h string) *Markdown {
+	return m.Header(6, h)
+}
+
 func (m *Markdown) String() string {
 	buf := m.sb.String()
 	return strings.ReplaceAll(buf, tocMarker, m.toc.String())

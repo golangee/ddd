@@ -7,11 +7,14 @@ import (
 	"github.com/golangee/src"
 	"path/filepath"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
 const (
-	pkgNameCore  = "core"
-	mainMarkdown = "README.md"
+	pkgNameCore    = "core"
+	pkgNameUseCase = "usecase"
+	mainMarkdown   = "README.md"
 )
 
 func generateCmdSrv(ctx *genctx) error {
@@ -150,6 +153,45 @@ func generateLayers(ctx *genctx) error {
 					diagram.Add(renderable)
 				}
 
+			case *ddd.UseCaseLayerSpec:
+				md.H4("The use case or application layer")
+				if len(l.UseCases()) == 1 {
+					md.P("The following use case is defined.")
+				} else {
+					md.P("The following " + strconv.Itoa(len(l.UseCases())) + " use cases have been identified.")
+				}
+
+				usecasePath := filepath.Join(bcPath, pkgNameUseCase)
+				ctx.newFile(usecasePath, "doc", "").SetPackageDoc(l.Description())
+
+				for _, useCase := range l.UseCases() {
+					md.H5(useCase.Name())
+					md.P("The use case *" + useCase.Name() + "* " + trimComment(useCase.Comment()))
+
+					api := ctx.newFile(usecasePath, strings.ToLower(useCase.Name()), "")
+					uFace := src.NewInterface(useCase.Name())
+					myDoc := useCase.Comment()
+					myDoc += "\n\nThe following user stories are covered:\n\n"
+					api.AddTypes(uFace)
+					for _, story := range useCase.Stories() {
+						fun, err := generateFactoryFunc(rslv, rUniverse|rCore|rUsecase, story.Func())
+						if err != nil {
+							return fmt.Errorf("%s: %w", layer.Name(), err)
+						}
+						uFace.AddMethods(fun)
+						myDoc += "  * " + story.Story() + "\n"
+
+						for _, strct := range story.Structs() {
+							s, err := generateStruct(rslv, rUniverse|rCore|rUsecase, strct)
+							if err != nil {
+								return fmt.Errorf("%s: %w", layer.Name(), err)
+							}
+							api.AddTypes(s)
+						}
+					}
+
+					uFace.SetDoc(myDoc)
+				}
 			default:
 				panic("not yet implemented: " + reflect.TypeOf(l).String())
 			}
@@ -194,8 +236,8 @@ func generateUML(t *src.TypeBuilder) *plantuml.Class {
 			Visibility: plantuml.Public,
 			Abstract:   true,
 			Static:     false,
-			Name:       fun.Name() + "("+pTmp+")",
-			Type:       "("+rTmp+")",
+			Name:       fun.Name() + "(" + pTmp + ")",
+			Type:       "(" + rTmp + ")",
 		})
 	}
 
