@@ -76,7 +76,11 @@ It contains 3 user stories.
 |searcher|search for keywords|I must not know the title or author|
 |searcher|have an autocomplete|I get support while typing my keywords|
 |searcher|see book details|I need to proof the relevance of the result|
+
+
 ![use case BookSearch](uml-use-case-booksearch.gen.svg?raw=true)
+
+
 
 ### The context *loan*
 
@@ -113,5 +117,9 @@ It contains 2 user stories.
 |---|---|---|
 |book loaner|scan the books barcode|I can take it with me|
 |library staff|check a customers library card|I can ensure that only actual customers can enter and loan books|
+
+
 ![use case BookLoaning](uml-use-case-bookloaning.gen.svg?raw=true)
+
+
 
