@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="236.4583px" preserveAspectRatio="none" style="width:484px;height:236px;" version="1.1" viewBox="0 0 484 236" width="484.375px" zoomAndPan="magnify"><defs><linearGradient id="gp9ltiytwld440" x1="50%" x2="50%" y1="0%" y2="100%"><stop offset="0%" stop-color="#59B6EC"/><stop offset="100%" stop-color="#2FA4E7"/></linearGradient></defs><g><!--MD5=[198e0798deb5fbe68c627b1faf6f780a]
+cluster book loaning--><rect fill="#FFFFFF" height="108.3333" rx="4.1667" ry="4.1667" style="stroke: #59B6EC; stroke-width: 2.0833333333333335;" width="450" x="22.9167" y="116.6667"/><text fill="#2FA4E7" font-family="Verdana" font-size="12.5" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="89.5833" x="203.125" y="136.5255">book loaning</text><ellipse cx="124.9823" cy="185.1006" fill="url(#gp9ltiytwld440)" rx="84.8781" ry="19.4756" style="stroke: #2FA4E7; stroke-width: 2.0833333333333335;"/><text fill="#FFFFFF" font-family="Verdana" font-size="12.5" lengthAdjust="spacingAndGlyphs" textLength="144.7917" x="52.5864" y="189.0506">scan the books barcode</text><ellipse cx="351.1128" cy="184.9101" fill="url(#gp9ltiytwld440)" rx="104.7587" ry="23.4517" style="stroke: #2FA4E7; stroke-width: 2.0833333333333335;"/><text fill="#FFFFFF" font-family="Verdana" font-size="12.5" lengthAdjust="spacingAndGlyphs" textLength="188.5417" x="256.842" y="188.8601">check a customers library card</text><!--MD5=[59cb9b78d166c3d64df73716af6f0090]
+entity ac5--><ellipse cx="125" cy="18.2292" fill="url(#gp9ltiytwld440)" rx="8.3333" ry="8.3333" style="stroke: #2FA4E7; stroke-width: 1.5625;"/><path d="M125,26.5625 L125,54.6875 M111.4583,34.8958 L138.5417,34.8958 M125,54.6875 L111.4583,70.3125 M125,54.6875 L138.5417,70.3125 " fill="none" style="stroke: #2FA4E7; stroke-width: 1.5625;"/><text fill="#343A40" font-family="Verdana" font-size="12.5" lengthAdjust="spacingAndGlyphs" textLength="71.875" x="89.0625" y="90.6921">book loaner</text><!--MD5=[0c42b6032dea3361a9bc0ba93cacc75d]
+entity ac6--><ellipse cx="351.0417" cy="18.2292" fill="url(#gp9ltiytwld440)" rx="8.3333" ry="8.3333" style="stroke: #2FA4E7; stroke-width: 1.5625;"/><path d="M351.0417,26.5625 L351.0417,54.6875 M337.5,34.8958 L364.5833,34.8958 M351.0417,54.6875 L337.5,70.3125 M351.0417,54.6875 L364.5833,70.3125 " fill="none" style="stroke: #2FA4E7; stroke-width: 1.5625;"/><text fill="#343A40" font-family="Verdana" font-size="12.5" lengthAdjust="spacingAndGlyphs" textLength="69.7917" x="316.1458" y="90.6921">library staff</text><!--MD5=[a259928717a6627365be5417507d1912]
+link ac5 to uc7--><path d="M125,99.1354 C125,119.5938 125,143.0417 125,160.0833 " fill="none" id="ac5-&gt;uc7" style="stroke: #2FA4E7; stroke-width: 3.125;"/><polygon fill="#2FA4E7" points="125,165.5938,129.1667,156.2188,125,160.3854,120.8333,156.2188,125,165.5938" style="stroke: #2FA4E7; stroke-width: 3.125;"/><!--MD5=[d0c5103d244f3bb324af44062dd92898]
+link ac6 to uc8--><path d="M351.0417,99.1354 C351.0417,117.8854 351.0417,139.1563 351.0417,155.6875 " fill="none" id="ac6-&gt;uc8" style="stroke: #2FA4E7; stroke-width: 3.125;"/><polygon fill="#2FA4E7" points="351.0417,161.1042,355.2083,151.7292,351.0417,155.8958,346.875,151.7292,351.0417,161.1042" style="stroke: #2FA4E7; stroke-width: 3.125;"/><!--MD5=[ddb9349dfd8c49a87ec1d46c70c0e9f5]
+@startuml
+
+
+
+skinparam backgroundColor transparent
+
+
+
+
+
+
+
+skinparam defaultFontName        "Verdana"
+skinparam defaultFontSize        12
+skinparam dpi                    100
+skinparam shadowing              false
+skinparam roundcorner            8
+skinparam ParticipantPadding     40
+skinparam BoxPadding             40
+skinparam Padding                5
+skinparam ArrowColor             #868E96
+skinparam stereotype {
+    CBackgroundColor #EDF0F2
+    CBorderColor #BABDBF
+    ABackgroundColor #8FB961
+    ABorderColor #5C862E
+    IBackgroundColor #D2494E
+    IBorderColor #9F161B
+    EBackgroundColor #E47833
+    EBorderColor #B14500
+    NBackgroundColor #35638F
+    NBorderColor #02305C
+}
+skinparam title {
+	FontColor	                 #2FA4E7
+	BorderColor	                 #BABDBF
+	FontSize	    	         20
+	BorderRoundCorner            8
+	BorderThickness 	         1
+	BackgroundColor              #EDF0F2-#E9ECEF
+}
+
+
+skinparam legend {
+	BackgroundColor #E9ECEF
+	BorderColor #BABDBF
+	FontColor #343A40
+}
+
+
+skinparam activity {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	BarColor #73A839
+	StartColor #033C73
+	EndColor #033C73
+	DiamondBackgroundColor #FFF-#EDF0F2
+  	DiamondBorderColor #BABDBF
+	DiamondFontColor #343A40
+}
+
+
+skinparam participant {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	ParticipantBorderThickness 2
+}
+
+
+skinparam actor {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam arrow {
+	Thickness 3
+	Color #2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam sequence {
+	BorderColor #2FA4E7
+	TitleFontColor #2FA4E7
+	BackgroundColor transparent
+	StartColor #2FA4E7
+	EndColor #2FA4E7
+	BoxBackgroundColor #F8F9FA
+	BoxBorderColor #868E96
+	BoxFontColor #343A40
+	LifeLineBorderColor #BABDBF
+	LifeLineBorderThickness 2
+	LifeLineBackgroundColor #EDF0F2
+	GroupBorderColor #868E96
+	GroupFontColor #343A40
+	GroupHeaderFontColor #033C73
+	DividerBackgroundColor #FFF-#F8F9FA
+    DividerBorderColor #868E96
+    DividerBorderThickness 2
+    DividerFontColor #343A40
+	ReferenceBackgroundColor transparent
+	ReferenceBorderColor #868E96
+	ReferenceFontColor #343A40
+	ReferenceHeaderFontColor #033C73
+}
+
+
+skinparam partition {
+	BorderColor #2FA4E7
+	FontColor #2FA4E7
+	BackgroundColor transparent
+}
+
+
+skinparam collections {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+}
+
+
+skinparam control {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam entity {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam boundary {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam agent {
+	BackgroundColor #orange
+	BorderColor #999999
+	FontColor #333333
+}
+
+
+skinparam note {
+	BorderThickness 1
+	BackgroundColor #35638F-#033C73
+	BorderColor #033C73
+	FontColor #FFF
+}
+
+
+skinparam artifact {
+	BackgroundColor #FFF-#F8F9FA
+	BorderColor #BABDBF
+	FontColor #343A40
+}
+
+
+skinparam component {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+}
+
+
+skinparam interface {
+	BackgroundColor  #D2494E
+	BorderColor  #C71C22
+	FontColor #343A40
+}
+
+
+skinparam storage {
+	BackgroundColor #E47833-#DD5600
+  	BorderColor #DD5600
+	FontColor #FFF
+}
+
+
+skinparam node {
+	BackgroundColor #EDF0F2-#E9ECEF
+	BorderColor #E9ECEF
+	FontColor #343A40
+}
+
+
+skinparam cloud {
+	BackgroundColor #F2FCFE-#eeeeee
+	BorderColor #F2FCFE
+	FontColor #2FA4E7
+}
+
+
+skinparam database {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	FontColor #343A40
+}
+
+
+skinparam class {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	HeaderBackgroundColor #2FA4E7-#2683B9
+	StereotypeFontColor #343A40
+	BorderThickness 1
+	AttributeFontColor #F8F9FA
+	AttributeFontSize 11
+}
+
+
+skinparam object {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	StereotypeFontColor #343A40
+	BorderThickness 1
+	AttributeFontColor #343A40
+	AttributeFontSize 11
+}
+
+
+skinparam usecase {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	BorderThickness 2
+	StereotypeFontColor #2FA4E7
+}
+
+
+skinparam rectangle {
+	FontColor #2FA4E7
+	BorderColor #59B6EC
+	BackgroundColor transparent
+	BorderThickness 2
+	StereotypeFontColor #2FA4E7
+}
+
+
+skinparam package {
+	FontColor #2FA4E7
+	BorderColor #59B6EC
+	BackgroundColor transparent
+	BorderThickness 2
+}
+
+
+skinparam folder {
+	BackgroundColor #FFF-#EDF0F2
+  	BorderColor #DD5600
+	FontColor #DD5600
+	BorderThickness 2
+}
+
+
+skinparam frame {
+	BackgroundColor #FFF-#EDF0F2
+  	BorderColor #033C73
+	FontColor #033C73
+	BorderThickness 2
+}
+
+
+skinparam state {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+	StartColor #033C73
+	EndColor #033C73
+	AttributeFontColor #343A40
+	AttributeFontSize 11
+}
+
+
+skinparam queue {
+		FontColor #FFF
+	BorderColor #2FA4E7
+	BackgroundColor #59B6EC-#2FA4E7
+}
+
+
+skinparam card {
+	BackgroundColor #35638F-#033C73
+	BorderColor #033C73
+	FontColor #FFF
+}
+
+
+skinparam file {
+	BackgroundColor #EDF0F2-#E9ECEF
+	BorderColor #033C73
+	FontColor #868E96
+
+}
+
+
+actor "book loaner" as ac5
+actor "library staff" as ac6
+rectangle "book loaning" {
+usecase "scan the books barcode" as uc7
+usecase "check a customers library card" as uc8
+}
+ac5 - -> uc7
+ac6 - -> uc8
+@enduml
+
+PlantUML version 1.2020.07(Sun Apr 19 13:42:40 CEST 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 13.0.2+8
+Operating System: Mac OS X
+Default Encoding: UTF-8
+Language: de
+Country: DE
+--></g></svg>

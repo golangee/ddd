@@ -138,3 +138,19 @@ func makePackagePrivate(str string) string {
 
 	return string(unicode.ToLower(rune(str[0]))) + str[1:]
 }
+
+// camelCaseToWords converts a text like MyBookLibrary into "my book library"
+func camelCaseToWords(cc string) string {
+	sb := &strings.Builder{}
+	for i, r := range cc {
+		if unicode.IsUpper(r) {
+			if i > 0 {
+				sb.WriteRune(' ')
+			}
+			sb.WriteRune(unicode.ToLower(r))
+		} else {
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}

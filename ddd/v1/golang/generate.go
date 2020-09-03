@@ -176,12 +176,16 @@ func generateLayers(ctx *genctx) error {
 					myDoc += "\n\nThe following user stories are covered:\n\n"
 					api.AddTypes(uFace)
 
+
+
 					md.TableHeader("As a/an", "I want to...", "So that...")
 					for _, story := range useCase.Stories() {
 						storyModel, err := validation.CheckUserStory(story.Story())
 						if err != nil {
 							panic("illegal state: must validate before")
 						}
+
+
 
 						md.TableRow(storyModel.Role, storyModel.Goal, storyModel.Reason)
 
@@ -201,6 +205,10 @@ func generateLayers(ctx *genctx) error {
 						}
 					}
 
+
+					addUseCaseDiagram(md,useCase)
+
+
 					uFace.SetDoc(myDoc)
 				}
 			default:
@@ -213,6 +221,8 @@ func generateLayers(ctx *genctx) error {
 
 	return nil
 }
+
+
 
 func generateUML(t *src.TypeBuilder) *plantuml.Class {
 	class := plantuml.NewClass(t.Name())
