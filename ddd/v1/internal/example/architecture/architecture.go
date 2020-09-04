@@ -70,7 +70,7 @@ func main() {
 
 				// the use case layer
 				UseCases(
-					UseCase("BookSearch",
+					Epic("BookSearch",
 						"...provides all user stories involved in searching books.",
 						Story("As a searcher, I want to search for keywords, so that I must not know the title or author.",
 							Func("FindByTags", "...searches for tags only.",
@@ -117,6 +117,98 @@ func main() {
 					),
 
 				),
+				REST("v1.0.1",
+					Servers(
+						Server("https://capital-city-library.com", "The live server."),
+						Server("https://dev.capital-city-library.com", "The development server."),
+					),
+					Resources(
+						Resource("/books",
+							"Resource to manage books.",
+							Parameters(
+								Header(
+									Var("session", String, "...is the global valid session."),
+								),
+							),
+							GET("Returns all books.",
+								Parameters(),
+								Responses(
+									Response(200, "book array response",
+										Header(
+											Var("x-RateLimit-Limit", Int64, "... is the request limit per hour."),
+											Var("x-RateLimit-Remaining", Int64, "...is the number of requests left for the time window."),
+										),
+										Content(Json, Slice("Book")),
+										Content("application/text", Slice("Book")),
+										Content(Xml, Slice("Book")),
+										Content("image/png", Reader),
+										Content("image/jpg", Reader),
+										Content(Any, Reader),
+									),
+									Response(404, "not found", Header()),
+								),
+							),
+							DELETE("Removes all books.",
+								Parameters(),
+								Responses(),
+							),
+						),
+						Resource("/books/:id",
+							"Resource to manage a single book.",
+							Parameters(
+								Header(Var("clientId", String, "...is a comment.")),
+							),
+							GET("Returns a single book.",
+								Parameters(),
+								Responses(),
+							),
+							DELETE("Removes a single book.",
+								Parameters(),
+								Responses(),
+							),
+							PUT("Updates a book.",
+								Parameters(),
+								RequestBody(),
+								Responses(),
+							),
+
+							POST("Creates a new book.",
+								Parameters(
+									Path(
+										Var("id", UUID, "...is a comment."),
+									),
+									Header(
+										Var("bearer", String, "...is a token bearer."),
+										Var("x-special-something", String, "...is something special."),
+									),
+									Query(
+										Var("offset", Int64, "...is a comment."),
+										Var("limit", Int64, "...is a comment."),
+									),
+								),
+								RequestBody(
+									Content("image/png", Reader),
+									Content("image/jpg", Reader),
+									Content("application/octet-stream", Reader),
+									Content(Json, "Book"),
+								),
+								Responses(
+									Response(200, "ok, book array response",
+										Header(
+											Var("x-RateLimit-Limit", Int64, "...is th request limit per hour."),
+											Var("x-RateLimit-Remaining", Int64, "...is the number of requests left for the time window."),
+										),
+										Content("image/png", Reader),
+										Content("image/jpg", Reader),
+										Content("application/octet-stream", Reader),
+										Content(Json, "Book"),
+									),
+								),
+							),
+
+						),
+
+					)),
 			),
 			Context("loan",
 				"This context is about everything around loaning or renting a book.\n"+
@@ -135,7 +227,7 @@ func main() {
 					Factories(),
 				),
 				UseCases(
-					UseCase("BookLoaning", "...provides all stories around loaning books.",
+					Epic("BookLoaning", "...provides all stories around loaning books.",
 						Story("As a book loaner, I have to scan the books barcode, so that I can take it with me.",
 							Func("Rent", "...loans a book.",
 								In(

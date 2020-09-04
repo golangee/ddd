@@ -16,27 +16,45 @@ package ddd
 
 import "strings"
 
+type NameValidationKind int
+
+const (
+	NVGoPublicIdentifier NameValidationKind = iota
+	NVGoPrivateIdentifier
+	NVHttpHeaderParameter
+	NVHttpQueryParameter
+	NVHttpPathParameter
+)
+
 // A ParamSpec represents an incoming or outgoing function parameter.
 type ParamSpec struct {
-	name     string
-	typeName TypeName
-	comment  []string
-	pos      Pos
+	name               string
+	typeName           TypeName
+	comment            []string
+	pos                Pos
+	nameValidationKind NameValidationKind
 }
 
 // Var is a factory for a ParamSpec.
 func Var(name string, typeName TypeName, comment string) *ParamSpec {
 	return &ParamSpec{
-		name:     name,
-		typeName: typeName,
-		comment:  []string{comment},
-		pos:      capturePos("Var", 1),
+		name:               name,
+		nameValidationKind: NVGoPrivateIdentifier,
+		typeName:           typeName,
+		comment:            []string{comment},
+		pos:                capturePos("Var", 1),
 	}
 }
 
 // WithContext is a shortcut to Var("ctx","context.Context", "...is the context to control timeouts and cancellations.")
 func WithContext() *ParamSpec {
-	return Var("ctx", Ctx, "...is the context to control timeouts and cancellations.")
+	return &ParamSpec{
+		name:               "ctx",
+		nameValidationKind: NVGoPrivateIdentifier,
+		typeName:           Ctx,
+		comment:            []string{"...is the context to control timeouts and cancellations."},
+		pos:                capturePos("Var", 1),
+	}
 }
 
 // Return is a factory for an unnamed and undocumented ParamSpec.
@@ -64,6 +82,11 @@ func (p *ParamSpec) Comment() string {
 // TypeName returns the declared type of the parameter.
 func (p *ParamSpec) TypeName() TypeName {
 	return p.typeName
+}
+
+// NameValidationKind returns the validation hint
+func (p *ParamSpec) NameValidationKind() NameValidationKind {
+	return p.nameValidationKind
 }
 
 // Pos returns debugging position.

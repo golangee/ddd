@@ -123,6 +123,14 @@ func (m *Markdown) TableRow(values ...string) *Markdown {
 	return m
 }
 
+func (m *Markdown) Code(hint, body string) *Markdown {
+	m.Printf("```%s\n", hint)
+	m.Print(body)
+	m.Print("\n```\n")
+
+	return m
+}
+
 func (m *Markdown) TableHeader(values ...string) *Markdown {
 	m.TableRow(values...)
 	m.Print("|")

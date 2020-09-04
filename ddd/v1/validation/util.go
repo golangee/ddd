@@ -5,6 +5,36 @@ import (
 	"unicode"
 )
 
+func isHttpPathOk(str string) bool {
+	for _, r := range str {
+		if unicode.IsSpace(r){
+			return false
+		}
+	}
+
+	return true
+}
+
+func isHttpQueryOk(str string) bool {
+	for _, r := range str {
+		if unicode.IsSpace(r){
+			return false
+		}
+	}
+
+	return true
+}
+
+func isHttpHeaderOk(str string) bool {
+	for _, r := range str {
+		if unicode.IsSpace(r){
+			return false
+		}
+	}
+
+	return true
+}
+
 func isPublicGoIdentifier(str string) bool {
 	if !isGoIdentifier(str) {
 		return false

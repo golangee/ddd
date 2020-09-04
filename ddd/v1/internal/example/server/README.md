@@ -16,6 +16,15 @@ This is the central service of the book library of capital city, for searching a
       * [UML](#uml)
       * [The use case or application layer](#the-use-case-or-application-layer)
         * [BookSearch](#booksearch)
+      * [REST API *v1.0.1*](#rest-api-v101)
+        * [/books](#books)
+          * [*GET* /books](#get-books)
+          * [*DELETE* /books](#delete-books)
+        * [/books/:id](#booksid)
+          * [*GET* /books/:id](#get-booksid)
+          * [*DELETE* /books/:id](#delete-booksid)
+          * [*PUT* /books/:id](#put-booksid)
+          * [*POST* /books/:id](#post-booksid)
     * [The context *loan*](#the-context-loan)
       * [The domains core layer](#the-domains-core-layer)
         * [Type *Book*](#type-book)
@@ -82,6 +91,67 @@ It contains 3 user stories.
 
 
 
+#### REST API *v1.0.1*
+
+Package rest contains the REST specific implementation for the current bounded context.
+It depends only from the use cases and transitively on the core API.
+
+##### /books
+
+Resource to manage books.
+
+###### *GET* /books
+
+Returns all books.
+
+```bash
+curl -v -X GET https://capital-city-library.com/api/v1/books
+
+```
+###### *DELETE* /books
+
+Removes all books.
+
+```bash
+curl -v -X DELETE https://capital-city-library.com/api/v1/books
+
+```
+##### /books/:id
+
+Resource to manage a single book.
+
+###### *GET* /books/:id
+
+Returns a single book.
+
+```bash
+curl -v -X GET https://capital-city-library.com/api/v1/books/:id
+
+```
+###### *DELETE* /books/:id
+
+Removes a single book.
+
+```bash
+curl -v -X DELETE https://capital-city-library.com/api/v1/books/:id
+
+```
+###### *PUT* /books/:id
+
+Updates a book.
+
+```bash
+curl -v -X PUT https://capital-city-library.com/api/v1/books/:id
+
+```
+###### *POST* /books/:id
+
+Creates a new book.
+
+```bash
+curl -v -X POST https://capital-city-library.com/api/v1/books/:id
+
+```
 ### The context *loan*
 
 This context is about everything around loaning or renting a book.

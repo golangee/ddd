@@ -16,6 +16,7 @@ const (
 	rCore resolverScope = 1 << iota
 	rUniverse
 	rUsecase
+	rRest
 )
 
 func (r resolverScope) Has(flag resolverScope) bool {
@@ -32,16 +33,21 @@ func (r resolverScope) String() string {
 		msg = append(msg, "universe")
 	}
 
+	if r.Has(rRest) {
+		msg = append(msg, "rest")
+	}
+
 	return strings.Join(msg, "|")
 }
 
 type resolver struct {
-	path     string
-	ctx      *ddd.BoundedContextSpec
-	layers   []typeLayer
-	universe []typeDef
-	core     typeLayer
-	usecase  typeLayer
+	path       string
+	ctx        *ddd.BoundedContextSpec
+	layers     []typeLayer
+	universe   []typeDef
+	core       typeLayer
+	usecase    typeLayer
+	restLayers []typeLayer
 }
 
 type typeLayer struct {
@@ -55,7 +61,7 @@ type typeDef struct {
 	typeDecl *src.TypeDecl
 }
 
-func (t typeDef) getDecl()*src.TypeDecl{
+func (t typeDef) getDecl() *src.TypeDecl {
 	return t.typeDecl.Clone()
 }
 
@@ -123,7 +129,17 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 					}
 				}
 			}
+
 			r.usecase = tlayer
+
+		case *ddd.RestLayerSpec:
+			layerPath := modPath + "/internal/" + safename(ctx.Name()) + "/" + l.Name()
+			tlayer := typeLayer{
+				layer: layer,
+				path:  layerPath,
+			}
+
+			r.restLayers = append(r.restLayers, tlayer)
 		default:
 			panic("not yet implemented: " + reflect.TypeOf(l).String())
 		}
@@ -194,6 +210,10 @@ func (r *resolver) resolveTypeName(scopes resolverScope, t ddd.TypeName) (*src.T
 				return makeGeneric(t, def.getDecl()), nil
 			}
 		}
+	}
+
+	if scopes.Has(rRest) {
+		//TODO
 	}
 
 	return nil, fmt.Errorf("type '%s' cannot be resolved from layers '%s'", t, scopes.String())

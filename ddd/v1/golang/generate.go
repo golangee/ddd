@@ -15,6 +15,7 @@ import (
 const (
 	pkgNameCore    = "core"
 	pkgNameUseCase = "usecase"
+	pkgNameRest = "rest"
 	mainMarkdown   = "README.md"
 )
 
@@ -200,12 +201,19 @@ func generateLayers(ctx *genctx) error {
 							api.AddTypes(s)
 						}
 					}
-
 					md.P("")
-					addUseCaseDiagram(md, useCase)
+
+					// create the use case diagram
+					ucDiag := md.UML("use case " + useCase.Name())
+					addUseCaseDiagram(ucDiag, useCase)
 					md.P("")
 
 					uFace.SetDoc(myDoc)
+				}
+			case *ddd.RestLayerSpec:
+				addRestAPI(md, l)
+				if err := createRestLayer(ctx, rslv, bc, l); err != nil {
+					return fmt.Errorf("%s: %w", layer.Name(), err)
 				}
 			default:
 				panic("not yet implemented: " + reflect.TypeOf(l).String())
@@ -216,47 +224,6 @@ func generateLayers(ctx *genctx) error {
 	}
 
 	return nil
-}
-
-func generateUML(t *src.TypeBuilder) *plantuml.Class {
-	class := plantuml.NewClass(t.Name())
-	for _, field := range t.Fields() {
-		class.AddAttrs(plantuml.Attr{
-			Visibility: plantuml.Public,
-			Abstract:   false,
-			Static:     false,
-			Name:       field.Name(),
-			Type:       umlifyDeclName(field.Type()),
-		})
-	}
-
-	for _, fun := range t.Methods() {
-		pTmp := ""
-		for i, p := range fun.Params() {
-			pTmp += p.Name() + " " + umlifyDeclName(p.Decl())
-			if i < len(fun.Params())-1 {
-				pTmp += ","
-			}
-		}
-
-		rTmp := ""
-		for i, p := range fun.Results() {
-			rTmp += p.Name() + " " + umlifyDeclName(p.Decl())
-			if i < len(fun.Params())-1 {
-				rTmp += ","
-			}
-		}
-
-		class.AddAttrs(plantuml.Attr{
-			Visibility: plantuml.Public,
-			Abstract:   true,
-			Static:     false,
-			Name:       fun.Name() + "(" + pTmp + ")",
-			Type:       "(" + rTmp + ")",
-		})
-	}
-
-	return class
 }
 
 func generateFactoryFunc(rslv *resolver, scopes resolverScope, fun *ddd.FuncSpec) (*src.FuncBuilder, error) {

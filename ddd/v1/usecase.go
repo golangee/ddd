@@ -18,7 +18,7 @@ package ddd
 type UseCaseLayerSpec struct {
 	name        string
 	description string
-	cases       []*UseCaseSpec
+	cases       []*EpicSpec
 }
 
 // Walks loops over self and use cases.
@@ -37,7 +37,7 @@ func (u *UseCaseLayerSpec) Walk(f func(obj interface{}) error) error {
 }
 
 // UseCases returns the contained use cases.
-func (u *UseCaseLayerSpec) UseCases() []*UseCaseSpec {
+func (u *UseCaseLayerSpec) UseCases() []*EpicSpec {
 	return u.cases
 }
 
@@ -57,8 +57,8 @@ func (u *UseCaseLayerSpec) Stereotype() Stereotype {
 }
 
 // UseCases is a factory for a UseCaseLayerSpec. A use case can only ever import Core API. Besides various instances
-// of UseCase, it may also define package specific data models.
-func UseCases(cases ...*UseCaseSpec) *UseCaseLayerSpec {
+// of Epic, it may also define package specific data models.
+func UseCases(cases ...*EpicSpec) *UseCaseLayerSpec {
 	return &UseCaseLayerSpec{
 		name: "usecases",
 		description: "Package usecase contains all domain specific use cases for the current bounded context.\n" +
@@ -68,18 +68,18 @@ func UseCases(cases ...*UseCaseSpec) *UseCaseLayerSpec {
 	}
 }
 
-// An UseCaseSpec contains different actors to accomplish a larger goal. This may be also called a use case.
-type UseCaseSpec struct {
+// An EpicSpec contains different actors to accomplish a larger goal. This may be also called a use case.
+type EpicSpec struct {
 	// name of the epic or use case, e.g. "BookLoaning" or "BookSearching"
 	name    string
 	comment string
 	stories []*UserStorySpec
 }
 
-// UseCase declares a use case consisting of user stories. The name must be a valid public identifier, because
+// Epic declares a use case consisting of user stories. The name must be a valid public identifier, because
 // it will be used as the enclosing interface for all contained stories.
-func UseCase(name, comment string, stories ...*UserStorySpec) *UseCaseSpec {
-	return &UseCaseSpec{
+func Epic(name, comment string, stories ...*UserStorySpec) *EpicSpec {
+	return &EpicSpec{
 		name:    name,
 		comment: comment,
 		stories: stories,
@@ -87,22 +87,22 @@ func UseCase(name, comment string, stories ...*UserStorySpec) *UseCaseSpec {
 }
 
 // Name returns current name.
-func (u *UseCaseSpec) Name() string {
+func (u *EpicSpec) Name() string {
 	return u.name
 }
 
 // Comment of the use case.
-func (u *UseCaseSpec) Comment() string {
+func (u *EpicSpec) Comment() string {
 	return u.comment
 }
 
 // Stories returns all contained user stories.
-func (u *UseCaseSpec) Stories() []*UserStorySpec {
+func (u *EpicSpec) Stories() []*UserStorySpec {
 	return u.stories
 }
 
 // Walks loops over self and stories.
-func (u *UseCaseSpec) Walk(f func(obj interface{}) error) error {
+func (u *EpicSpec) Walk(f func(obj interface{}) error) error {
 	if err := f(u); err != nil {
 		return err
 	}

@@ -3,8 +3,13 @@ package validation
 import (
 	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
+	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 )
+
+var urlRegex = regexp.MustCompile(`/((\w+)/*|:\w+)*[^/]`)
 
 const (
 	minDescriptionLength = 5
@@ -66,6 +71,27 @@ func Validate(spec *ddd.AppSpec) error {
 			}
 		}
 
+		if obj, ok := obj.(*ddd.RestServerSpec); ok {
+			if len(strings.TrimSpace(obj.Url())) == 0 {
+				return buildErr("url", obj.Url(), "may not be empty", obj)
+			}
+
+			if !strings.HasPrefix(obj.Url(), "http") {
+				return buildErr("url", obj.Url(), "must start with http:// or https://", obj)
+			}
+
+			_, err := url.Parse(obj.Url())
+			if err != nil {
+				return buildErr("url", obj.Url(), err.Error(), obj)
+			}
+		}
+
+		if obj, ok := obj.(*ddd.HttpResourceSpec); ok {
+			if err := checkHttpRes(obj); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 }
@@ -93,8 +119,29 @@ func checkName(d withName) error {
 			return nil
 		}
 
-		if !isPrivateGoIdentifier(v) {
-			return buildErr(pKeyName, v, "must be a private go identifier", d)
+		switch t.NameValidationKind() {
+		case ddd.NVGoPublicIdentifier:
+			if !isPublicGoIdentifier(v) {
+				return buildErr(pKeyName, v, "must be a public go identifier", d)
+			}
+		case ddd.NVGoPrivateIdentifier:
+			if !isPrivateGoIdentifier(v) {
+				return buildErr(pKeyName, v, "must be a private go identifier", d)
+			}
+		case ddd.NVHttpHeaderParameter:
+			if !isHttpHeaderOk(v) {
+				return buildErr(pKeyName, v, "must be a valid http header parameter", d)
+			}
+		case ddd.NVHttpQueryParameter:
+			if !isHttpQueryOk(v) {
+				return buildErr(pKeyName, v, "must be a valid http query parameter", d)
+			}
+		case ddd.NVHttpPathParameter:
+			if !isHttpPathOk(v) {
+				return buildErr(pKeyName, v, "must be a valid http path parameter", d)
+			}
+		default:
+			panic("not yet implemented: " + strconv.Itoa(int(t.NameValidationKind())))
 		}
 
 	default:
@@ -117,6 +164,10 @@ func checkDescription(d withDescription) error {
 		return buildErr(pKeyDescription, v, "is to short", d)
 	}
 
+	if strings.Count(d.Description(), " ") < 2 {
+		return buildErr(pKeyComment, v, "not enough words.", d)
+	}
+
 	if !startsUppercase(v) {
 		return buildErr(pKeyDescription, v, "must start with a capital letter", d)
 	}
@@ -137,6 +188,10 @@ func checkComment(d withComment) error {
 
 	if len(v) < minDescriptionLength {
 		return buildErr(pKeyComment, v, "is to short", d)
+	}
+
+	if strings.Count(d.Comment(), " ") < 2 {
+		return buildErr(pKeyComment, v, "not enough words.", d)
 	}
 
 	if !strings.HasPrefix(v, "...") {
@@ -247,4 +302,12 @@ func trimComma(str string) string {
 	}
 
 	return strings.TrimSpace(str)
+}
+
+func checkHttpRes(res *ddd.HttpResourceSpec) error {
+	if urlRegex.FindString(res.Path()) != res.Path() {
+		return buildErr("path", res.Path(), "must be a valid url path", res)
+	}
+
+	return nil
 }

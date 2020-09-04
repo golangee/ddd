@@ -4,10 +4,72 @@ import (
 	"github.com/golangee/architecture/ddd/v1"
 	"github.com/golangee/architecture/ddd/v1/validation"
 	"github.com/golangee/plantuml"
+	"github.com/golangee/src"
 	"sort"
 )
 
-func addUseCaseDiagram(md *Markdown, useCase *ddd.UseCaseSpec) {
+// TODO remove dependency from generated go-specific code
+func generateUML(t *src.TypeBuilder) *plantuml.Class {
+	class := plantuml.NewClass(t.Name())
+	for _, field := range t.Fields() {
+		class.AddAttrs(plantuml.Attr{
+			Visibility: plantuml.Public,
+			Abstract:   false,
+			Static:     false,
+			Name:       field.Name(),
+			Type:       umlifyDeclName(field.Type()),
+		})
+	}
+
+	for _, fun := range t.Methods() {
+		pTmp := ""
+		for i, p := range fun.Params() {
+			pTmp += p.Name() + " " + umlifyDeclName(p.Decl())
+			if i < len(fun.Params())-1 {
+				pTmp += ","
+			}
+		}
+
+		rTmp := ""
+		for i, p := range fun.Results() {
+			rTmp += p.Name() + " " + umlifyDeclName(p.Decl())
+			if i < len(fun.Params())-1 {
+				rTmp += ","
+			}
+		}
+
+		class.AddAttrs(plantuml.Attr{
+			Visibility: plantuml.Public,
+			Abstract:   true,
+			Static:     false,
+			Name:       fun.Name() + "(" + pTmp + ")",
+			Type:       "(" + rTmp + ")",
+		})
+	}
+
+	return class
+}
+
+func addRestAPI(md *Markdown, rest *ddd.RestLayerSpec) {
+	md.H4("REST API *" + rest.Version() + "*")
+	md.P(rest.Description())
+	for _, resource := range rest.Resources() {
+		md.H5(resource.Path())
+		md.P(resource.Description())
+
+		for _, verb := range resource.Verbs() {
+			md.H6("*" + verb.Method() + "* " + resource.Path())
+			md.P(verb.Description())
+			tmp := "curl -v -X " + verb.Method() + " "
+			tmp += joinSlashes(rest.PrimaryUrl(), rest.Prefix(), resource.Path())
+			tmp += "\n"
+			md.Code("bash", tmp)
+		}
+
+	}
+}
+
+func addUseCaseDiagram(ucDiag *plantuml.Diagram, useCase *ddd.EpicSpec) {
 	type umlStory struct {
 		name    string
 		usStory *plantuml.UseCase
@@ -45,7 +107,7 @@ func addUseCaseDiagram(md *Markdown, useCase *ddd.UseCaseSpec) {
 	sort.Strings(sortedActors)
 
 	// iterate again and create uml actors first
-	ucDiag := md.UML("use case " + useCase.Name())
+
 	for _, a := range sortedActors {
 		actor := plantuml.NewActor(a)
 		actors[a].ucActor = actor

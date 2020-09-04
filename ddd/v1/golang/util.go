@@ -20,7 +20,7 @@ func safename(str string) string {
 	str = strings.ToLower(str)
 	sb := &strings.Builder{}
 	for _, r := range str {
-		if r >= 'a' || r <= 'z' {
+		if r >= 'a' && r <= 'z' {
 			sb.WriteRune(r)
 		}
 	}
@@ -139,6 +139,15 @@ func makePackagePrivate(str string) string {
 	return string(unicode.ToLower(rune(str[0]))) + str[1:]
 }
 
+// makePublic converts aBc to ABc.
+func makePublic(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+
+	return string(unicode.ToUpper(rune(str[0]))) + str[1:]
+}
+
 // camelCaseToWords converts a text like MyBookLibrary into "my book library"
 func camelCaseToWords(cc string) string {
 	sb := &strings.Builder{}
@@ -152,5 +161,53 @@ func camelCaseToWords(cc string) string {
 			sb.WriteRune(r)
 		}
 	}
+	return sb.String()
+}
+
+// joinSlashes assembles the path segments and ensures that they have only 1 slash per segment. Leading
+// or trailing slashes are purged.
+func joinSlashes(paths ...string) string {
+	sb := &strings.Builder{}
+	for i, path := range paths {
+		path = trimSlashes(path)
+		sb.WriteString(path)
+		if i < len(paths)-1 {
+			sb.WriteRune('/')
+		}
+	}
+
+	return sb.String()
+}
+
+// trimSlashes removes leading and trailing slashes
+func trimSlashes(str string) string {
+	for strings.HasPrefix(str, "/") {
+		str = str[1:]
+	}
+
+	for strings.HasSuffix(str, "/") {
+		str = str[:len(str)-1]
+	}
+
+	return str
+}
+
+func text2GoIdentifier(p string) string {
+	sb := &strings.Builder{}
+	upCase := true
+	for _, r := range p {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'z') && (r < '0' || r > '9') {
+			upCase = true
+			continue
+		}
+
+		if upCase {
+			sb.WriteRune(unicode.ToUpper(r))
+			upCase = false
+		} else {
+			sb.WriteRune(r)
+		}
+	}
+
 	return sb.String()
 }
