@@ -23,30 +23,59 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 		goResName := text2GoIdentifier(strings.ReplaceAll(resource.Path(), ":", "-By-"))
 		resFile := ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), strings.ToLower(safename(goResName)), pkgNameRest)
 
-		resIface := src.NewInterface(goResName)
-		resIface.SetDoc(resIface.Name() + " represents the REST resource " + text.JoinSlashes(rest.Prefix(), resource.Path()) + ".\n" + resource.Description())
-		for _, verb := range resource.Verbs() {
-			paramType, err := createRestResourceVerbRequest(goResName, rslv, resource, verb)
-			if err != nil {
-				return err
-			}
-			resFile.AddTypes(paramType)
-
-			verbFunc := src.NewFunc(text2GoIdentifier(strings.ToLower(verb.Method())))
-			verbFunc.AddParams(src.NewParameter("ctx", src.NewTypeDecl(src.Qualifier(paramType.Name())))).
-				SetDoc(verbFunc.Name() + " represents the http " + verb.Method() + " request on the " + resource.Path() + " resource.\n" + verb.Description()).
-				AddResults(src.NewParameter("", src.NewTypeDecl("error")))
-			resIface.AddMethods(verbFunc)
-
+		// create a documented interface
+		resIface, err := createRestResourceInterface(resFile, rslv, goResName, resource)
+		if err != nil {
+			return err
 		}
+
+		resIface.SetDoc(resIface.Name() + " represents the REST resource " + text.JoinSlashes(rest.Prefix(), resource.Path()) + ".\n" + resource.Description())
 		resFile.AddTypes(resIface)
+		resFile.AddTypes(src.ImplementMock(resIface))
+
+		ifaceImpl, err := createRestResourceMockImpl(resFile, rslv, resource, resIface)
+		if err != nil {
+			return err
+		}
+		_ = ifaceImpl
 	}
+
+	api := ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), "api", pkgNameRest)
+	api.AddFuncs(createWrapHandlerFunc())
 
 	return nil
 }
 
-// createRestResourceVerbRequest assembles a type safe struct per verb request.
-func createRestResourceVerbRequest(name string, rslv *resolver, parent *ddd.HttpResourceSpec, verb *ddd.VerbSpec) (*src.TypeBuilder, error) {
+// createRestResourceInterface creates an interface which represents the http verbs as methods.
+func createRestResourceMockImpl(resFile *src.FileBuilder, rslv *resolver, resource *ddd.HttpResourceSpec, iface *src.TypeBuilder) (*src.TypeBuilder, error) {
+	ifaceImpl := src.Implement(iface, true)
+	return ifaceImpl, nil
+}
+
+// createRestResourceInterface creates an interface which represents the http verbs as methods.
+func createRestResourceInterface(resFile *src.FileBuilder, rslv *resolver, ifaceName string, resource *ddd.HttpResourceSpec) (*src.TypeBuilder, error) {
+	resIface := src.NewInterface(ifaceName)
+
+	for _, verb := range resource.Verbs() {
+		paramType, err := createRestResourceVerbRequestContextStruct(ifaceName, rslv, resource, verb)
+		if err != nil {
+			return nil, err
+		}
+		resFile.AddTypes(paramType)
+
+		verbFunc := src.NewFunc(text2GoIdentifier(strings.ToLower(verb.Method()) + ifaceName))
+		verbFunc.AddParams(src.NewParameter("ctx", src.NewTypeDecl(src.Qualifier(paramType.Name())))).
+			SetDoc(verbFunc.Name() + " represents the http " + verb.Method() + " request on the " + resource.Path() + " resource.\n" + verb.Description()).
+			AddResults(src.NewParameter("", src.NewTypeDecl("error")))
+		resIface.AddMethods(verbFunc)
+
+	}
+
+	return resIface, nil
+}
+
+// createRestResourceVerbRequestContextStruct assembles a type safe struct per verb request.
+func createRestResourceVerbRequestContextStruct(name string, rslv *resolver, parent *ddd.HttpResourceSpec, verb *ddd.VerbSpec) (*src.TypeBuilder, error) {
 	req := src.NewStruct(name + text2GoIdentifier(strings.ToLower(verb.Method())) + "Context")
 	req.SetDoc(req.Name()+" provides the specific http request and response context including already parsed parameters.").
 		AddFields(
@@ -93,4 +122,35 @@ func createRestResourceVerbRequest(name string, rslv *resolver, parent *ddd.Http
 		req.AddFields(field)
 	}
 	return req, nil
+}
+
+// createWrapHandlerFunc emits a wrap function to convert between the julienschmidt-router handle the stdlib handlerFunc.
+func createWrapHandlerFunc() *src.FuncBuilder {
+
+	/*
+		//wrap converts from the http.HandlerFunc to the httprouter.Handle interface.
+		func wrap(route string, handler http.HandlerFunc) (string, httprouter.Handle) {
+			return route, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+				handler(writer, request)
+			}
+		}
+	*/
+
+	const httpRouter = "github.com/julienschmidt/httprouter.Handle"
+	return src.NewFunc("wrap").
+		SetDoc("wrap converts from the http.HandlerFunc to the httprouter.Handle interface.").
+		AddParams(
+			src.NewParameter("route", src.NewTypeDecl("string")),
+			src.NewParameter("handler", src.NewTypeDecl("net/http.HandlerFunc")),
+		).
+		AddResults(
+			src.NewParameter("", src.NewTypeDecl("string")),
+			src.NewParameter("", src.NewTypeDecl(httpRouter)),
+		).AddBody(
+		src.NewBlock().
+			AddLine("return route, func(writer ", src.NewTypeDecl("net/http.ResponseWriter"), ", request *", src.NewTypeDecl("net/http.Request"), ",_ ", src.NewTypeDecl("github.com/julienschmidt/httprouter.Params"), ") {").
+			AddLine("handler(writer, request)").
+			AddLine("}"),
+	)
+
 }

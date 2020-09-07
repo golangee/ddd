@@ -60,16 +60,70 @@ type BooksByIdPostContext struct {
 // BooksById represents the REST resource api/v1/books/:id.
 // Resource to manage a single book.
 type BooksById interface {
-	// Get represents the http GET request on the /books/:id resource.
+	// GetBooksById represents the http GET request on the /books/:id resource.
 	// Returns a single book.
-	Get(ctx BooksByIdGetContext) error
-	// Delete represents the http DELETE request on the /books/:id resource.
+	GetBooksById(ctx BooksByIdGetContext) error
+	// DeleteBooksById represents the http DELETE request on the /books/:id resource.
 	// Removes a single book.
-	Delete(ctx BooksByIdDeleteContext) error
-	// Put represents the http PUT request on the /books/:id resource.
+	DeleteBooksById(ctx BooksByIdDeleteContext) error
+	// PutBooksById represents the http PUT request on the /books/:id resource.
 	// Updates a book.
-	Put(ctx BooksByIdPutContext) error
-	// Post represents the http POST request on the /books/:id resource.
+	PutBooksById(ctx BooksByIdPutContext) error
+	// PostBooksById represents the http POST request on the /books/:id resource.
 	// Creates a new book.
-	Post(ctx BooksByIdPostContext) error
+	PostBooksById(ctx BooksByIdPostContext) error
+}
+
+// BooksByIdMock is a mock implementation of BooksById.
+// BooksById represents the REST resource api/v1/books/:id.
+// Resource to manage a single book.
+type BooksByIdMock struct {
+	// GetBooksByIdFunc mocks the GetBooksById function.
+	GetBooksByIdFunc func(ctx BooksByIdGetContext) error
+	// DeleteBooksByIdFunc mocks the DeleteBooksById function.
+	DeleteBooksByIdFunc func(ctx BooksByIdDeleteContext) error
+	// PutBooksByIdFunc mocks the PutBooksById function.
+	PutBooksByIdFunc func(ctx BooksByIdPutContext) error
+	// PostBooksByIdFunc mocks the PostBooksById function.
+	PostBooksByIdFunc func(ctx BooksByIdPostContext) error
+}
+
+// GetBooksById represents the http GET request on the /books/:id resource.
+// Returns a single book.
+func (m BooksByIdMock) GetBooksById(ctx BooksByIdGetContext) error {
+	if m.GetBooksByIdFunc != nil {
+		return m.GetBooksByIdFunc(ctx)
+	}
+
+	panic("mock not available: GetBooksById")
+}
+
+// DeleteBooksById represents the http DELETE request on the /books/:id resource.
+// Removes a single book.
+func (m BooksByIdMock) DeleteBooksById(ctx BooksByIdDeleteContext) error {
+	if m.DeleteBooksByIdFunc != nil {
+		return m.DeleteBooksByIdFunc(ctx)
+	}
+
+	panic("mock not available: DeleteBooksById")
+}
+
+// PutBooksById represents the http PUT request on the /books/:id resource.
+// Updates a book.
+func (m BooksByIdMock) PutBooksById(ctx BooksByIdPutContext) error {
+	if m.PutBooksByIdFunc != nil {
+		return m.PutBooksByIdFunc(ctx)
+	}
+
+	panic("mock not available: PutBooksById")
+}
+
+// PostBooksById represents the http POST request on the /books/:id resource.
+// Creates a new book.
+func (m BooksByIdMock) PostBooksById(ctx BooksByIdPostContext) error {
+	if m.PostBooksByIdFunc != nil {
+		return m.PostBooksByIdFunc(ctx)
+	}
+
+	panic("mock not available: PostBooksById")
 }

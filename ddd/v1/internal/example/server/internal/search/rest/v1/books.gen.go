@@ -29,10 +29,40 @@ type BooksDeleteContext struct {
 // Books represents the REST resource api/v1/books.
 // Resource to manage books.
 type Books interface {
-	// Get represents the http GET request on the /books resource.
+	// GetBooks represents the http GET request on the /books resource.
 	// Returns all books.
-	Get(ctx BooksGetContext) error
-	// Delete represents the http DELETE request on the /books resource.
+	GetBooks(ctx BooksGetContext) error
+	// DeleteBooks represents the http DELETE request on the /books resource.
 	// Removes all books.
-	Delete(ctx BooksDeleteContext) error
+	DeleteBooks(ctx BooksDeleteContext) error
+}
+
+// BooksMock is a mock implementation of Books.
+// Books represents the REST resource api/v1/books.
+// Resource to manage books.
+type BooksMock struct {
+	// GetBooksFunc mocks the GetBooks function.
+	GetBooksFunc func(ctx BooksGetContext) error
+	// DeleteBooksFunc mocks the DeleteBooks function.
+	DeleteBooksFunc func(ctx BooksDeleteContext) error
+}
+
+// GetBooks represents the http GET request on the /books resource.
+// Returns all books.
+func (m BooksMock) GetBooks(ctx BooksGetContext) error {
+	if m.GetBooksFunc != nil {
+		return m.GetBooksFunc(ctx)
+	}
+
+	panic("mock not available: GetBooks")
+}
+
+// DeleteBooks represents the http DELETE request on the /books resource.
+// Removes all books.
+func (m BooksMock) DeleteBooks(ctx BooksDeleteContext) error {
+	if m.DeleteBooksFunc != nil {
+		return m.DeleteBooksFunc(ctx)
+	}
+
+	panic("mock not available: DeleteBooks")
 }
