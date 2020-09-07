@@ -6,6 +6,7 @@ import (
 	"github.com/golangee/architecture/ddd/v1/validation"
 	"github.com/golangee/plantuml"
 	"sort"
+	"strings"
 )
 
 func generateUMLForInterface(t *ddd.InterfaceSpec) *plantuml.Class {
@@ -16,24 +17,31 @@ func generateUMLForInterface(t *ddd.InterfaceSpec) *plantuml.Class {
 		for i, p := range fun.In() {
 			pTmp += p.Name() + " " + string(p.TypeName())
 			if i < len(fun.In())-1 {
-				pTmp += ","
+				pTmp += ", "
 			}
 		}
 
+		rMultiple := false
 		rTmp := ""
 		for i, p := range fun.Out() {
 			rTmp += p.Name() + " " + string(p.TypeName())
 			if i < len(fun.Out())-1 {
-				rTmp += ","
+				rTmp += ", "
+				rMultiple = true
 			}
+		}
+
+		myResLiteral := strings.TrimSpace(rTmp)
+		if rMultiple {
+			myResLiteral = "(" + myResLiteral + ")"
 		}
 
 		class.AddAttrs(plantuml.Attr{
 			Visibility: plantuml.Public,
 			Abstract:   true,
 			Static:     false,
-			Name:       fun.Name() + "(" + pTmp + ")",
-			Type:       "(" + rTmp + ")",
+			Name:       fun.Name() + "(" + strings.TrimSpace(pTmp) + ")",
+			Type:       myResLiteral,
 		})
 	}
 

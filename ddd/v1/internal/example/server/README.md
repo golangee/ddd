@@ -13,7 +13,6 @@ This is the central service of the book library of capital city, for searching a
         * [Type *BookRepository*](#type-bookrepository)
         * [Type *SearchService*](#type-searchservice)
         * [Factory *NewSearchService*](#factory-newsearchservice)
-      * [UML](#uml)
       * [The use case or application layer](#the-use-case-or-application-layer)
         * [BookSearch](#booksearch)
       * [REST API *v1.0.1*](#rest-api-v101)
@@ -29,7 +28,6 @@ This is the central service of the book library of capital city, for searching a
       * [The domains core layer](#the-domains-core-layer)
         * [Type *Book*](#type-book)
         * [Type *User*](#type-user)
-      * [UML](#uml)
       * [The use case or application layer](#the-use-case-or-application-layer)
         * [BookLoaning](#bookloaning)
 
@@ -67,8 +65,6 @@ The API interface *SearchService* is the domain specific service API.
 
 The API factory method *NewSearchService* is a factory to create a new SearchService.
 
-#### UML
-
 ![search core API](uml-search-core-api.gen.svg?raw=true)
 
 #### The use case or application layer
@@ -87,9 +83,11 @@ It contains 3 user stories.
 |searcher|see book details|I need to proof the relevance of the result|
 
 
-![use case BookSearch](uml-use-case-booksearch.gen.svg?raw=true)
+![use case-BookSearch](uml-use-case-booksearch.gen.svg?raw=true)
 
 
+
+![iface-BookSearch](uml-iface-booksearch.gen.svg?raw=true)
 
 #### REST API *v1.0.1*
 
@@ -170,8 +168,6 @@ The data class *Book* is a book to loan or rent.
 
 The data class *User* is a library customer.
 
-#### UML
-
 ![loan core API](uml-loan-core-api.gen.svg?raw=true)
 
 #### The use case or application layer
@@ -189,7 +185,9 @@ It contains 2 user stories.
 |library staff|check a customers library card|I can ensure that only actual customers can enter and loan books|
 
 
-![use case BookLoaning](uml-use-case-bookloaning.gen.svg?raw=true)
+![use case-BookLoaning](uml-use-case-bookloaning.gen.svg?raw=true)
 
 
+
+![iface-BookLoaning](uml-iface-bookloaning.gen.svg?raw=true)
 

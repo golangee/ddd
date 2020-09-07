@@ -106,7 +106,6 @@ func generateLayers(ctx *genctx) error {
 					}
 				}
 
-				md.H4("UML")
 				diagram := md.UML(bc.Name() + " core API")
 				for _, renderable := range uml {
 					diagram.Add(renderable)
@@ -121,6 +120,8 @@ func generateLayers(ctx *genctx) error {
 				}
 
 				for _, useCase := range l.UseCases() {
+					var ucMethods []*ddd.FuncSpec
+
 					md.H5(useCase.Name())
 					md.P("The use case *" + useCase.Name() + "* " + text.TrimComment(useCase.Comment()) + "\n" +
 						"It contains " + strconv.Itoa(len(useCase.Stories())) + " user stories.")
@@ -134,15 +135,20 @@ func generateLayers(ctx *genctx) error {
 
 						md.TableRow(storyModel.Role, storyModel.Goal, storyModel.Reason)
 
+						ucMethods = append(ucMethods, story.Func())
 					}
 					md.P("")
 
 					// create the use case diagram
-					ucDiag := md.UML("use case " + useCase.Name())
+					ucDiag := md.UML("use case-" + useCase.Name())
 					addUseCaseDiagram(ucDiag, useCase)
 					md.P("")
 
+					tmpIface := ddd.Interface(useCase.Name(), "", ucMethods...)
+					diagram := md.UML("iface-" + tmpIface.Name())
+					diagram.Add(generateUMLForInterface(tmpIface))
 				}
+
 			case *ddd.RestLayerSpec:
 				addRestAPI(md, l)
 			default:
