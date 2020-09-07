@@ -1,39 +1,29 @@
-package golang
+package markdown
 
 import (
 	"github.com/golangee/architecture/ddd/v1"
+	"github.com/golangee/architecture/ddd/v1/internal/text"
 	"github.com/golangee/architecture/ddd/v1/validation"
 	"github.com/golangee/plantuml"
-	"github.com/golangee/src"
 	"sort"
 )
 
-// TODO remove dependency from generated go-specific code
-func generateUML(t *src.TypeBuilder) *plantuml.Class {
-	class := plantuml.NewClass(t.Name())
-	for _, field := range t.Fields() {
-		class.AddAttrs(plantuml.Attr{
-			Visibility: plantuml.Public,
-			Abstract:   false,
-			Static:     false,
-			Name:       field.Name(),
-			Type:       umlifyDeclName(field.Type()),
-		})
-	}
+func generateUMLForInterface(t *ddd.InterfaceSpec) *plantuml.Class {
+	class := plantuml.NewInterface(t.Name())
 
-	for _, fun := range t.Methods() {
+	for _, fun := range t.Funcs() {
 		pTmp := ""
-		for i, p := range fun.Params() {
-			pTmp += p.Name() + " " + umlifyDeclName(p.Decl())
-			if i < len(fun.Params())-1 {
+		for i, p := range fun.In() {
+			pTmp += p.Name() + " " + string(p.TypeName())
+			if i < len(fun.In())-1 {
 				pTmp += ","
 			}
 		}
 
 		rTmp := ""
-		for i, p := range fun.Results() {
-			rTmp += p.Name() + " " + umlifyDeclName(p.Decl())
-			if i < len(fun.Params())-1 {
+		for i, p := range fun.Out() {
+			rTmp += p.Name() + " " + string(p.TypeName())
+			if i < len(fun.Out())-1 {
 				rTmp += ","
 			}
 		}
@@ -44,6 +34,21 @@ func generateUML(t *src.TypeBuilder) *plantuml.Class {
 			Static:     false,
 			Name:       fun.Name() + "(" + pTmp + ")",
 			Type:       "(" + rTmp + ")",
+		})
+	}
+
+	return class
+}
+
+func generateUMLForStruct(t *ddd.StructSpec) *plantuml.Class {
+	class := plantuml.NewClass(t.Name())
+	for _, field := range t.Fields() {
+		class.AddAttrs(plantuml.Attr{
+			Visibility: plantuml.Public,
+			Abstract:   false,
+			Static:     false,
+			Name:       field.Name(),
+			Type:       string(field.TypeName()),
 		})
 	}
 
@@ -61,7 +66,7 @@ func addRestAPI(md *Markdown, rest *ddd.RestLayerSpec) {
 			md.H6("*" + verb.Method() + "* " + resource.Path())
 			md.P(verb.Description())
 			tmp := "curl -v -X " + verb.Method() + " "
-			tmp += joinSlashes(rest.PrimaryUrl(), rest.Prefix(), resource.Path())
+			tmp += text.JoinSlashes(rest.PrimaryUrl(), rest.Prefix(), resource.Path())
 			tmp += "\n"
 			md.Code("bash", tmp)
 		}
@@ -115,7 +120,7 @@ func addUseCaseDiagram(ucDiag *plantuml.Diagram, useCase *ddd.EpicSpec) {
 	}
 
 	// iterate again and put stories
-	ucRect := plantuml.NewRectangle(camelCaseToWords(useCase.Name()))
+	ucRect := plantuml.NewRectangle(text.CamelCaseToWords(useCase.Name()))
 	ucDiag.Add(ucRect)
 	for _, a := range sortedActors {
 		for _, s := range actors[a].stories {

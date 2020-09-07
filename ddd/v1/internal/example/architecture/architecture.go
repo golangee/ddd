@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/golangee/architecture"
 	. "github.com/golangee/architecture/ddd/v1"
 	"github.com/golangee/architecture/ddd/v1/golang"
+	"github.com/golangee/architecture/ddd/v1/markdown"
 	"log"
 )
 
@@ -260,6 +262,15 @@ func main() {
 	}
 
 	if err := golang.Generate(opts, spec); err != nil {
+		log.Fatal(err)
+	}
+
+	prj, err := architecture.Detect()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := markdown.Generate(prj.File(opts.ServerDir), spec); err != nil {
 		log.Fatal(err)
 	}
 }

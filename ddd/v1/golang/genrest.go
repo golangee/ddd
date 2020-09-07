@@ -2,6 +2,7 @@ package golang
 
 import (
 	"github.com/golangee/architecture/ddd/v1"
+	"github.com/golangee/architecture/ddd/v1/internal/text"
 	"github.com/golangee/src"
 	"path/filepath"
 	"strconv"
@@ -23,7 +24,7 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 		resFile := ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), strings.ToLower(safename(goResName)), pkgNameRest)
 
 		resIface := src.NewInterface(goResName)
-		resIface.SetDoc(resIface.Name() + " represents the REST resource " + joinSlashes(rest.Prefix(), resource.Path()) + ".\n" + resource.Description())
+		resIface.SetDoc(resIface.Name() + " represents the REST resource " + text.JoinSlashes(rest.Prefix(), resource.Path()) + ".\n" + resource.Description())
 		for _, verb := range resource.Verbs() {
 			paramType, err := createRestResourceVerbRequest(goResName, rslv, resource, verb)
 			if err != nil {

@@ -3,37 +3,20 @@ package golang
 import (
 	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
-	"github.com/golangee/architecture/ddd/v1/validation"
-	"github.com/golangee/plantuml"
+	"github.com/golangee/architecture/ddd/v1/internal/text"
 	"github.com/golangee/src"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
 const (
 	pkgNameCore    = "core"
 	pkgNameUseCase = "usecase"
-	pkgNameRest = "rest"
-	mainMarkdown   = "README.md"
+	pkgNameRest    = "rest"
 )
 
 func generateCmdSrv(ctx *genctx) error {
-	md := ctx.markdown(mainMarkdown).
-		H1(ctx.spec.Name()).
-		P(ctx.spec.Description()).
-		H2("Index").
-		TOC().
-		H2("Architecture")
-
-	md.Println("The server is organized after the domain driven design principles.")
-	if len(ctx.spec.BoundedContexts()) == 1 {
-		md.Println("However, it currently consists only of exact one bounded context.")
-	} else {
-		md.Printf("It is separated into the following %d bounded contexts.\n\n", len(ctx.spec.BoundedContexts()))
-	}
-
 	ctx.newFile("cmd/"+safename(ctx.spec.Name()+"srv"), "main", "main").
 		SetPackageDoc("Package main contains the executable to launch the actual " + ctx.spec.Name() + " server process.").
 		AddFuncs(
@@ -45,9 +28,6 @@ func generateCmdSrv(ctx *genctx) error {
 
 func generateLayers(ctx *genctx) error {
 	for _, bc := range ctx.spec.BoundedContexts() {
-		md := ctx.markdown(mainMarkdown).
-			H3("The context *" + bc.Name() + "*").
-			P(bc.Description())
 
 		rslv := newResolver(ctx.mod.Main().Path, bc)
 		bcPath := filepath.Join("internal", safename(bc.Name()))
@@ -59,14 +39,9 @@ func generateLayers(ctx *genctx) error {
 		for _, layer := range bc.Layers() {
 			switch l := layer.(type) {
 			case *ddd.CoreLayerSpec:
-				dataTypes := 0
-				ifaceTypes := 0
-				factoryFuncs := 0
-
 				corePath := filepath.Join(bcPath, pkgNameCore)
 				ctx.newFile(corePath, "doc", "").SetPackageDoc(l.Description())
 
-				var uml []plantuml.Renderable
 				api := ctx.newFile(corePath, "api", "")
 				for _, structOrInterface := range l.API() {
 					switch t := structOrInterface.(type) {
@@ -76,16 +51,12 @@ func generateLayers(ctx *genctx) error {
 							return fmt.Errorf("core: %w", err)
 						}
 						api.AddTypes(strct)
-						uml = append(uml, generateUML(strct))
-						dataTypes++
 					case *ddd.InterfaceSpec:
 						iface, err := generateInterface(rslv, rUniverse|rCore, t)
 						if err != nil {
 							return fmt.Errorf("core: %w", err)
 						}
 						api.AddTypes(iface)
-						uml = append(uml, generateUML(iface))
-						ifaceTypes++
 					default:
 						panic("not yet implemented: " + reflect.TypeOf(t).String())
 					}
@@ -106,70 +77,16 @@ func generateLayers(ctx *genctx) error {
 							return fmt.Errorf("%s: %w", layer.Name(), err)
 						}
 						facs.AddFuncs(fun)
-						factoryFuncs++
 					default:
 						panic("not yet implemented: " + reflect.TypeOf(t).String())
 					}
 				}
 
-				md.H4("The domains core layer").
-					Printf("The core layer or API layer of the domain consists of %d data types,\n", dataTypes).
-					Printf("%d service or SPI interfaces and %d actual service implementations.\n\n", ifaceTypes, factoryFuncs)
-
-				// returned types from factories are API types, everything else is SPI
-				apiIfaceFactory := make(map[string]string)
-				for _, funcOrStruct := range l.Factories() {
-					if fun, ok := funcOrStruct.(*ddd.FuncSpec); ok {
-						for _, spec := range fun.Out() {
-							apiIfaceFactory[string(spec.TypeName())] = ""
-						}
-					}
-				}
-
-				for _, structOrInterface := range l.API() {
-					md.H5("Type *" + structOrInterface.Name() + "*")
-					switch structOrInterface.(type) {
-					case *ddd.StructSpec:
-						md.P("The data class *" + structOrInterface.Name() + "* " + trimComment(structOrInterface.Comment()))
-					case *ddd.InterfaceSpec:
-						_, ok := apiIfaceFactory[structOrInterface.Name()]
-						if ok {
-							md.P("The API interface *" + structOrInterface.Name() + "* " + trimComment(structOrInterface.Comment()))
-						} else {
-							md.P("The SPI interface *" + structOrInterface.Name() + "* " + trimComment(structOrInterface.Comment()))
-						}
-					}
-
-				}
-
-				for _, funcOrStruct := range l.Factories() {
-					if fun, ok := funcOrStruct.(*ddd.FuncSpec); ok {
-						md.H5("Factory *" + fun.Name() + "*")
-						md.P("The API factory method *" + fun.Name() + "* " + trimComment(fun.Comment()))
-					}
-				}
-
-				md.H4("UML")
-				diagram := md.UML(bc.Name() + " core API")
-				for _, renderable := range uml {
-					diagram.Add(renderable)
-				}
-
 			case *ddd.UseCaseLayerSpec:
-				md.H4("The use case or application layer")
-				if len(l.UseCases()) == 1 {
-					md.P("The following use case is defined.")
-				} else {
-					md.P("The following " + strconv.Itoa(len(l.UseCases())) + " use cases have been identified.")
-				}
-
 				usecasePath := filepath.Join(bcPath, pkgNameUseCase)
 				ctx.newFile(usecasePath, "doc", "").SetPackageDoc(l.Description())
 
 				for _, useCase := range l.UseCases() {
-					md.H5(useCase.Name())
-					md.P("The use case *" + useCase.Name() + "* " + trimComment(useCase.Comment()) + "\n" +
-						"It contains " + strconv.Itoa(len(useCase.Stories())) + " user stories.")
 
 					api := ctx.newFile(usecasePath, strings.ToLower(useCase.Name()), "")
 					uFace := src.NewInterface(useCase.Name())
@@ -177,15 +94,7 @@ func generateLayers(ctx *genctx) error {
 					myDoc += "\n\nThe following user stories are covered:\n\n"
 					api.AddTypes(uFace)
 
-					md.TableHeader("As a/an", "I want to...", "So that...")
 					for _, story := range useCase.Stories() {
-						storyModel, err := validation.CheckUserStory(story.Story())
-						if err != nil {
-							panic("illegal state: must validate before")
-						}
-
-						md.TableRow(storyModel.Role, storyModel.Goal, storyModel.Reason)
-
 						fun, err := generateFactoryFunc(rslv, rUniverse|rCore|rUsecase, story.Func())
 						if err != nil {
 							return fmt.Errorf("%s: %w", layer.Name(), err)
@@ -201,17 +110,10 @@ func generateLayers(ctx *genctx) error {
 							api.AddTypes(s)
 						}
 					}
-					md.P("")
-
-					// create the use case diagram
-					ucDiag := md.UML("use case " + useCase.Name())
-					addUseCaseDiagram(ucDiag, useCase)
-					md.P("")
 
 					uFace.SetDoc(myDoc)
 				}
 			case *ddd.RestLayerSpec:
-				addRestAPI(md, l)
 				if err := createRestLayer(ctx, rslv, bc, l); err != nil {
 					return fmt.Errorf("%s: %w", layer.Name(), err)
 				}
@@ -261,7 +163,7 @@ func generateFunc(rslv *resolver, scopes resolverScope, fun *ddd.FuncSpec) (*src
 
 		myComment += "\n\n"
 		myComment += "The parameter '" + param.Name() + "' "
-		myComment += trimComment(param.Comment())
+		myComment += text.TrimComment(param.Comment())
 	}
 
 	for _, param := range fun.Out() {
@@ -280,7 +182,7 @@ func generateFunc(rslv *resolver, scopes resolverScope, fun *ddd.FuncSpec) (*src
 			myComment += commentifyDeclName(decl)
 		}
 		myComment += "' "
-		myComment += trimComment(param.Comment())
+		myComment += text.TrimComment(param.Comment())
 	}
 
 	f.SetDoc(myComment)
