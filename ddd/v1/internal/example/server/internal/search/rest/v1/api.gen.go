@@ -7,9 +7,21 @@ import (
 	http "net/http"
 )
 
+// API is the common interface which represents the following resources:
+//  * Books: api/v1/books
+//  * BooksById: api/v1/books/:id
+type API interface {
+	Books
+	BooksById
+}
+
 // wrap converts from the http.HandlerFunc to the httprouter.Handle interface.
 func wrap(route string, handler http.HandlerFunc) (string, httprouter.Handle) {
 	return route, func(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 		handler(writer, request)
 	}
+}
+
+// Configure just applies the entire API to the given router.
+func Configure() {
 }

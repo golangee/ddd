@@ -3,6 +3,7 @@
 package rest
 
 import (
+	httprouter "github.com/julienschmidt/httprouter"
 	log "log"
 	http "net/http"
 )
@@ -102,4 +103,10 @@ func DeleteBooks(api func(ctx BooksDeleteContext) error) (route string, handler 
 			return
 		}
 	}
+}
+
+// ConfigureBooksRouter just applies the package wide endpoints into the given router without any other middleware.
+func ConfigureBooksRouter(api Books, router httprouter.Router) {
+	router.GET(wrap(GetBooks(api.GetBooks)))
+	router.DELETE(wrap(DeleteBooks(api.DeleteBooks)))
 }

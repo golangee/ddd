@@ -58,7 +58,6 @@ func CamelCaseToWords(cc string) string {
 	return sb.String()
 }
 
-
 // TrimComment removes '...' and any whitespace afterwards.
 func TrimComment(str string) string {
 	str = strings.TrimSpace(str)
@@ -66,4 +65,31 @@ func TrimComment(str string) string {
 		str = str[3:]
 	}
 	return strings.TrimSpace(str)
+}
+
+// ParseVerb checks for Get/Post/Head/Patch/Put/Delete verbs and returns
+// them in uppercase. If no verb is found, an empty string is returned.
+func ParseVerb(text string) string {
+	text = strings.ToLower(text)
+	if strings.HasPrefix(text, "get") {
+		return "GET"
+	}
+
+	if strings.HasPrefix(text, "post") {
+		return "POST"
+	}
+
+	if strings.HasPrefix(text, "delete") {
+		return "DELETE"
+	}
+
+	if strings.HasPrefix(text, "put") {
+		return "PUT"
+	}
+
+	if strings.HasPrefix(text, "head") {
+		return "head"
+	}
+
+	return ""
 }

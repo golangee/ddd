@@ -10,6 +10,37 @@ import (
 	"strings"
 )
 
+// StringParser is hacky way to allow custom serialization codes
+type StringParser func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error)
+
+// NotSupportedErr is only used by StringParser implementations.
+var NotSupportedErr = fmt.Errorf("string parsing not supported")
+var restParamParsers []StringParser
+
+func init() {
+	AddStringParser(func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error) {
+		if targetType.Qualifier() == "int64" {
+			return src.NewBlock().Add(src.NewTypeDecl("strconv.ParseInt"), "(", fromStrCode, ", 10, 64)"), nil
+		}
+		return nil, NotSupportedErr
+	})
+
+	AddStringParser(func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error) {
+		if targetType.Qualifier() == "github.com/golangee/uuid.UUID" {
+			return src.NewBlock().Add(src.NewTypeDecl("github.com/golangee/uuid.Parse"), "(", fromStrCode, ")"), nil
+		}
+		return nil, NotSupportedErr
+	})
+}
+
+// AddStringParser registers another StringParser for the REST parameter deserialization.
+// The following types are supported out of the box:
+//  * int64
+//  * github.com/golangee/uuid.UUID
+func AddStringParser(parser StringParser) {
+	restParamParsers = append(restParamParsers, parser)
+}
+
 // createRestLayer emits the interfaces and types in the <bc>/rest/vX package according to the REST specification.
 func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, rest *ddd.RestLayerSpec) error {
 	bcPath := filepath.Join("internal", safename(bc.Name()))
@@ -20,6 +51,8 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 	ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), "doc", pkgNameRest).
 		SetPackageDoc(rest.Description() + "\nThe current api version is " + rest.Version() + ".")
 
+	var generatedResourceIfaces []*src.TypeBuilder
+	var resourcePaths []string
 	for _, resource := range rest.Resources() {
 		goResName := text2GoIdentifier(strings.ReplaceAll(resource.Path(), ":", "-By-"))
 		resFile := ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), strings.ToLower(safename(goResName)), pkgNameRest)
@@ -29,8 +62,10 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 		if err != nil {
 			return err
 		}
+		generatedResourceIfaces = append(generatedResourceIfaces, resIface)
 
 		endpointPath := text.JoinSlashes(rest.Prefix(), resource.Path())
+		resourcePaths = append(resourcePaths, endpointPath)
 		resIface.SetDoc(resIface.Name() + " represents the REST resource " + endpointPath + ".\n" + resource.Description())
 		resFile.AddTypes(resIface)
 		resFile.AddTypes(src.ImplementMock(resIface))
@@ -48,25 +83,32 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 					myParamsInGenFieldOrder = append(myParamsInGenFieldOrder, spec)
 				}
 			}
-			factoryFunc, err := createHandlerFuncFactory(resFile, myParamsInGenFieldOrder, endpointPath, resIface, fun)
+			factoryFunc, err := createHandlerFuncFactory(resFile, myParamsInGenFieldOrder, endpointPath, fun)
 			if err != nil {
 				return fmt.Errorf("unable to create handler func for %s: %w", endpointPath, err)
 			}
 			resFile.AddFuncs(factoryFunc)
 		}
 
+		resFile.AddFuncs(createConfigureFunc(resIface))
 	}
 
 	api := ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), "api", pkgNameRest)
 	api.AddFuncs(createWrapHandlerFunc())
 
-	return nil
-}
+	// add a common interface
+	commonIface := src.NewInterface("API")
+	tmpComment := "... is the common interface which represents the following resources:\n"
+	for i, iface := range generatedResourceIfaces {
+		commonIface.AddEmbedded(src.NewTypeDecl(src.Qualifier(iface.Name())))
+		tmpComment+=" * "+iface.Name()+": "+resourcePaths[i]+"\n"
+	}
+	commonIface.SetDoc(tmpComment)
+	api.AddTypes(commonIface)
 
-// createRestResourceInterface creates an interface which represents the http verbs as methods.
-func createRestResourceMockImpl(iface *src.TypeBuilder) (*src.TypeBuilder, error) {
-	ifaceImpl := src.Implement(iface, true)
-	return ifaceImpl, nil
+	api.AddFuncs(createMainConfigureFunc(generatedResourceIfaces))
+
+	return nil
 }
 
 // createRestResourceInterface creates an interface which represents the http verbs as methods.
@@ -141,6 +183,15 @@ func createRestResourceVerbRequestContextStruct(name string, rslv *resolver, par
 	return req, nil
 }
 
+func createMainConfigureFunc(ifaces []*src.TypeBuilder) *src.FuncBuilder {
+
+
+	cfgFunc := src.NewFunc("Configure").
+		SetDoc("...just applies the entire API to the given router.")
+
+	return cfgFunc
+}
+
 // createWrapHandlerFunc emits a wrap function to convert between the julienschmidt-router handle the stdlib handlerFunc.
 func createWrapHandlerFunc() *src.FuncBuilder {
 
@@ -175,7 +226,7 @@ func createWrapHandlerFunc() *src.FuncBuilder {
 // createHandlerFuncFactory assembles a public package function to create a
 // standard handler and the according path. It currently only works
 // with the julienschmidt httprouter
-func createHandlerFuncFactory(resFile *src.FileBuilder, myParamsInGenFieldOrder []*ddd.ParamSpec, endpointPath string, resIface *src.TypeBuilder, fun *src.FuncBuilder) (*src.FuncBuilder, error) {
+func createHandlerFuncFactory(resFile *src.FileBuilder, myParamsInGenFieldOrder []*ddd.ParamSpec, endpointPath string, fun *src.FuncBuilder) (*src.FuncBuilder, error) {
 	const httprouter = "github.com/julienschmidt/httprouter."
 	statusBadRequest := src.NewTypeDecl("net/http.StatusBadRequest")
 	ctxType := resFile.TypeByName(fun.Params()[0].Decl().Qualifier().Name())
@@ -256,32 +307,7 @@ func createHandlerFuncFactory(resFile *src.FileBuilder, myParamsInGenFieldOrder 
 	return hFun, nil
 }
 
-// StringParser is hacky way to allow custom serialization codes
-type StringParser func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error)
-
-var NotSupportedErr = fmt.Errorf("string parsing not supported")
-var restParamParsers []StringParser
-
-func init() {
-	AddStringParser(func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error) {
-		if targetType.Qualifier() == "int64" {
-			return src.NewBlock().Add(src.NewTypeDecl("strconv.ParseInt"), "(", fromStrCode, ", 10, 64)"), nil
-		}
-		return nil, NotSupportedErr
-	})
-
-	AddStringParser(func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error) {
-		if targetType.Qualifier() == "github.com/golangee/uuid.UUID" {
-			return src.NewBlock().Add(src.NewTypeDecl("github.com/golangee/uuid.Parse"), "(", fromStrCode, ")"), nil
-		}
-		return nil, NotSupportedErr
-	})
-}
-
-func AddStringParser(parser StringParser) {
-	restParamParsers = append(restParamParsers, parser)
-}
-
+// parseVarFromStr emits a helper block to parse various types from a string.
 func parseVarFromStr(toName, fromName string, targetType *src.TypeDecl, optional bool) (*src.Block, error) {
 	if targetType.Qualifier() == "string" {
 		return src.NewBlock(toName, " = ", fromName), nil
@@ -319,6 +345,28 @@ func parseVarFromStr(toName, fromName string, targetType *src.TypeDecl, optional
 	return block, nil
 }
 
+func createConfigureFunc(resIface *src.TypeBuilder) *src.FuncBuilder {
+	cfgFunc := src.NewFunc("Configure"+resIface.Name()+"Router").
+		SetDoc("...just applies the package wide endpoints into the given router without any other middleware.").
+		AddParams(
+			src.NewParameter("api", src.NewTypeDecl(src.Qualifier(resIface.Name()))),
+			src.NewParameter("router", src.NewTypeDecl("github.com/julienschmidt/httprouter.Router")),
+		)
+	body := src.NewBlock()
+	for _, fun := range resIface.Methods() {
+		verb := text.ParseVerb(fun.Name())
+		if verb == "" {
+			panic("verb routing not yet implemented: " + fun.Name())
+		}
+
+		body.AddLine("router.", verb, "(wrap(", fun.Name(), "(api.", fun.Name(), ")))")
+	}
+
+	cfgFunc.AddBody(body)
+	return cfgFunc
+}
+
+// logPrintln emits a row to write into the golang logger
 func logPrintln(codes ...interface{}) []interface{} {
 	tmp := []interface{}{
 		src.NewTypeDecl("log.Println"),
