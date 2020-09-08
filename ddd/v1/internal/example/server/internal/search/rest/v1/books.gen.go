@@ -105,8 +105,8 @@ func DeleteBooks(api func(ctx BooksDeleteContext) error) (route string, handler 
 	}
 }
 
-// ConfigureBooksRouter just applies the package wide endpoints into the given router without any other middleware.
-func ConfigureBooksRouter(api Books, router httprouter.Router) {
+// ConfigureBooks just applies the package wide endpoints into the given router without any other middleware.
+func ConfigureBooks(api Books, router httprouter.Router) {
 	router.GET(wrap(GetBooks(api.GetBooks)))
 	router.DELETE(wrap(DeleteBooks(api.DeleteBooks)))
 }

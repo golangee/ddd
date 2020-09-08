@@ -219,8 +219,8 @@ func PostBooksById(api func(ctx BooksByIdPostContext) error) (route string, hand
 	}
 }
 
-// ConfigureBooksByIdRouter just applies the package wide endpoints into the given router without any other middleware.
-func ConfigureBooksByIdRouter(api BooksById, router httprouter.Router) {
+// ConfigureBooksById just applies the package wide endpoints into the given router without any other middleware.
+func ConfigureBooksById(api BooksById, router httprouter.Router) {
 	router.GET(wrap(GetBooksById(api.GetBooksById)))
 	router.DELETE(wrap(DeleteBooksById(api.DeleteBooksById)))
 	router.PUT(wrap(PutBooksById(api.PutBooksById)))

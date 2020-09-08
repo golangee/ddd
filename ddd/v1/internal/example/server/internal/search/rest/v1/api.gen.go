@@ -23,5 +23,7 @@ func wrap(route string, handler http.HandlerFunc) (string, httprouter.Handle) {
 }
 
 // Configure just applies the entire API to the given router.
-func Configure() {
+func Configure(api API, router httprouter.Router) {
+	ConfigureBooks(api, router)
+	ConfigureBooksById(api, router)
 }

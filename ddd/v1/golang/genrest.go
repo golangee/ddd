@@ -101,11 +101,12 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 	tmpComment := "... is the common interface which represents the following resources:\n"
 	for i, iface := range generatedResourceIfaces {
 		commonIface.AddEmbedded(src.NewTypeDecl(src.Qualifier(iface.Name())))
-		tmpComment+=" * "+iface.Name()+": "+resourcePaths[i]+"\n"
+		tmpComment += " * " + iface.Name() + ": " + resourcePaths[i] + "\n"
 	}
 	commonIface.SetDoc(tmpComment)
 	api.AddTypes(commonIface)
 
+	// add the all-in-one configure method for the commonIface
 	api.AddFuncs(createMainConfigureFunc(generatedResourceIfaces))
 
 	return nil
@@ -185,9 +186,18 @@ func createRestResourceVerbRequestContextStruct(name string, rslv *resolver, par
 
 func createMainConfigureFunc(ifaces []*src.TypeBuilder) *src.FuncBuilder {
 
-
 	cfgFunc := src.NewFunc("Configure").
-		SetDoc("...just applies the entire API to the given router.")
+		SetDoc("...just applies the entire API to the given router.").
+		AddParams(
+			src.NewParameter("api", src.NewTypeDecl("API")),
+			src.NewParameter("router", src.NewTypeDecl("github.com/julienschmidt/httprouter.Router")),
+		)
+
+	body := src.NewBlock()
+	for _, iface := range ifaces {
+		body.AddLine("Configure"+iface.Name(), "(api, router)")
+	}
+	cfgFunc.AddBody(body)
 
 	return cfgFunc
 }
@@ -346,7 +356,7 @@ func parseVarFromStr(toName, fromName string, targetType *src.TypeDecl, optional
 }
 
 func createConfigureFunc(resIface *src.TypeBuilder) *src.FuncBuilder {
-	cfgFunc := src.NewFunc("Configure"+resIface.Name()+"Router").
+	cfgFunc := src.NewFunc("Configure"+resIface.Name()).
 		SetDoc("...just applies the package wide endpoints into the given router without any other middleware.").
 		AddParams(
 			src.NewParameter("api", src.NewTypeDecl(src.Qualifier(resIface.Name()))),
