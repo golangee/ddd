@@ -23,14 +23,13 @@ type CoreLayerSpec struct {
 }
 
 // Core has never any dependencies to any other layer.
-func Core(api []StructOrInterface, factories []FuncOrStruct) *CoreLayerSpec {
+func Core(api []StructOrInterface, configurations...*ConfigSpec) *CoreLayerSpec {
 	return &CoreLayerSpec{
 		name: "core",
 		description: "Package core contains all domain specific models for the current bounded context.\n" +
 			"It contains an exposed public API to be imported by other layers and an internal package \n" +
 			"private implementation accessible by factory functions.",
 		api:       api,
-		factories: factories,
 	}
 }
 

@@ -54,20 +54,14 @@ func main() {
 
 						),
 					),
-					Factories(
-						Struct("Opts", "...is an option type for the factory.",
-							Field("Flag", Bool, "...is for something."),
-						),
-						Func("NewSearchService", "...is a factory to create a new SearchService.",
-							In(
-								Var("opts", "Opts", "... contains options to configure the instance."),
-								Var("repo", "BookRepository", "... is the repo implementation to use."),
-							),
-							Out(
-								Return("SearchService", "...is a package private instance."),
-							),
+					Configure(
+						"SearchService",
+						Require("BookRepository"),
+						External(
+							Env("fulltextSearch", Bool, "false", "...is a flag to enable fulltext search in items."),
 						),
 					),
+
 				),
 
 				// the use case layer
@@ -226,7 +220,6 @@ func main() {
 							Field("ID", UUID, "...is the unique id of the user."),
 						),
 					),
-					Factories(),
 				),
 				UseCases(
 					Epic("BookLoaning", "...provides all stories around loaning books.",

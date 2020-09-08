@@ -12,7 +12,6 @@ This is the central service of the book library of capital city, for searching a
         * [Type *Book*](#type-book)
         * [Type *BookRepository*](#type-bookrepository)
         * [Type *SearchService*](#type-searchservice)
-        * [Factory *NewSearchService*](#factory-newsearchservice)
       * [The use case or application layer](#the-use-case-or-application-layer)
         * [BookSearch](#booksearch)
       * [REST API *v1.0.1*](#rest-api-v101)
@@ -47,7 +46,7 @@ like ebooks or new publications.
 #### The domains core layer
 
 The core layer or API layer of the domain consists of 1 data types,
-2 service or SPI interfaces and 1 actual service implementations.
+2 service or SPI interfaces and 0 actual service implementations.
 
 ##### Type *Book*
 
@@ -59,11 +58,7 @@ The SPI interface *BookRepository* is a repository to handle books.
 
 ##### Type *SearchService*
 
-The API interface *SearchService* is the domain specific service API.
-
-##### Factory *NewSearchService*
-
-The API factory method *NewSearchService* is a factory to create a new SearchService.
+The SPI interface *SearchService* is the domain specific service API.
 
 ![search core API](uml-search-core-api.gen.svg?raw=true)
 
