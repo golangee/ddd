@@ -1,10 +1,8 @@
 package main
 
 import (
-	"github.com/golangee/architecture"
 	. "github.com/golangee/architecture/ddd/v1"
 	"github.com/golangee/architecture/ddd/v1/golang"
-	"github.com/golangee/architecture/ddd/v1/markdown"
 	"log"
 )
 
@@ -181,11 +179,11 @@ func main() {
 									),
 									Header(
 										Var("bearer", String, "...is a token bearer."),
-										Var("x-special-something", String, "...is something special."),
+										Var("x-special-something", String, "...is something special.").SetOptional(true),
 									),
 									Query(
 										Var("offset", Int64, "...is a comment."),
-										Var("limit", Int64, "...is a comment."),
+										Var("limit", Int64, "...is a comment.").SetOptional(true),
 									),
 								),
 								RequestBody(
@@ -265,12 +263,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	prj, err := architecture.Detect()
-	if err != nil {
-		log.Fatal(err)
-	}
+	/*
+		prj, err := architecture.Detect()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	if err := markdown.Generate(prj.File(opts.ServerDir), spec); err != nil {
-		log.Fatal(err)
-	}
+
+		if err := markdown.Generate(prj.File(opts.ServerDir), spec); err != nil {
+			log.Fatal(err)
+		}*/
 }

@@ -33,6 +33,7 @@ type ParamSpec struct {
 	comment            []string
 	pos                Pos
 	nameValidationKind NameValidationKind
+	optional           bool
 }
 
 // Var is a factory for a ParamSpec.
@@ -67,6 +68,20 @@ func Return(typeName TypeName, comment string) *ParamSpec {
 // Err is a shortcut for Return(Error, "...is returned to indicate a violation of pre- or invariant and represents an implementation specific failure.")
 func Err() *ParamSpec {
 	return Return(Error, "...indicates a violation of pre- or invariants and represents an implementation specific failure.")
+}
+
+// Optional returns true, if the parameter can be nil or the default value.
+func (p *ParamSpec) Optional() bool {
+	return p.optional
+}
+
+// SetOptional sets the optional flag to the param. If ParamSpec.TypeName indicates a
+// pointer, a nil value is acceptable. Otherwise this is also very important for
+// REST parameter where a missing or unparseable parameter would otherwise cause
+// an early exit.
+func (p *ParamSpec) SetOptional(optional bool) *ParamSpec {
+	p.optional = optional
+	return p
 }
 
 // Name returns the name of parameter.

@@ -3,6 +3,7 @@
 package rest
 
 import (
+	log "log"
 	http "net/http"
 )
 
@@ -65,4 +66,40 @@ func (m BooksMock) DeleteBooks(ctx BooksDeleteContext) error {
 	}
 
 	panic("mock not available: DeleteBooks")
+}
+
+// GetBooks returns the route to register on and the handler to execute.
+// Currently, only the httprouter.Router is supported.
+func GetBooks(api func(ctx BooksGetContext) error) (route string, handler http.HandlerFunc) {
+	return "api/v1/books", func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		ctx := BooksGetContext{
+			Request: r,
+			Writer:  w,
+		}
+		ctx.Session = r.Header.Get("session")
+		if err = api(ctx); err != nil {
+			log.Println(r.URL.String(), err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+}
+
+// DeleteBooks returns the route to register on and the handler to execute.
+// Currently, only the httprouter.Router is supported.
+func DeleteBooks(api func(ctx BooksDeleteContext) error) (route string, handler http.HandlerFunc) {
+	return "api/v1/books", func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		ctx := BooksDeleteContext{
+			Request: r,
+			Writer:  w,
+		}
+		ctx.Session = r.Header.Get("session")
+		if err = api(ctx); err != nil {
+			log.Println(r.URL.String(), err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
 }

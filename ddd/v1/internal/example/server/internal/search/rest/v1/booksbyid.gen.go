@@ -4,7 +4,10 @@ package rest
 
 import (
 	uuid "github.com/golangee/uuid"
+	httprouter "github.com/julienschmidt/httprouter"
+	log "log"
 	http "net/http"
+	strconv "strconv"
 )
 
 // BooksByIdGetContext provides the specific http request and response context including already parsed parameters.
@@ -126,4 +129,92 @@ func (m BooksByIdMock) PostBooksById(ctx BooksByIdPostContext) error {
 	}
 
 	panic("mock not available: PostBooksById")
+}
+
+// GetBooksById returns the route to register on and the handler to execute.
+// Currently, only the httprouter.Router is supported.
+func GetBooksById(api func(ctx BooksByIdGetContext) error) (route string, handler http.HandlerFunc) {
+	return "api/v1/books/:id", func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		ctx := BooksByIdGetContext{
+			Request: r,
+			Writer:  w,
+		}
+		ctx.ClientId = r.Header.Get("clientId")
+		if err = api(ctx); err != nil {
+			log.Println(r.URL.String(), err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+}
+
+// DeleteBooksById returns the route to register on and the handler to execute.
+// Currently, only the httprouter.Router is supported.
+func DeleteBooksById(api func(ctx BooksByIdDeleteContext) error) (route string, handler http.HandlerFunc) {
+	return "api/v1/books/:id", func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		ctx := BooksByIdDeleteContext{
+			Request: r,
+			Writer:  w,
+		}
+		ctx.ClientId = r.Header.Get("clientId")
+		if err = api(ctx); err != nil {
+			log.Println(r.URL.String(), err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+}
+
+// PutBooksById returns the route to register on and the handler to execute.
+// Currently, only the httprouter.Router is supported.
+func PutBooksById(api func(ctx BooksByIdPutContext) error) (route string, handler http.HandlerFunc) {
+	return "api/v1/books/:id", func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		ctx := BooksByIdPutContext{
+			Request: r,
+			Writer:  w,
+		}
+		ctx.ClientId = r.Header.Get("clientId")
+		if err = api(ctx); err != nil {
+			log.Println(r.URL.String(), err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+}
+
+// PostBooksById returns the route to register on and the handler to execute.
+// Currently, only the httprouter.Router is supported.
+func PostBooksById(api func(ctx BooksByIdPostContext) error) (route string, handler http.HandlerFunc) {
+	return "api/v1/books/:id", func(w http.ResponseWriter, r *http.Request) {
+		p := httprouter.ParamsFromContext(r.Context())
+		var err error
+		ctx := BooksByIdPostContext{
+			Request: r,
+			Writer:  w,
+		}
+		ctx.ClientId = r.Header.Get("clientId")
+		if ctx.Id, err = uuid.Parse(p.ByName("id")); err != nil {
+			log.Println(r.URL.String(), err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		ctx.Bearer = r.Header.Get("bearer")
+		ctx.XSpecialSomething = r.Header.Get("x-special-something")
+		if ctx.Offset, err = strconv.ParseInt(r.URL.Query().Get("offset"), 10, 64); err != nil {
+			log.Println(r.URL.String(), err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		ctx.Limit, _ = strconv.ParseInt(r.URL.Query().Get("limit"), 10, 64)
+		if err = api(ctx); err != nil {
+			log.Println(r.URL.String(), err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
 }

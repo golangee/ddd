@@ -23,6 +23,12 @@ github.com/golangee/src v0.0.0-20200907142136-75bf87fb85e9 h1:+PCuZr8459j2hK1Lwc
 github.com/golangee/src v0.0.0-20200907142136-75bf87fb85e9/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/golangee/src v0.0.0-20200907142750-382f5781946a h1:4v9o5+ujcQHmybv1fY1NTmgc2ZCMEdOLpQ4PGxxSkEw=
 github.com/golangee/src v0.0.0-20200907142750-382f5781946a/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20200908083754-3333da40a2e9 h1:Z9dB8ZlFGUiraTycZ2VmhJ0Ll26v6c5w5ysfLHVbHdA=
+github.com/golangee/src v0.0.0-20200908083754-3333da40a2e9/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20200908091854-9a620910aca5 h1:i034I7GcKJBlg1c+S7LJXimNfYQXtkThHiEzpO4OUrQ=
+github.com/golangee/src v0.0.0-20200908091854-9a620910aca5/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/uuid v0.0.0-20200908112435-4e82cb965bfd/go.mod h1:i+BaPFNyXGweWAc/GX3OniM1pz/m1qLja81YgJZOrMQ=
+github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
