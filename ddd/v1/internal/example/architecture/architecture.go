@@ -54,11 +54,13 @@ func main() {
 
 						),
 					),
-					Configure(
+					Implementation(
 						"SearchService",
-						Require("BookRepository"),
-						External(
-							Env("fulltextSearch", Bool, "false", "...is a flag to enable fulltext search in items."),
+						Requires("BookRepository"),
+						Options(
+							Field("FulltextSearch", Bool, "...is a flag to enable fulltext search in items.").
+								SetDefault("false").
+								SetJsonName("full-text-SEARCH"),
 						),
 					),
 
@@ -109,6 +111,23 @@ func main() {
 									Err(),
 								),
 							),
+						),
+
+						Story("As a book admin, I want to change a title, because the book has a typo.",
+							Func("ChangeBookTitle", "...changes the book title.",
+								In(
+									Var("titleModel", "BookTitleSpec", "... is to short."),
+								),
+								Out(
+									Return("Book", "... the updated book."),
+									Err(),
+								),
+
+							),
+							Struct("BookTitleSpec", "...is for changing book titles.",
+								Field("Title", String, "... is a title.").SetOptional(true),
+							),
+
 						),
 					),
 
@@ -258,12 +277,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	prj, err := architecture.Detect()
-	if err != nil {
-		log.Fatal(err)
+	const uml = false
+
+	if uml {
+		prj, err := architecture.Detect()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := markdown.Generate(prj.File(opts.ServerDir), spec); err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	if err := markdown.Generate(prj.File(opts.ServerDir), spec); err != nil {
-		log.Fatal(err)
-	}
 }

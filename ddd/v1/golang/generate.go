@@ -43,6 +43,7 @@ func generateLayers(ctx *genctx) error {
 				ctx.newFile(corePath, "doc", "").SetPackageDoc(l.Description())
 
 				api := ctx.newFile(corePath, "api", "")
+				mock := ctx.newFile(corePath, "mock", "")
 				for _, structOrInterface := range l.API() {
 					switch t := structOrInterface.(type) {
 					case *ddd.StructSpec:
@@ -53,33 +54,35 @@ func generateLayers(ctx *genctx) error {
 						api.AddTypes(strct)
 					case *ddd.InterfaceSpec:
 						iface, err := generateInterface(rslv, rUniverse|rCore, t)
+
 						if err != nil {
 							return fmt.Errorf("core: %w", err)
 						}
 						api.AddTypes(iface)
+
+						if l.IsService(t.Name()) {
+							mock.AddTypes(src.ImplementMock(iface))
+						}
 					default:
 						panic("not yet implemented: " + reflect.TypeOf(t).String())
 					}
 				}
 
 				facs := ctx.newFile(corePath, "factories", "")
-				for _, funcOrStruct := range l.Factories() {
-					switch t := funcOrStruct.(type) {
-					case *ddd.StructSpec:
-						strct, err := generateStruct(rslv, rUniverse|rCore, t)
-						if err != nil {
-							return fmt.Errorf("%s: %w", layer.Name(), err)
-						}
-						facs.AddTypes(strct)
-					case *ddd.FuncSpec:
-						fun, err := generateFactoryFunc(rslv, rUniverse|rCore, t)
-						if err != nil {
-							return fmt.Errorf("%s: %w", layer.Name(), err)
-						}
-						facs.AddFuncs(fun)
-					default:
-						panic("not yet implemented: " + reflect.TypeOf(t).String())
+				for _, impl := range l.Implementations() {
+
+					fun, opt, err := generateFactoryFunc(rslv, rUniverse|rCore, impl)
+					if err != nil {
+						return fmt.Errorf("%s: %w", layer.Name(), err)
 					}
+					facs.AddTypes(opt)
+
+					facs.AddVars(
+						src.NewVar(impl.Of() + "Factory").SetRHS(src.NewBlock(fun)).SetDoc(fun.Doc()),
+					)
+					fun.SetDoc("")
+					fun.SetName("")
+
 				}
 
 			case *ddd.UseCaseLayerSpec:
@@ -95,7 +98,7 @@ func generateLayers(ctx *genctx) error {
 					api.AddTypes(uFace)
 
 					for _, story := range useCase.Stories() {
-						fun, err := generateFactoryFunc(rslv, rUniverse|rCore|rUsecase, story.Func())
+						fun, err := generateFunc(rslv, rUniverse|rCore|rUsecase, story.Func())
 						if err != nil {
 							return fmt.Errorf("%s: %w", layer.Name(), err)
 						}
@@ -128,25 +131,32 @@ func generateLayers(ctx *genctx) error {
 	return nil
 }
 
-func generateFactoryFunc(rslv *resolver, scopes resolverScope, fun *ddd.FuncSpec) (*src.FuncBuilder, error) {
+func generateFactoryFunc(rslv *resolver, scopes resolverScope, impl *ddd.ServiceImplSpec) (*src.FuncBuilder, *src.TypeBuilder, error) {
+	strct, err := generateStruct(rslv, rUniverse|rCore, impl.Options())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var in ddd.InParams
+	in = append(in, ddd.Var("opts", ddd.TypeName(strct.Name()), "... contains the options to create the instance."))
+	for _, inj := range impl.Requires() {
+		in = append(in, ddd.Var(makePackagePrivate(inj), ddd.TypeName(inj), "... is a non-nil instance."))
+	}
+
+	fun := ddd.Func(impl.Of()+"Factory", "... is the factory function to create a new instance of "+impl.Of()+".", in,
+		ddd.Out(
+			ddd.Return(ddd.TypeName(impl.Of()), "...is the new instance or nil in case of an error."),
+			ddd.Err(),
+		),
+	)
+
 	f, err := generateFunc(rslv, scopes, fun)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	// TODO it would be great to inspect the entire AST of the package and create the private function for the dev
-	block := src.NewBlock().
-		AddLine("// this package private function is implemented by the developer").
-		Add("return ", makePackagePrivate(fun.Name()), "(")
-
-	for _, p := range f.Params() {
-		block.Add(p.Name(), ",")
-	}
-
-	block.AddLine(")")
-
-	f.AddBody(block)
-	return f, nil
+	f.AddBody(src.NewBlock("return &", impl.Of(), "Mock", "{}, nil"))
+	return f, strct, nil
 }
 
 func generateFunc(rslv *resolver, scopes resolverScope, fun *ddd.FuncSpec) (*src.FuncBuilder, error) {
@@ -201,11 +211,25 @@ func generateStruct(rslv *resolver, scopes resolverScope, t *ddd.StructSpec) (*s
 
 		f := src.NewField(field.Name(), decl)
 		f.SetDoc(field.Comment())
+		var jsonTags []string
+		myName := makePackagePrivate(f.Name())
+		if field.JsonName() != "" {
+			myName = field.JsonName()
+		}
+		jsonTags = append(jsonTags, myName)
+		if field.Optional() {
+			jsonTags = append(jsonTags, "omitempty")
+		}
+		f.AddTag("json", jsonTags...)
 
 		s.AddFields(f)
 	}
 
 	return s, nil
+}
+
+func addStructJsonMethods(t *src.TypeBuilder){
+
 }
 
 func generateInterface(rslv *resolver, scopes resolverScope, t *ddd.InterfaceSpec) (*src.TypeBuilder, error) {

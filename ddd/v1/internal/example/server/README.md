@@ -69,13 +69,14 @@ The following use case is defined.
 ##### BookSearch
 
 The use case *BookSearch* provides all user stories involved in searching books.
-It contains 3 user stories.
+It contains 4 user stories.
 
 |As a/an|I want to...|So that...|
 |---|---|---|
 |searcher|search for keywords|I must not know the title or author|
 |searcher|have an autocomplete|I get support while typing my keywords|
 |searcher|see book details|I need to proof the relevance of the result|
+|book admin|change a title|the book has a typo|
 
 
 ![use case-BookSearch](uml-use-case-booksearch.gen.svg?raw=true)

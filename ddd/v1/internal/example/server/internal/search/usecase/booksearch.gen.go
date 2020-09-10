@@ -15,6 +15,7 @@ import (
 //   * As a searcher, I want to search for keywords, so that I must not know the title or author.
 //   * As a searcher, I want to have an autocomplete so that I get support while typing my keywords.
 //   * As a searcher, I want to see book details, because I need to proof the relevance of the result.
+//   * As a book admin, I want to change a title, because the book has a typo.
 type BookSearch interface {
 	// FindByTags searches for tags only.
 	//
@@ -46,14 +47,28 @@ type BookSearch interface {
 	//
 	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
 	Details(ctx context.Context, id uuid.UUID) (core.Book, error)
+	// ChangeBookTitle changes the book title.
+	//
+	// The parameter 'titleModel' is to short.
+	//
+	// The result 'Book' the updated book.
+	//
+	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
+	ChangeBookTitle(titleModel BookTitleSpec) (core.Book, error)
 }
 
 // AutoCompleteValue represents an auto completed value.
 type AutoCompleteValue struct {
 	// Value is the value to complete.
-	Value string
+	Value string `json:"value" `
 	// Score the probability of importance.
-	Score float32
+	Score float32 `json:"score" `
 	// Synonyms alternative search suggestions.
-	Synonyms []string
+	Synonyms []string `json:"synonyms" `
+}
+
+// BookTitleSpec is for changing book titles.
+type BookTitleSpec struct {
+	// Title is a title.
+	Title string `json:"title,omitempty" `
 }

@@ -16,20 +16,21 @@ package ddd
 
 // A CoreLayerSpec represents a stereotyped CORE Layer.
 type CoreLayerSpec struct {
-	name        string
-	description string
-	api         []StructOrInterface
-	factories   []FuncOrStruct
+	name            string
+	description     string
+	api             []StructOrInterface
+	implementations []*ServiceImplSpec
 }
 
 // Core has never any dependencies to any other layer.
-func Core(api []StructOrInterface, configurations...*ConfigSpec) *CoreLayerSpec {
+func Core(api []StructOrInterface, implementations ...*ServiceImplSpec) *CoreLayerSpec {
 	return &CoreLayerSpec{
 		name: "core",
 		description: "Package core contains all domain specific models for the current bounded context.\n" +
 			"It contains an exposed public API to be imported by other layers and an internal package \n" +
 			"private implementation accessible by factory functions.",
-		api:       api,
+		api:             api,
+		implementations: implementations,
 	}
 }
 
@@ -38,11 +39,21 @@ func (c *CoreLayerSpec) API() []StructOrInterface {
 	return c.api
 }
 
-// Factories returns the constructor or factory functions for the implementation of the API. Structs are only
+// Implementations returns the constructor or factory functions for the implementation of the API. Structs are only
 // to describe parameters or factory options. The returned types must match the API interfaces and structs.
 // The actual implementation must be performed by the developer and is not defined by the DSL.
-func (c *CoreLayerSpec) Factories() []FuncOrStruct {
-	return c.factories
+func (c *CoreLayerSpec) Implementations() []*ServiceImplSpec {
+	return c.implementations
+}
+
+// IsService returns true, if an implementation has been defined.
+func (c *CoreLayerSpec) IsService(name string)bool{
+	for _, impl := range c.implementations {
+		if impl.Of() == name{
+			return true
+		}
+	}
+	return false
 }
 
 // Name of the Layer
@@ -71,8 +82,12 @@ func (c *CoreLayerSpec) Walk(f func(obj interface{}) error) error {
 		}
 	}
 
-	for _, obj := range c.factories {
-		if err := obj.Walk(f); err != nil {
+	for _, obj := range c.implementations {
+		if err := f(obj); err != nil {
+			return err
+		}
+
+		if err := 	obj.options.Walk(f); err != nil {
 			return err
 		}
 	}

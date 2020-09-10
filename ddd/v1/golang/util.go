@@ -103,7 +103,6 @@ func buildErr(property, value, msg string, p ddd.Pos) error {
 	return fmt.Errorf("%s.%s '%s': %s: %s:%d", p.Name, property, value, msg, p.File, p.Line)
 }
 
-
 // commentifyDeclName makes some readable name of it, without package qualifier etc.
 func commentifyDeclName(dec *src.TypeDecl) string {
 	tmp := dec.Qualifier().Name()
@@ -113,19 +112,19 @@ func commentifyDeclName(dec *src.TypeDecl) string {
 	return tmp
 }
 
-
-
 // makePackagePrivate converts ABc to aBc.
 func makePackagePrivate(str string) string {
 	if len(str) == 0 {
 		return str
 	}
 
-	return string(unicode.ToLower(rune(str[0]))) + str[1:]
+	switch str {
+	case "ID":
+		return "id"
+	default:
+		return string(unicode.ToLower(rune(str[0]))) + str[1:]
+	}
 }
-
-
-
 
 func text2GoIdentifier(p string) string {
 	sb := &strings.Builder{}

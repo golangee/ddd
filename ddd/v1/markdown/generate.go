@@ -7,6 +7,7 @@ import (
 	"github.com/golangee/plantuml"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -58,15 +59,8 @@ func generateLayers(ctx *genctx) error {
 					}
 				}
 
-				for _, funcOrStruct := range l.Factories() {
-					switch t := funcOrStruct.(type) {
-					case *ddd.FuncSpec:
-						factoryFuncs++
-					case *ddd.StructSpec:
-						// ignored
-					default:
-						panic("not yet implemented: " + reflect.TypeOf(t).String())
-					}
+				for range l.Implementations() {
+					factoryFuncs++
 				}
 
 				md.H4("The domains core layer").
@@ -75,12 +69,8 @@ func generateLayers(ctx *genctx) error {
 
 				// returned types from factories are API types, everything else is SPI
 				apiIfaceFactory := make(map[string]string)
-				for _, funcOrStruct := range l.Factories() {
-					if fun, ok := funcOrStruct.(*ddd.FuncSpec); ok {
-						for _, spec := range fun.Out() {
-							apiIfaceFactory[string(spec.TypeName())] = ""
-						}
-					}
+				for _, impl := range l.Implementations() {
+					apiIfaceFactory[impl.Of()] = ""
 				}
 
 				for _, structOrInterface := range l.API() {
@@ -99,11 +89,20 @@ func generateLayers(ctx *genctx) error {
 
 				}
 
-				for _, funcOrStruct := range l.Factories() {
-					if fun, ok := funcOrStruct.(*ddd.FuncSpec); ok {
-						md.H5("Factory *" + fun.Name() + "*")
-						md.P("The API factory method *" + fun.Name() + "* " + text.TrimComment(fun.Comment()))
+				for _, impl := range l.Implementations() {
+					md.H5("Factory *" + impl.Of() + "*")
+					md.Print("The API factory method *" + impl.Of() + "Factory* creates an instance.\n")
+					if len(impl.Requires()) > 0 {
+						md.Print("It requires the interfaces *" + strings.Join(impl.Requires(), "*, *") + "* as dependencies.\n")
 					}
+
+					if len(impl.Options().Fields()) > 0 {
+						md.Print("The instance must be configured using the following options:\n")
+						for _, field := range impl.Options().Fields() {
+							md.Print(" * " + field.Name() + " (" + field.Comment() + ")\n")
+						}
+					}
+					md.Print("\n")
 				}
 
 				diagram := md.UML(bc.Name() + " core API")

@@ -111,7 +111,9 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 			}
 
 			appendStructOrInterfaces(&tlayer, l.API())
-			appendFuncOrStructs(&tlayer, l.Factories())
+			for _, impl := range l.Implementations() {
+				appendFuncOrStructs(&tlayer, []ddd.FuncOrStruct{impl.Options()})
+			}
 			r.core = tlayer
 
 		case *ddd.UseCaseLayerSpec:

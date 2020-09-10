@@ -16,7 +16,7 @@ architecture and related documentation.
 
 ## Alternatives
 
-Actually, only [goa](https://goa.design/) is known.
+* [goa](https://goa.design/) seems to be very similar and quite popular.
 However, *goa* neither enforces a *domain driven design*
 nor does it provide a
 meaningful, typesafe and autocompletion friendly
@@ -24,6 +24,11 @@ DSL. It does also not support planned features,
 especially with regard to an automatic project 
 documentation, deep integrations of frontends or 
 other backend languages.
+* [gozero](https://github.com/tal-tech/go-zero/blob/master/readme-en.md) shares also some basic ideas and seems
+to enforce a better structure than goa, but otherwise it lacks the same features.
+They also use a custom API DSL, which have its own pros and cons. Also, most of its documentation seems to be in chinese,
+which makes it harder to understand. In a random sample, the source code itself seems not be documented at all. 
+* [kok](https://github.com/RussellLuo/kok) is a generator toolkit for [gokit](https://github.com/go-kit/kit)
 
 ## domain driven design, variant 1
 

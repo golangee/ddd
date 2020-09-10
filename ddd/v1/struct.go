@@ -14,8 +14,6 @@
 
 package ddd
 
-import "strings"
-
 // A StructSpec represents a simple data class. It is usually treated as a value type.
 type StructSpec struct {
 	name    string
@@ -81,20 +79,55 @@ func (s *StructSpec) Walk(f func(obj interface{}) error) error {
 // A FieldSpec represents a public field or attribute of a data class. The data type of a field is itself usually
 // treated as a value type.
 type FieldSpec struct {
-	comment  []string
-	name     string
-	typeName TypeName
-	pos      Pos
+	comment        string
+	name           string
+	typeName       TypeName
+	optional       bool
+	pos            Pos
+	defaultLiteral string
+	jsonName       string
 }
 
 // Field is a factory for a FieldSpec.
-func Field(name string, typeName TypeName, comment ...string) *FieldSpec {
+func Field(name string, typeName TypeName, comment string) *FieldSpec {
 	return &FieldSpec{
 		comment:  comment,
 		name:     name,
 		typeName: typeName,
 		pos:      capturePos("Field", 1),
 	}
+}
+
+// SetOptional indicates if this field may be nil, if it declares a pointer type or if the default value makes
+// any sense. This also influences also how other values are parsed or omitted.
+func (f *FieldSpec) SetOptional(optional bool) *FieldSpec {
+	f.optional = optional
+	return f
+}
+
+// Optional returns the optional flag.
+func (f *FieldSpec) Optional() bool {
+	return f.optional
+}
+
+// SetDefault contains a literal to be used to initialize the value, if it is optional and absent or unparseable.
+// It also sets automatically SetOptional to true
+func (f *FieldSpec) SetDefault(literal string) *FieldSpec {
+	f.defaultLiteral = literal
+	f.SetOptional(true)
+	return f
+}
+
+// SetJsonName sets the json serialization name. Default is empty and conventionally the "package private" name
+// (camel case with lower case starting)
+func (f *FieldSpec) SetJsonName(name string) *FieldSpec {
+	f.jsonName = name
+	return f
+}
+
+// JsonName returns an alternative name to use or use the default if empty.
+func (f *FieldSpec) JsonName() string {
+	return f.jsonName
 }
 
 // Name of the field.
@@ -104,7 +137,7 @@ func (f *FieldSpec) Name() string {
 
 // Comment of the field.
 func (f *FieldSpec) Comment() string {
-	return strings.Join(f.comment, "\n")
+	return f.comment
 }
 
 // Pos for debugging.

@@ -28,6 +28,8 @@ github.com/golangee/src v0.0.0-20200908091854-9a620910aca5 h1:i034I7GcKJBlg1c+S7
 github.com/golangee/src v0.0.0-20200908091854-9a620910aca5/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/golangee/src v0.0.0-20200908123223-79f43d1e136e h1:RqEy7Rt92fDpQnGd3vuV4SE5toyGdkUFaXc1TWqwdxI=
 github.com/golangee/src v0.0.0-20200908123223-79f43d1e136e/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20200910095407-52992f047c82 h1:dG2MADMRCsGi40K+kqKmRNwfDmu25OIv0sFnGIBA9vU=
+github.com/golangee/src v0.0.0-20200910095407-52992f047c82/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/golangee/uuid v0.0.0-20200908112435-4e82cb965bfd h1:5gLVwkMBIp8QkADQHnu4AksYXbsf17b4Qjx3d1z3dt8=
 github.com/golangee/uuid v0.0.0-20200908112435-4e82cb965bfd/go.mod h1:i+BaPFNyXGweWAc/GX3OniM1pz/m1qLja81YgJZOrMQ=
 github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
