@@ -11,13 +11,13 @@ import (
 // Book is a book with meta data to index and find.
 type Book struct {
 	// ID is the unique id of a book.
-	ID uuid.UUID `json:"id" `
+	ID uuid.UUID `json:"id"`
 	// Title is the title for the book.
-	Title string `json:"title" `
+	Title string `json:"title"`
 	// Special is a test for importing a custom type.
-	Special uuid1.UUID `json:"special" `
+	Special uuid1.UUID `json:"special"`
 	// Tags to describe a book.
-	Tags []string `json:"tags" `
+	Tags []string `json:"tags"`
 }
 
 // BookRepository is a repository to handle books.

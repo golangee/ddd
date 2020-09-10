@@ -118,6 +118,11 @@ func (f *FieldSpec) SetDefault(literal string) *FieldSpec {
 	return f
 }
 
+// Default returns the default literal
+func (f *FieldSpec) Default() string {
+	return f.defaultLiteral
+}
+
 // SetJsonName sets the json serialization name. Default is empty and conventionally the "package private" name
 // (camel case with lower case starting)
 func (f *FieldSpec) SetJsonName(name string) *FieldSpec {

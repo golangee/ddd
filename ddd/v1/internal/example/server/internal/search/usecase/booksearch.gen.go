@@ -60,15 +60,15 @@ type BookSearch interface {
 // AutoCompleteValue represents an auto completed value.
 type AutoCompleteValue struct {
 	// Value is the value to complete.
-	Value string `json:"value" `
+	Value string `json:"value"`
 	// Score the probability of importance.
-	Score float32 `json:"score" `
+	Score float32 `json:"score"`
 	// Synonyms alternative search suggestions.
-	Synonyms []string `json:"synonyms" `
+	Synonyms []string `json:"synonyms"`
 }
 
 // BookTitleSpec is for changing book titles.
 type BookTitleSpec struct {
 	// Title is a title.
-	Title string `json:"title,omitempty" `
+	Title string `json:"title,omitempty"`
 }

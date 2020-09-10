@@ -9,15 +9,15 @@ import (
 // Book is a book to loan or rent.
 type Book struct {
 	// ID is the unique id of a book.
-	ID uuid.UUID `json:"id" `
+	ID uuid.UUID `json:"id"`
 	// ISBN the international number.
-	ISBN int64 `json:"iSBN" `
+	ISBN int64 `json:"iSBN"`
 	// LoanedBy is either nil or the user id.
-	LoanedBy *uuid.UUID `json:"loanedBy" `
+	LoanedBy *uuid.UUID `json:"loanedBy"`
 }
 
 // User is a library customer.
 type User struct {
 	// ID is the unique id of the user.
-	ID uuid.UUID `json:"id" `
+	ID uuid.UUID `json:"id"`
 }

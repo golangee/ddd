@@ -2,6 +2,11 @@
 
 package core
 
+import (
+	json "encoding/json"
+	flag "flag"
+)
+
 // SearchServiceFactory is the factory function to create a new instance of SearchService.
 //
 // The parameter 'opts' contains the options to create the instance.
@@ -18,5 +23,34 @@ var SearchServiceFactory = func(opts SearchServiceOpts, bookRepository BookRepos
 // SearchServiceOpts provides the options for creating a new instance of SearchService.
 type SearchServiceOpts struct {
 	// FulltextSearch is a flag to enable fulltext search in items.
-	FulltextSearch bool `json:"full-text-SEARCH,omitempty" `
+	FulltextSearch bool `json:"full-text-SEARCH,omitempty"`
+	// Namespace is a weired option.
+	Namespace string `json:"namespace"`
+}
+
+// String serializes the struct into a json string.
+func (s *SearchServiceOpts) String() string {
+	buf, err := json.Marshal(s)
+	if err != nil {
+		panic("invalid state: " + err.Error())
+	}
+
+	return string(buf)
+}
+
+// Parse tries to parse the given buffer as json and updates the current values accordingly.
+func (s *SearchServiceOpts) Parse(buf []byte) error {
+	if err := json.Unmarshal(buf, s); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ParseEnv parses the environment variables for the following flags:
+//  * SEARCH.CORE.FULLTEXTSEARCH as bool. The default value is 'false'. FulltextSearch is a flag to enable fulltext search in items.
+//  * SEARCH.CORE.NAMESPACE as string. The default value is ''. Namespace is a weired option.
+func (s *SearchServiceOpts) ParseEnv() {
+	flag.BoolVar(&s.FulltextSearch, "SEARCH.CORE.FULLTEXTSEARCH", false, "FulltextSearch is a flag to enable fulltext search in items.")
+	flag.StringVar(&s.Namespace, "SEARCH.CORE.NAMESPACE", "", "Namespace is a weired option.")
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/golangee/src"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -71,7 +72,7 @@ func generateLayers(ctx *genctx) error {
 				facs := ctx.newFile(corePath, "factories", "")
 				for _, impl := range l.Implementations() {
 
-					fun, opt, err := generateFactoryFunc(rslv, rUniverse|rCore, impl)
+					fun, opt, err := generateFactoryFunc(strings.ToUpper(bc.Name()+"."+l.Name()+"."), rslv, rUniverse|rCore, impl)
 					if err != nil {
 						return fmt.Errorf("%s: %w", layer.Name(), err)
 					}
@@ -131,9 +132,15 @@ func generateLayers(ctx *genctx) error {
 	return nil
 }
 
-func generateFactoryFunc(rslv *resolver, scopes resolverScope, impl *ddd.ServiceImplSpec) (*src.FuncBuilder, *src.TypeBuilder, error) {
+func generateFactoryFunc(envPrefix string, rslv *resolver, scopes resolverScope, impl *ddd.ServiceImplSpec) (*src.FuncBuilder, *src.TypeBuilder, error) {
 	strct, err := generateStruct(rslv, rUniverse|rCore, impl.Options())
 	if err != nil {
+		return nil, nil, err
+	}
+
+	strct.AddMethodToJson("String", true, true, true)
+	strct.AddMethodFromJson("Parse")
+	if err := generateEnvFlagsConfigure(envPrefix, "ParseEnv", strct, impl.Options()); err != nil {
 		return nil, nil, err
 	}
 
@@ -228,10 +235,6 @@ func generateStruct(rslv *resolver, scopes resolverScope, t *ddd.StructSpec) (*s
 	return s, nil
 }
 
-func addStructJsonMethods(t *src.TypeBuilder){
-
-}
-
 func generateInterface(rslv *resolver, scopes resolverScope, t *ddd.InterfaceSpec) (*src.TypeBuilder, error) {
 	s := src.NewInterface(t.Name())
 	s.SetDoc(t.Comment())
@@ -245,4 +248,36 @@ func generateInterface(rslv *resolver, scopes resolverScope, t *ddd.InterfaceSpe
 	}
 
 	return s, nil
+}
+
+func generateEnvFlagsConfigure(envPrefix, name string, rec *src.TypeBuilder, origin *ddd.StructSpec) error {
+	fun := src.NewFunc(name).SetPointerReceiver(true)
+	rec.AddMethods(fun)
+	body := src.NewBlock()
+	comment := "... parses the environment variables for the following flags:\n"
+	for i, field := range rec.Fields() {
+		oType := origin.Fields()[i]
+		envName := envPrefix + strings.ToUpper(field.Name())
+		fieldComment := field.Name() + " " + text.TrimComment(field.Doc())
+		comment += " * " + envName + " as " + string(oType.TypeName()) + ". The default value is '" + oType.Default() + "'. " + fieldComment + "\n"
+		switch oType.TypeName() {
+		case "string":
+			literal := oType.Default()
+			if literal == "" {
+				literal = `""`
+			}
+			body.AddLine(src.NewTypeDecl("flag.StringVar"), "(&", fun.ReceiverName(), ".", field.Name(), ",", strconv.Quote(envName), ",", literal, ",", strconv.Quote(fieldComment), ")")
+		case "bool":
+			literal := oType.Default()
+			if literal == "" {
+				literal = `false`
+			}
+			body.AddLine(src.NewTypeDecl("flag.BoolVar"), "(&", fun.ReceiverName(), ".", field.Name(), ",", strconv.Quote(envName), ",", literal, ",", strconv.Quote(fieldComment), ")")
+		default:
+			return buildErr("TypeName", string(oType.TypeName()), "is not supported to be parsed from an environment variable", oType.Pos())
+		}
+	}
+	fun.AddBody(body)
+	fun.SetDoc(comment)
+	return nil
 }
