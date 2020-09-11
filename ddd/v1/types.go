@@ -19,20 +19,21 @@ package ddd
 type TypeName string
 
 const (
-	Int64   TypeName = "int64"
-	Int32   TypeName = "int32"
-	Bool    TypeName = "bool"
-	Float32 TypeName = "float32"
-	Float64 TypeName = "float64"
-	Int16   TypeName = "int16"
-	Int8    TypeName = "int8"
-	Byte    TypeName = "byte"
-	String  TypeName = "string"
-	UUID    TypeName = "uuid"
-	Error   TypeName = "error"
-	Reader  TypeName = "io.Reader"
-	Writer  TypeName = "io.Writer"
-	Ctx     TypeName = "context.Context"
+	Int64    TypeName = "int64"
+	Int32    TypeName = "int32"
+	Bool     TypeName = "bool"
+	Float32  TypeName = "float32"
+	Float64  TypeName = "float64"
+	Int16    TypeName = "int16"
+	Int8     TypeName = "int8"
+	Byte     TypeName = "byte"
+	String   TypeName = "string"
+	UUID     TypeName = "uuid"
+	Error    TypeName = "error"
+	Reader   TypeName = "io.Reader"
+	Writer   TypeName = "io.Writer"
+	Ctx      TypeName = "context.Context"
+	Duration TypeName = "time.Duration"
 )
 
 // StructOrInterface is a marker interface to declare a sum type of accepting either Struct or Interface types.

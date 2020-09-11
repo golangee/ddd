@@ -26,11 +26,33 @@ func init() {
 	})
 
 	AddStringParser(func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error) {
+		if targetType.Qualifier() == "float64" {
+			return src.NewBlock().Add(src.NewTypeDecl("strconv.ParseFloat"), "(", fromStrCode, ", 64)"), nil
+		}
+		return nil, NotSupportedErr
+	})
+
+	AddStringParser(func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error) {
 		if targetType.Qualifier() == "github.com/golangee/uuid.UUID" {
 			return src.NewBlock().Add(src.NewTypeDecl("github.com/golangee/uuid.Parse"), "(", fromStrCode, ")"), nil
 		}
 		return nil, NotSupportedErr
 	})
+
+	AddStringParser(func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error) {
+		if targetType.Qualifier() == "bool" {
+			return src.NewBlock().Add(src.NewTypeDecl("strconv.ParseBool"), "(", fromStrCode, ")"), nil
+		}
+		return nil, NotSupportedErr
+	})
+
+	AddStringParser(func(fromStrCode string, targetType *src.TypeDecl) (*src.Block, error) {
+		if targetType.Qualifier() == "time.Duration" {
+			return src.NewBlock().Add(src.NewTypeDecl("time.ParseDuration"), "(", fromStrCode, ")"), nil
+		}
+		return nil, NotSupportedErr
+	})
+
 }
 
 // AddStringParser registers another StringParser for the REST parameter deserialization.
@@ -317,6 +339,15 @@ func createHandlerFuncFactory(resFile *src.FileBuilder, myParamsInGenFieldOrder 
 	return hFun, nil
 }
 
+func genParseStr(fromName string, targetType *src.TypeDecl) (*src.Block, error) {
+	for _, parser := range restParamParsers {
+		if code, err := parser(fromName, targetType); err == nil {
+			return code, nil
+		}
+	}
+	return nil, fmt.Errorf("REST: don't know how to parse '" + targetType.String() + "' from string")
+}
+
 // parseVarFromStr emits a helper block to parse various types from a string.
 func parseVarFromStr(toName, fromName string, targetType *src.TypeDecl, optional bool) (*src.Block, error) {
 	if targetType.Qualifier() == "string" {
@@ -331,17 +362,12 @@ func parseVarFromStr(toName, fromName string, targetType *src.TypeDecl, optional
 	} else {
 		block.Add("if ", toName, ", err = ")
 	}
-	parsed := false
-	for _, parser := range restParamParsers {
-		if code, err := parser(fromName, targetType); err == nil {
-			parsed = true
-			block.Add(code)
-			break
-		}
+	code, err := genParseStr(fromName, targetType)
+	if err != nil {
+		return nil, err
 	}
-	if !parsed {
-		return nil, fmt.Errorf("REST: don't know how to parse '" + targetType.String() + "' from string")
-	}
+
+	block.Add(code)
 
 	if !optional {
 		block.AddLine("; err != nil {")

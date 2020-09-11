@@ -5,6 +5,10 @@ package core
 import (
 	json "encoding/json"
 	flag "flag"
+	fmt "fmt"
+	os "os"
+	strconv "strconv"
+	time "time"
 )
 
 // SearchServiceFactory is the factory function to create a new instance of SearchService.
@@ -25,7 +29,13 @@ type SearchServiceOpts struct {
 	// FulltextSearch is a flag to enable fulltext search in items.
 	FulltextSearch bool `json:"full-text-SEARCH,omitempty"`
 	// Namespace is a weired option.
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
+	// MyInt64 is an int64.
+	MyInt64 int64 `json:"myInt64"`
+	// MyFloat64 is a float64.
+	MyFloat64 float64 `json:"myFloat64,omitempty"`
+	// MyDuration is a duration.
+	MyDuration time.Duration `json:"myDuration"`
 }
 
 // String serializes the struct into a json string.
@@ -47,10 +57,82 @@ func (s *SearchServiceOpts) Parse(buf []byte) error {
 	return nil
 }
 
-// ParseEnv parses the environment variables for the following flags:
-//  * SEARCH.CORE.FULLTEXTSEARCH as bool. The default value is 'false'. FulltextSearch is a flag to enable fulltext search in items.
-//  * SEARCH.CORE.NAMESPACE as string. The default value is ''. Namespace is a weired option.
-func (s *SearchServiceOpts) ParseEnv() {
-	flag.BoolVar(&s.FulltextSearch, "SEARCH.CORE.FULLTEXTSEARCH", false, "FulltextSearch is a flag to enable fulltext search in items.")
-	flag.StringVar(&s.Namespace, "SEARCH.CORE.NAMESPACE", "", "Namespace is a weired option.")
+// ConfigureFlags configures the flags to be ready to get evaluated. The default values are taken from the struct at calling time.
+// After calling, use flag.Parse() to load the values. You can only use it once, otherwise the flag package will panic.
+// The following flags will be tied to this instance:
+//  * FulltextSearch is parsed from flag 'search-core-fulltextsearch'
+//  * Namespace is parsed from flag 'search-core-namespace'
+//  * MyInt64 is parsed from flag 'search-core-myint64'
+//  * MyFloat64 is parsed from flag 'search-core-myfloat64'
+//  * MyDuration is parsed from flag 'search-core-myduration'
+func (s *SearchServiceOpts) ConfigureFlags() {
+	flag.BoolVar(&s.FulltextSearch, "search-core-fulltextsearch", s.FulltextSearch, "FulltextSearch is a flag to enable fulltext search in items.")
+	flag.StringVar(&s.Namespace, "search-core-namespace", s.Namespace, "Namespace is a weired option.")
+	flag.Int64Var(&s.MyInt64, "search-core-myint64", s.MyInt64, "MyInt64 is an int64.")
+	flag.Float64Var(&s.MyFloat64, "search-core-myfloat64", s.MyFloat64, "MyFloat64 is a float64.")
+	flag.DurationVar(&s.MyDuration, "search-core-myduration", s.MyDuration, "MyDuration is a duration.")
+}
+
+// Reset restores this instance to the default state.
+//  * The default value of FulltextSearch is 'false'.
+//  * The default value of Namespace is '"some ugly stuff"'.
+//  * The default value of MyInt64 is '0'.
+//  * The default value of MyFloat64 is '5'.
+//  * The default value of MyDuration is '0'.
+func (s *SearchServiceOpts) Reset() {
+	s.FulltextSearch = false
+	s.Namespace = "some ugly stuff"
+	s.MyInt64 = 0
+	s.MyFloat64 = 5
+	s.MyDuration = 0
+}
+
+// ParseEnv tries to parse the environment variables into this instance. It will only set those values, which have been actually defined. If values cannot be parsed, an error is returned.
+//  * FulltextSearch is parsed from flag 'SEARCH_CORE_FULLTEXTSEARCH'
+//  * Namespace is parsed from flag 'SEARCH_CORE_NAMESPACE'
+//  * MyInt64 is parsed from flag 'SEARCH_CORE_MYINT64'
+//  * MyFloat64 is parsed from flag 'SEARCH_CORE_MYFLOAT64'
+//  * MyDuration is parsed from flag 'SEARCH_CORE_MYDURATION'
+func (s *SearchServiceOpts) ParseEnv() error {
+	if value, ok := os.LookupEnv("SEARCH_CORE_FULLTEXTSEARCH"); ok {
+		v, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'SEARCH_CORE_FULLTEXTSEARCH': %w", err)
+		}
+
+		s.FulltextSearch = v
+	}
+
+	if value, ok := os.LookupEnv("SEARCH_CORE_NAMESPACE"); ok {
+		s.Namespace = value
+	}
+
+	if value, ok := os.LookupEnv("SEARCH_CORE_MYINT64"); ok {
+		v, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'SEARCH_CORE_MYINT64': %w", err)
+		}
+
+		s.MyInt64 = v
+	}
+
+	if value, ok := os.LookupEnv("SEARCH_CORE_MYFLOAT64"); ok {
+		v, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'SEARCH_CORE_MYFLOAT64': %w", err)
+		}
+
+		s.MyFloat64 = v
+	}
+
+	if value, ok := os.LookupEnv("SEARCH_CORE_MYDURATION"); ok {
+		v, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'SEARCH_CORE_MYDURATION': %w", err)
+		}
+
+		s.MyDuration = v
+	}
+
+	return nil
 }

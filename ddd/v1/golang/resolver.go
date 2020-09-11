@@ -83,8 +83,28 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 				typeDecl: src.NewTypeDecl("int64"),
 			},
 			{
+				typeName: ddd.Int32,
+				typeDecl: src.NewTypeDecl("int32"),
+			},
+			{
+				typeName: ddd.Int16,
+				typeDecl: src.NewTypeDecl("int16"),
+			},
+			{
+				typeName: ddd.Int8,
+				typeDecl: src.NewTypeDecl("int8"),
+			},
+			{
+				typeName: ddd.Byte,
+				typeDecl: src.NewTypeDecl("byte"),
+			},
+			{
 				typeName: ddd.Float32,
 				typeDecl: src.NewTypeDecl("float32"),
+			},
+			{
+				typeName: ddd.Float64,
+				typeDecl: src.NewTypeDecl("float64"),
 			},
 			{
 				typeName: ddd.Bool,

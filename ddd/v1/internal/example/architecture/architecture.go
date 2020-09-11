@@ -61,7 +61,12 @@ func main() {
 							Field("FulltextSearch", Bool, "...is a flag to enable fulltext search in items.").
 								SetDefault("false").
 								SetJsonName("full-text-SEARCH"),
-							Field("Namespace", String, "...is a weired option."),
+							Field("Namespace", String, "...is a weired option.").
+								SetDefault("\"some ugly stuff\""),
+							Field("MyInt64", Int64, "... is an int64."),
+							Field("MyFloat64", Float64, "... is a float64.").
+								SetDefault("5"),
+							Field("MyDuration", Duration, "... is a duration."),
 						),
 					),
 
