@@ -13,9 +13,22 @@ import (
 )
 
 type genctx struct {
-	mod   mod.Modules
-	spec  *ddd.AppSpec
-	files []genfile
+	mod          mod.Modules
+	spec         *ddd.AppSpec
+	files        []genfile
+	factorySpecs []*factorySpec
+}
+
+type factorySpec struct {
+	file        *src.FileBuilder
+	factoryFunc *src.FuncBuilder
+	options     *src.TypeBuilder
+}
+
+type keyValue struct {
+	key     string
+	val     string
+	comment string
 }
 
 type genfile struct {
@@ -25,6 +38,7 @@ type genfile struct {
 	file        *src.FileBuilder
 }
 
+// newFile allocates a new go source file. If pkgname is empty, it will be set to the last segment of path.
 func (g *genctx) newFile(path, fname, pkgname string) *src.FileBuilder {
 	if pkgname == "" {
 		pkgname = filepath.Base(strings.ToLower(path))
@@ -42,6 +56,14 @@ func (g *genctx) newFile(path, fname, pkgname string) *src.FileBuilder {
 	g.files = append(g.files, f)
 
 	return f.file
+}
+
+func (g *genctx) addFactorySpec(file *src.FileBuilder, factoryFunc *src.FuncBuilder, opts *src.TypeBuilder) {
+	g.factorySpecs = append(g.factorySpecs, &factorySpec{
+		file:        file,
+		factoryFunc: factoryFunc,
+		options:     opts,
+	})
 }
 
 func (g *genctx) emit() error {

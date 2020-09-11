@@ -58,6 +58,11 @@ func (g *generator) make() error {
 		return err
 	}
 
+	// generateLayer has collected a bunch of stuff, which we need to create the actual app
+	if err := generateApp(gctx); err != nil {
+		return err
+	}
+
 	if err := gctx.emit(); err != nil {
 		return err
 	}

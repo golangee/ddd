@@ -5,7 +5,7 @@ package core
 import (
 	context "context"
 	uuid "github.com/golangee/uuid"
-	uuid1 "github.com/google/uuid"
+	googleuuid "github.com/google/uuid"
 )
 
 // Book is a book with meta data to index and find.
@@ -15,7 +15,7 @@ type Book struct {
 	// Title is the title for the book.
 	Title string `json:"title"`
 	// Special is a test for importing a custom type.
-	Special uuid1.UUID `json:"special"`
+	Special googleuuid.UUID `json:"special"`
 	// Tags to describe a book.
 	Tags []string `json:"tags"`
 }

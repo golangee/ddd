@@ -21,3 +21,9 @@ type User struct {
 	// ID is the unique id of the user.
 	ID uuid.UUID `json:"id"`
 }
+
+// LoanService provides stuff to loan all the things.
+type LoanService interface {
+	// LoanIt loans a book.
+	LoanIt()
+}

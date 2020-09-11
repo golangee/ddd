@@ -244,6 +244,19 @@ func main() {
 						Struct("User", "... is a library customer.",
 							Field("ID", UUID, "...is the unique id of the user."),
 						),
+						Interface("LoanService", "...provides stuff to loan all the things.",
+							Func("LoanIt", "...loans a book.",
+								In(),
+								Out(),
+							),
+						),
+					),
+					Implementation(
+						"LoanService",
+						Requires(),
+						Options(
+							Field("Test", String, "...a test string."),
+						),
 					),
 				),
 				UseCases(
