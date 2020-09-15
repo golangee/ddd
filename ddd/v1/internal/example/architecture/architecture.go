@@ -76,64 +76,70 @@ func main() {
 				UseCases(
 					Epic("BookSearch",
 						"...provides all user stories involved in searching books.",
-						Story("As a searcher, I want to search for keywords, so that I must not know the title or author.",
-							Func("FindByTags", "...searches for tags only.",
-								In(
-									WithContext(),
-									Var("query", String, "...provides tokens to search for, separated by spaces or commas."),
-								),
-								Out(
-									Return(Slice("Book"), "...is a list of books which match to the query."),
-									Err(),
-								),
-							),
-						),
-						Story("As a searcher, I want to have an autocomplete so that I get support while typing my keywords.",
-							Func("Autocomplete", "...proposes autocompletion values.",
-								In(
-									WithContext(),
-									Var("text", String, "...is the text to autocomplete."),
-								),
-								Out(
-									Return(Slice("AutoCompleteValue"), "...is a list of proposals."),
-									Err(),
-								),
-							),
-							Struct("AutoCompleteValue",
-								"...represents an auto completed value.",
-								Field("Value", String, "...is the value to complete."),
-								Field("Score", Float32, "...the probability of importance."),
-								Field("Synonyms", Slice(String), "...alternative search suggestions."),
-							),
-						),
-						Story("As a searcher, I want to see book details, because I need to proof the relevance of the result.",
-							Func("Details", "...returns the details of a book.",
-								In(
-									WithContext(),
-									Var("id", UUID, "...is the Id of a book."),
-								),
-								Out(
-									Return("Book", "...is the according book."),
-									Err(),
-								),
-							),
-						),
+						Stories(
 
-						Story("As a book admin, I want to change a title, because the book has a typo.",
-							Func("ChangeBookTitle", "...changes the book title.",
-								In(
-									Var("titleModel", "BookTitleSpec", "... is to short."),
+							Story("As a searcher, I want to search for keywords, so that I must not know the title or author.",
+								Func("FindByTags", "...searches for tags only.",
+									In(
+										WithContext(),
+										Var("query", String, "...provides tokens to search for, separated by spaces or commas."),
+									),
+									Out(
+										Return(Slice("Book"), "...is a list of books which match to the query."),
+										Err(),
+									),
 								),
-								Out(
-									Return("Book", "... the updated book."),
-									Err(),
-								),
-
 							),
-							Struct("BookTitleSpec", "...is for changing book titles.",
-								Field("Title", String, "... is a title.").SetOptional(true),
+							Story("As a searcher, I want to have an autocomplete so that I get support while typing my keywords.",
+								Func("Autocomplete", "...proposes autocompletion values.",
+									In(
+										WithContext(),
+										Var("text", String, "...is the text to autocomplete."),
+									),
+									Out(
+										Return(Slice("AutoCompleteValue"), "...is a list of proposals."),
+										Err(),
+									),
+								),
+								Struct("AutoCompleteValue",
+									"...represents an auto completed value.",
+									Field("Value", String, "...is the value to complete."),
+									Field("Score", Float32, "...the probability of importance."),
+									Field("Synonyms", Slice(String), "...alternative search suggestions."),
+								),
+							),
+							Story("As a searcher, I want to see book details, because I need to proof the relevance of the result.",
+								Func("Details", "...returns the details of a book.",
+									In(
+										WithContext(),
+										Var("id", UUID, "...is the Id of a book."),
+									),
+									Out(
+										Return("Book", "...is the according book."),
+										Err(),
+									),
+								),
 							),
 
+							Story("As a book admin, I want to change a title, because the book has a typo.",
+								Func("ChangeBookTitle", "...changes the book title.",
+									In(
+										Var("titleModel", "BookTitleSpec", "... is to short."),
+									),
+									Out(
+										Return("Book", "... the updated book."),
+										Err(),
+									),
+
+								),
+								Struct("BookTitleSpec", "...is for changing book titles.",
+									Field("Title", String, "... is a title.").SetOptional(true),
+								),
+
+							),
+						),
+						Options(
+							Field("EpicFeatureFlag", Bool, "...turns the magic feature on, if set to true."),
 						),
 					),
 
@@ -261,25 +267,28 @@ func main() {
 				),
 				UseCases(
 					Epic("BookLoaning", "...provides all stories around loaning books.",
-						Story("As a book loaner, I have to scan the books barcode, so that I can take it with me.",
-							Func("Rent", "...loans a book.",
-								In(
-									WithContext(),
-									Var("bookId", UUID, "...is the id of the book."),
-									Var("userId", UUID, "...is the id of the user, who loans the book."),
+						Stories(
+							Story("As a book loaner, I have to scan the books barcode, so that I can take it with me.",
+								Func("Rent", "...loans a book.",
+									In(
+										WithContext(),
+										Var("bookId", UUID, "...is the id of the book."),
+										Var("userId", UUID, "...is the id of the user, who loans the book."),
+									),
+									Out(Err()),
 								),
-								Out(Err()),
+							),
+							Story("As a library staff, I have to check a customers library card, so that I can ensure that only actual customers can enter and loan books.",
+								Func("CheckCustomerId", "...validates if the user is registered and active.",
+									In(
+										WithContext(),
+										Var("userId", UUID, "...is the users id."),
+									),
+									Out(Err()),
+								),
 							),
 						),
-						Story("As a library staff, I have to check a customers library card, so that I can ensure that only actual customers can enter and loan books.",
-							Func("CheckCustomerId", "...validates if the user is registered and active.",
-								In(
-									WithContext(),
-									Var("userId", UUID, "...is the users id."),
-								),
-								Out(Err()),
-							),
-						),
+						Options(),
 
 					),
 				),
@@ -296,7 +305,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	const uml = true
+	const uml = false
 
 	if uml {
 		prj, err := architecture.Detect()

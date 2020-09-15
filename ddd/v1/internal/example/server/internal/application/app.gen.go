@@ -4,7 +4,9 @@ package application
 
 import (
 	loancore "example-server/internal/loan/core"
+	loanusecase "example-server/internal/loan/usecase"
 	core "example-server/internal/search/core"
+	usecase "example-server/internal/search/usecase"
 	flag "flag"
 	fmt "fmt"
 	os "os"
@@ -13,7 +15,9 @@ import (
 // App is the actual application, which glues all layers together and is launched from the command line.
 type App struct {
 	searchService core.SearchService
+	bookSearch    usecase.BookSearch
 	loanService   loancore.LoanService
+	bookLoaning   loanusecase.BookLoaning
 }
 
 // Start launches any blocking background processes, like e.g. an http server.
@@ -38,11 +42,20 @@ func NewApp() (*App, error) {
 		os.Exit(0)
 	}
 	a := &App{}
+	// TODO dependency to bookRepository of type BookRepository cannot be resolved.
 	if a.searchService, err = core.SearchServiceFactory(options.SearchCoreSearchServiceOpts, nil); err != nil {
 		return nil, err
 	}
 
+	if a.bookSearch, err = usecase.BookSearchFactory(options.SearchUsecaseBookSearchOpts, a.searchService); err != nil {
+		return nil, err
+	}
+
 	if a.loanService, err = loancore.LoanServiceFactory(options.LoanCoreLoanServiceOpts); err != nil {
+		return nil, err
+	}
+
+	if a.bookLoaning, err = loanusecase.BookLoaningFactory(options.LoanUsecaseBookLoaningOpts, a.loanService); err != nil {
 		return nil, err
 	}
 

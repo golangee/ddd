@@ -26,6 +26,9 @@ type Layer interface {
 	// Stereotype of the layer
 	Stereotype() Stereotype
 
+	// Pos returns the debug position.
+	Pos() Pos
+
 	// Walk through all nested objects, including self as root.
 	Walk(f func(obj interface{}) error) error
 }

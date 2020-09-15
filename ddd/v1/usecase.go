@@ -14,11 +14,14 @@
 
 package ddd
 
+import "github.com/golangee/architecture/ddd/v1/internal/text"
+
 // A UseCaseLayerSpec represents a stereotyped USECASE Layer.
 type UseCaseLayerSpec struct {
 	name        string
 	description string
 	cases       []*EpicSpec
+	pos         Pos
 }
 
 // Walks loops over self and use cases.
@@ -56,16 +59,23 @@ func (u *UseCaseLayerSpec) Stereotype() Stereotype {
 	return USECASE
 }
 
-// UseCases is a factory for a UseCaseLayerSpec. A use case can only ever import Core API. Besides various instances
+// UseCases is a factory for a UseCaseLayerSpec (which is the application layer in ddd).
+// A use case can only ever import Core API. Besides various instances
 // of Epic, it may also define package specific data models.
-func UseCases(cases ...*EpicSpec) *UseCaseLayerSpec {
+func UseCases(epics ...*EpicSpec) *UseCaseLayerSpec {
 	return &UseCaseLayerSpec{
-		name: "usecases",
+		name: "Usecases",
 		description: "Package usecase contains all domain specific use cases for the current bounded context.\n" +
 			"It contains an exposed public API to be imported by PRESENTATION layers. \n" +
 			"It provides a private implementation of the use cases accessible by factory functions.",
-		cases: cases,
+		cases: epics,
+		pos:   capturePos("UseCases", -1),
 	}
+}
+
+// Pos returns the debug position.
+func (u *UseCaseLayerSpec) Pos() Pos {
+	return u.pos
 }
 
 // An EpicSpec contains different actors to accomplish a larger goal. This may be also called a use case.
@@ -74,21 +84,34 @@ type EpicSpec struct {
 	name    string
 	comment string
 	stories []*UserStorySpec
+	options *StructSpec
 }
 
 // Epic declares a use case consisting of user stories. The name must be a valid public identifier, because
 // it will be used as the enclosing interface for all contained stories.
-func Epic(name, comment string, stories ...*UserStorySpec) *EpicSpec {
-	return &EpicSpec{
+func Epic(name, comment string, stories []*UserStorySpec, params *EnvParams) *EpicSpec {
+	e := &EpicSpec{
 		name:    name,
 		comment: comment,
 		stories: stories,
+		options: (*StructSpec)(params),
 	}
+
+	// code duplication and must be equal to Implementation()
+	e.options.name = text.MakePublic(name) + "Opts"
+	e.options.comment = "... provides the options for creating a new instance of " + text.MakePublic(name) + "."
+
+	return e
 }
 
 // Name returns current name.
 func (u *EpicSpec) Name() string {
 	return u.name
+}
+
+// Options returns the options struct for the entire epic.
+func (u *EpicSpec) Options() *StructSpec {
+	return u.options
 }
 
 // Comment of the use case.
@@ -113,7 +136,16 @@ func (u *EpicSpec) Walk(f func(obj interface{}) error) error {
 		}
 	}
 
+	if err := u.options.Walk(f); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// Stories returns a slice of UserStorySpec.
+func Stories(stories ...*UserStorySpec) []*UserStorySpec {
+	return stories
 }
 
 // UserStorySpec contains a story and the representing calling endpoint and potential types, if not already defined

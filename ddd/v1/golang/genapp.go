@@ -3,6 +3,7 @@ package golang
 import (
 	"github.com/golangee/architecture/ddd/v1/internal/text"
 	"github.com/golangee/src"
+	"strconv"
 	"strings"
 )
 
@@ -83,18 +84,48 @@ func generateAppConstructor(ctx *genctx) *src.FuncBuilder {
 	body.AddLine(src.NewTypeDecl("os.Exit"), "(0)")
 	body.AddLine("}")
 	body.AddLine("a := &", appTypeName, "{}")
+
+	knownDependencies := map[string]*src.TypeDecl{}
+
 	for _, factory := range ctx.factorySpecs {
 		serviceType := factory.factoryFunc.Results()[0].Decl().Clone()
 		fieldName := makePackagePrivate(serviceType.Qualifier().Name())
+
+		no := 2
+		for {
+			_, has := knownDependencies[fieldName]
+			if has {
+				fieldName = makePackagePrivate(serviceType.Qualifier().Name()) + strconv.Itoa(no)
+				continue
+			}
+			break
+		}
+
+		knownDependencies[fieldName] = serviceType
+
+		warnDepNotFoundComment := src.NewBlock()
+		body.Add(warnDepNotFoundComment)
 		body.Add("if a.", fieldName, ", err =", src.NewTypeDecl(serviceType.Qualifier()+"Factory"), "(")
-		for i, _ := range factory.factoryFunc.Params() {
+		for i, p := range factory.factoryFunc.Params() {
 			if i == 0 {
 				fieldName := getUberOptionsFieldName(factory.factoryFunc.Params()[0].Decl().Qualifier())
 				body.Add("options.", fieldName)
 				continue
 			}
-			// TODO resolve order?
-			body.Add(",nil")
+			dependencyFound := false
+			for field, decl := range knownDependencies {
+				// we just compare qualifiers, because our dependencies are always interfaces
+				if p.Decl().Qualifier() == decl.Qualifier() {
+					dependencyFound = true
+					body.Add(",a." + field)
+					break
+				}
+			}
+
+			if !dependencyFound {
+				body.Add(",nil")
+				warnDepNotFoundComment.AddLine("// TODO dependency to " + p.Name() + " of type " + p.Decl().String() + " cannot be resolved.")
+			}
 		}
 		body.AddLine(");err!=nil{")
 		body.AddLine("return nil,err")

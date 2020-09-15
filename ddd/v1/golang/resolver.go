@@ -38,6 +38,10 @@ func (r resolverScope) String() string {
 		msg = append(msg, "rest")
 	}
 
+	if r.Has(rUsecase) {
+		msg = append(msg, "usecase")
+	}
+
 	return strings.Join(msg, "|")
 }
 
@@ -145,12 +149,19 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 			}
 
 			for _, useCase := range l.UseCases() {
+				var funcs []*ddd.FuncSpec
 				for _, story := range useCase.Stories() {
+					funcs = append(funcs, story.Func())
 					appendFuncOrStructs(&tlayer, []ddd.FuncOrStruct{story.Func()})
 					for _, strct := range story.Structs() {
 						appendFuncOrStructs(&tlayer, []ddd.FuncOrStruct{strct})
 					}
 				}
+				appendFuncOrStructs(&tlayer, []ddd.FuncOrStruct{useCase.Options()})
+
+				// (re)-create the artificial interface
+				epicIface := ddd.Interface(useCase.Name(), useCase.Comment(), funcs...)
+				appendStructOrInterfaces(&tlayer, []ddd.StructOrInterface{epicIface})
 			}
 
 			r.usecase = tlayer

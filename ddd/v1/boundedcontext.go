@@ -38,6 +38,21 @@ func Context(name string, description string, layers ...Layer) *BoundedContextSp
 	}
 }
 
+// DomainServices picks up the CoreLayerSpec and returns those InterfaceSpec which have an implementation entry point.
+func (s *BoundedContextSpec) DomainServices() []*InterfaceSpec {
+	var res []*InterfaceSpec
+	for _, layer := range s.layers {
+		if api, ok := layer.(*CoreLayerSpec); ok {
+			for _, structOrInterface := range api.API() {
+				if api.IsService(structOrInterface.Name()) {
+					res = append(res, structOrInterface.(*InterfaceSpec))
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (s *BoundedContextSpec) Layers() []Layer {
 	return s.layers
 }

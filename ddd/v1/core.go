@@ -20,23 +20,30 @@ type CoreLayerSpec struct {
 	description     string
 	api             []StructOrInterface
 	implementations []*ServiceImplSpec
+	pos             Pos
 }
 
 // Core has never any dependencies to any other layer.
 func Core(api []StructOrInterface, implementations ...*ServiceImplSpec) *CoreLayerSpec {
 	return &CoreLayerSpec{
-		name: "core",
+		name: "Core",
 		description: "Package core contains all domain specific models for the current bounded context.\n" +
 			"It contains an exposed public API to be imported by other layers and an internal package \n" +
 			"private implementation accessible by factory functions.",
 		api:             api,
 		implementations: implementations,
+		pos:             capturePos("Core", -1),
 	}
 }
 
 // API returns the struct or interfaces from the API definition.
 func (c *CoreLayerSpec) API() []StructOrInterface {
 	return c.api
+}
+
+// Pos returns the debugging position.
+func (c *CoreLayerSpec) Pos() Pos {
+	return c.pos
 }
 
 // Implementations returns the constructor or factory functions for the implementation of the API. Structs are only
@@ -47,9 +54,9 @@ func (c *CoreLayerSpec) Implementations() []*ServiceImplSpec {
 }
 
 // IsService returns true, if an implementation has been defined.
-func (c *CoreLayerSpec) IsService(name string)bool{
+func (c *CoreLayerSpec) IsService(name string) bool {
 	for _, impl := range c.implementations {
-		if impl.Of() == name{
+		if impl.Of() == name {
 			return true
 		}
 	}
@@ -87,7 +94,7 @@ func (c *CoreLayerSpec) Walk(f func(obj interface{}) error) error {
 			return err
 		}
 
-		if err := 	obj.options.Walk(f); err != nil {
+		if err := obj.options.Walk(f); err != nil {
 			return err
 		}
 	}

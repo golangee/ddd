@@ -82,6 +82,9 @@ func generateLayers(ctx *genctx) error {
 				usecasePath := filepath.Join(bcPath, pkgNameUseCase)
 				ctx.newFile(usecasePath, "doc", "").SetPackageDoc(l.Description())
 
+				facs := ctx.newFile(usecasePath, "factories", "")
+				mock := ctx.newFile(usecasePath, "mock", "")
+
 				for _, useCase := range l.UseCases() {
 
 					api := ctx.newFile(usecasePath, strings.ToLower(useCase.Name()), "")
@@ -107,6 +110,38 @@ func generateLayers(ctx *genctx) error {
 						}
 					}
 
+					// add the artificial interface mock
+					mock.AddTypes(src.ImplementMock(uFace))
+
+					// the factory stuff for our already artificial interfaces
+					impl := ddd.Implementation(uFace.Name(), nil, (*ddd.EnvParams)(useCase.Options()))
+					fun, opt, err := generateFactoryFunc(strings.ToUpper(bc.Name()+"."+l.Name()+"."), rslv, rUniverse|rCore|rUsecase, impl)
+					if err != nil {
+						return fmt.Errorf("%s: %w", layer.Name(), err)
+					}
+
+					// by logical definition, each Epic in a bounded context requires all domain services to work properly.
+					// If that would not be the case, we have identified a standalone subset of a bounded context, which
+					// stands for itself. This would mean, that it must define its own bounded context.
+					for _, domainService := range bc.DomainServices() {
+						t, err := rslv.resolveTypeName(rUniverse|rCore|rUsecase, ddd.TypeName(domainService.Name()))
+						if err != nil {
+							return err
+						}
+						fun.AddParams(src.NewParameter(makePackagePrivate(domainService.Name()), t))
+					}
+
+					facs.AddTypes(opt)
+
+					facs.AddVars(
+						src.NewVar(impl.Of() + "Factory").SetRHS(src.NewBlock(fun)).SetDoc(fun.Doc()),
+					)
+					fun.SetDoc("")
+					fun.SetName("")
+
+					// keep a central reference, to build the uber options
+					ctx.addFactorySpec(facs, fun, opt)
+
 					uFace.SetDoc(myDoc)
 				}
 			case *ddd.RestLayerSpec:
@@ -125,7 +160,7 @@ func generateLayers(ctx *genctx) error {
 }
 
 func generateFactoryFunc(envPrefix string, rslv *resolver, scopes resolverScope, impl *ddd.ServiceImplSpec) (*src.FuncBuilder, *src.TypeBuilder, error) {
-	strct, err := generateStruct(rslv, rUniverse|rCore, impl.Options())
+	strct, err := generateStruct(rslv, scopes, impl.Options())
 	if err != nil {
 		return nil, nil, err
 	}

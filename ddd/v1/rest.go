@@ -61,6 +61,7 @@ type RestLayerSpec struct {
 	description string
 	resources   []*HttpResourceSpec
 	hosts       []*RestServerSpec
+	pos         Pos
 }
 
 // REST is a driven port and directly uses the UseCases API. It does normally not define any further models
@@ -69,7 +70,7 @@ type RestLayerSpec struct {
 // Version must be a semantic version string like "v1.2.3".
 func REST(version string, hosts []*RestServerSpec, resources []*HttpResourceSpec) *RestLayerSpec {
 	major := semver.Major(version)
-	name := "rest" + major
+	name := "Rest" + major
 	return &RestLayerSpec{
 		name:    name,
 		hosts:   hosts,
@@ -77,6 +78,7 @@ func REST(version string, hosts []*RestServerSpec, resources []*HttpResourceSpec
 		description: "Package rest contains the REST specific implementation for the current bounded context.\n" +
 			"It depends only from the use cases and transitively on the core API.",
 		resources: resources,
+		pos:       capturePos("REST", -1),
 	}
 }
 
@@ -87,6 +89,11 @@ func (r *RestLayerSpec) PrimaryUrl() string {
 	}
 
 	return r.hosts[0].url
+}
+
+// Pos returns the debug position.
+func (r *RestLayerSpec) Pos() Pos {
+	return r.pos
 }
 
 // Prefix returns by default /api/vX/ where x is the major version from the semver version.

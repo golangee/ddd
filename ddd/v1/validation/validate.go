@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -46,6 +47,40 @@ type withStory interface {
 
 // Validate inspects the AppSpec and bails out, if something does not taste.
 func Validate(spec *ddd.AppSpec) error {
+
+	for _, bc := range spec.BoundedContexts() {
+		core := -10
+		usecase := -9
+		rest := -8
+
+		for i, layer := range bc.Layers() {
+			switch t := layer.(type) {
+			case *ddd.CoreLayerSpec:
+				if core >= 0 {
+					return buildErr("BoundedContexts", "core", "multiple core definitions", t)
+				}
+				core = i
+			case *ddd.UseCaseLayerSpec:
+				if usecase >= 0 {
+					return buildErr("BoundedContexts", "core", "multiple usecase definitions", t)
+				}
+				usecase = i
+			case *ddd.RestLayerSpec:
+				rest = i
+			default:
+				panic("not yet implemented: " + reflect.TypeOf(t).String())
+			}
+		}
+
+		if core > usecase {
+			return buildErr("BoundedContexts", "core vs usecase", "core must be defined before the use case layer", bc.Layers()[core])
+		}
+
+		if rest > 0 && rest < usecase {
+			return buildErr("BoundedContexts", "rest vs usecase", "usecase must be defined before the rest layer", bc.Layers()[rest])
+		}
+	}
+
 	return spec.Walk(func(obj interface{}) error {
 		if obj, ok := obj.(withDescription); ok {
 			if err := checkDescription(obj); err != nil {
