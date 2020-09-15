@@ -257,9 +257,15 @@ booklibrary -search-core-namespace="some ugly stuff"
 ### MyInt64
 
 The bounded context *search* declares in the layer *core* the *int64* option **MyInt64** which is an integer with 8 byte.
-The default value is 0 (zero).
+The default value is The default value is 0 (zero).
 The environment variable *SEARCH_CORE_MYINT64* is evaluated, if present and is only overridden by the command line argument *search-core-myint64*.
 
+Example
+
+```bash
+export SEARCH_CORE_MYINT64=0
+booklibrary -search-core-myint64=0
+```
 ### MyFloat64
 
 The bounded context *search* declares in the layer *core* the *float64* option **MyFloat64** which is a float with 64 bits.
@@ -275,12 +281,24 @@ booklibrary -search-core-myfloat64=5
 ### MyDuration
 
 The bounded context *search* declares in the layer *core* the *time.Duration* option **MyDuration** which is a duration.
-The default value is the native zero value.
+The default value is The default value is 0s.
 The environment variable *SEARCH_CORE_MYDURATION* is evaluated, if present and is only overridden by the command line argument *search-core-myduration*.
 
+Example
+
+```bash
+export SEARCH_CORE_MYDURATION=0s
+booklibrary -search-core-myduration=0s
+```
 ### Test
 
 The bounded context *loan* declares in the layer *core* the *string* option **Test** which a test string.
-The default value is the empty string.
+The default value is The default value is the empty string.
 The environment variable *LOAN_CORE_TEST* is evaluated, if present and is only overridden by the command line argument *loan-core-test*.
 
+Example
+
+```bash
+export LOAN_CORE_TEST="lorem ipsum"
+booklibrary -loan-core-test="lorem ipsum"
+```

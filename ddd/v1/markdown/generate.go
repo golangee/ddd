@@ -211,34 +211,43 @@ func generateCommandlineArgs(ctx *genctx) error {
 						cmdName := strings.ReplaceAll(strings.ToLower(envPrefix+field.Name()), ".", "-")
 
 						md.H3(field.Name())
+						myDefaultText := field.Default()
+						myDefaultValue := field.Default()
 						str := "The bounded context *" + bc.Name() + "* declares in the layer *" + layer.Name() + "* the *" + string(field.TypeName()) + "* option **" + field.Name() + "** which " + text.TrimComment(field.Comment()) + "\n"
-						if field.Default() != "" {
-							str += "The default value is " + field.Default() + ".\n"
-						} else {
+						if field.Default() == "" {
 							str += "The default value is " + field.Default()
 							switch field.TypeName() {
 							case ddd.String:
-								str += "the empty string"
+								myDefaultText = "the empty string"
+								myDefaultValue = "\"lorem ipsum\""
 							case ddd.Int64:
-								str += "0 (zero)"
+								myDefaultText = "0 (zero)"
+								myDefaultValue = "0"
 							case ddd.Float64:
-								str += "0.0"
+								myDefaultText = "0.0"
+								myDefaultValue = "0.0"
 							case ddd.Bool:
-								str += "false"
+								myDefaultText = "false"
+								myDefaultValue = "false"
+							case ddd.Duration:
+								myDefaultText = "0s"
+								myDefaultValue = "0s"
 							default:
-								str += "the native zero value"
+								myDefaultText = "the native zero value"
 							}
-							str += ".\n"
 						}
+
+						str += "The default value is " + myDefaultText + ".\n"
 						str += "The environment variable *" + envName + "* is evaluated, if present and is only overridden by the command line argument *" + cmdName + "*."
 						md.P(str)
 
-						if field.Default() != "" {
+						if myDefaultValue != "" {
 							md.P("Example")
-							tmp := "export " + envName + "=" + field.Default() + "\n"
-							tmp += binName + " -" + cmdName + "=" + field.Default()
+							tmp := "export " + envName + "=" + myDefaultValue + "\n"
+							tmp += binName + " -" + cmdName + "=" + myDefaultValue
 							md.Code("bash", tmp)
 						}
+
 					}
 				}
 
