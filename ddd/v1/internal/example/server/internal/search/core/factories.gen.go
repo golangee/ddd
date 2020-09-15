@@ -30,9 +30,9 @@ type SearchServiceOpts struct {
 	FulltextSearch bool `json:"full-text-SEARCH,omitempty"`
 	// Namespace is a weired option.
 	Namespace string `json:"namespace,omitempty"`
-	// MyInt64 is an int64.
+	// MyInt64 is an integer with 8 byte.
 	MyInt64 int64 `json:"myInt64"`
-	// MyFloat64 is a float64.
+	// MyFloat64 is a float with 64 bits.
 	MyFloat64 float64 `json:"myFloat64,omitempty"`
 	// MyDuration is a duration.
 	MyDuration time.Duration `json:"myDuration"`
@@ -68,8 +68,8 @@ func (s *SearchServiceOpts) Parse(buf []byte) error {
 func (s *SearchServiceOpts) ConfigureFlags() {
 	flag.BoolVar(&s.FulltextSearch, "search-core-fulltextsearch", s.FulltextSearch, "FulltextSearch is a flag to enable fulltext search in items.")
 	flag.StringVar(&s.Namespace, "search-core-namespace", s.Namespace, "Namespace is a weired option.")
-	flag.Int64Var(&s.MyInt64, "search-core-myint64", s.MyInt64, "MyInt64 is an int64.")
-	flag.Float64Var(&s.MyFloat64, "search-core-myfloat64", s.MyFloat64, "MyFloat64 is a float64.")
+	flag.Int64Var(&s.MyInt64, "search-core-myint64", s.MyInt64, "MyInt64 is an integer with 8 byte.")
+	flag.Float64Var(&s.MyFloat64, "search-core-myfloat64", s.MyFloat64, "MyFloat64 is a float with 64 bits.")
 	flag.DurationVar(&s.MyDuration, "search-core-myduration", s.MyDuration, "MyDuration is a duration.")
 }
 

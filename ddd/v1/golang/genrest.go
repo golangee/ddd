@@ -65,7 +65,7 @@ func AddStringParser(parser StringParser) {
 
 // createRestLayer emits the interfaces and types in the <bc>/rest/vX package according to the REST specification.
 func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, rest *ddd.RestLayerSpec) error {
-	bcPath := filepath.Join("internal", safename(bc.Name()))
+	bcPath := filepath.Join("internal", text.Safename(bc.Name()))
 	layerPath := filepath.Join(bcPath, pkgNameRest)
 
 	ctx.newFile(layerPath, "doc", pkgNameRest).
@@ -77,7 +77,7 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 	var resourcePaths []string
 	for _, resource := range rest.Resources() {
 		goResName := text2GoIdentifier(strings.ReplaceAll(resource.Path(), ":", "-By-"))
-		resFile := ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), strings.ToLower(safename(goResName)), pkgNameRest)
+		resFile := ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), strings.ToLower(text.Safename(goResName)), pkgNameRest)
 
 		// create a documented interface
 		resIface, err := createRestResourceInterface(resFile, rslv, goResName, resource)

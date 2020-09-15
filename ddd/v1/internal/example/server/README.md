@@ -12,6 +12,7 @@ This is the central service of the book library of capital city, for searching a
         * [Type *Book*](#type-book)
         * [Type *BookRepository*](#type-bookrepository)
         * [Type *SearchService*](#type-searchservice)
+        * [Factory *SearchService*](#factory-searchservice)
       * [The use case or application layer](#the-use-case-or-application-layer)
         * [BookSearch](#booksearch)
       * [REST API *v1.0.1*](#rest-api-v101)
@@ -27,8 +28,17 @@ This is the central service of the book library of capital city, for searching a
       * [The domains core layer](#the-domains-core-layer)
         * [Type *Book*](#type-book)
         * [Type *User*](#type-user)
+        * [Type *LoanService*](#type-loanservice)
+        * [Factory *LoanService*](#factory-loanservice)
       * [The use case or application layer](#the-use-case-or-application-layer)
         * [BookLoaning](#bookloaning)
+  * [usage](#usage)
+    * [FulltextSearch](#fulltextsearch)
+    * [Namespace](#namespace)
+    * [MyInt64](#myint64)
+    * [MyFloat64](#myfloat64)
+    * [MyDuration](#myduration)
+    * [Test](#test)
 
 
 ## Architecture
@@ -46,7 +56,7 @@ like ebooks or new publications.
 #### The domains core layer
 
 The core layer or API layer of the domain consists of 1 data types,
-2 service or SPI interfaces and 0 actual service implementations.
+2 service or SPI interfaces and 1 actual service implementations.
 
 ##### Type *Book*
 
@@ -58,7 +68,18 @@ The SPI interface *BookRepository* is a repository to handle books.
 
 ##### Type *SearchService*
 
-The SPI interface *SearchService* is the domain specific service API.
+The API interface *SearchService* is the domain specific service API.
+
+##### Factory *SearchService*
+
+The API factory method *SearchServiceFactory* creates an instance.
+It requires the interfaces *BookRepository* as dependencies.
+The instance must be configured using the following options:
+ * FulltextSearch (...is a flag to enable fulltext search in items.)
+ * Namespace (...is a weired option.)
+ * MyInt64 (... is an integer with 8 byte.)
+ * MyFloat64 (... is a float with 64 bits.)
+ * MyDuration (... is a duration.)
 
 ![search core API](uml-search-core-api.gen.svg?raw=true)
 
@@ -154,7 +175,7 @@ Only physical books can be loaned from within the library building by users.
 #### The domains core layer
 
 The core layer or API layer of the domain consists of 2 data types,
-0 service or SPI interfaces and 0 actual service implementations.
+1 service or SPI interfaces and 1 actual service implementations.
 
 ##### Type *Book*
 
@@ -163,6 +184,16 @@ The data class *Book* is a book to loan or rent.
 ##### Type *User*
 
 The data class *User* is a library customer.
+
+##### Type *LoanService*
+
+The API interface *LoanService* provides stuff to loan all the things.
+
+##### Factory *LoanService*
+
+The API factory method *LoanServiceFactory* creates an instance.
+The instance must be configured using the following options:
+ * Test (...a test string.)
 
 ![loan core API](uml-loan-core-api.gen.svg?raw=true)
 
@@ -186,4 +217,70 @@ It contains 2 user stories.
 
 
 ![iface-BookLoaning](uml-iface-bookloaning.gen.svg?raw=true)
+
+## usage
+
+The application can be launched from the command line. One can display any available options using the *-help* flag:
+
+```bash
+booklibrary -help
+```
+The application can be configured using the following command line or environment options.
+Currently, there are 6 options.
+At first, the default value is loaded into the variable.
+Afterwards the environment variable is considered and finally the command line argument takes precedence.
+
+### FulltextSearch
+
+The bounded context *search* declares in the layer *core* the *bool* option **FulltextSearch** which is a flag to enable fulltext search in items.
+The default value is false.
+The environment variable *SEARCH_CORE_FULLTEXTSEARCH* is evaluated, if present and is only overridden by the command line argument *search-core-fulltextsearch*.
+
+Example
+
+```bash
+export SEARCH_CORE_FULLTEXTSEARCH=false
+booklibrary -search-core-fulltextsearch=false
+```
+### Namespace
+
+The bounded context *search* declares in the layer *core* the *string* option **Namespace** which is a weired option.
+The default value is "some ugly stuff".
+The environment variable *SEARCH_CORE_NAMESPACE* is evaluated, if present and is only overridden by the command line argument *search-core-namespace*.
+
+Example
+
+```bash
+export SEARCH_CORE_NAMESPACE="some ugly stuff"
+booklibrary -search-core-namespace="some ugly stuff"
+```
+### MyInt64
+
+The bounded context *search* declares in the layer *core* the *int64* option **MyInt64** which is an integer with 8 byte.
+The default value is 0 (zero).
+The environment variable *SEARCH_CORE_MYINT64* is evaluated, if present and is only overridden by the command line argument *search-core-myint64*.
+
+### MyFloat64
+
+The bounded context *search* declares in the layer *core* the *float64* option **MyFloat64** which is a float with 64 bits.
+The default value is 5.
+The environment variable *SEARCH_CORE_MYFLOAT64* is evaluated, if present and is only overridden by the command line argument *search-core-myfloat64*.
+
+Example
+
+```bash
+export SEARCH_CORE_MYFLOAT64=5
+booklibrary -search-core-myfloat64=5
+```
+### MyDuration
+
+The bounded context *search* declares in the layer *core* the *time.Duration* option **MyDuration** which is a duration.
+The default value is the native zero value.
+The environment variable *SEARCH_CORE_MYDURATION* is evaluated, if present and is only overridden by the command line argument *search-core-myduration*.
+
+### Test
+
+The bounded context *loan* declares in the layer *core* the *string* option **Test** which a test string.
+The default value is the empty string.
+The environment variable *LOAN_CORE_TEST* is evaluated, if present and is only overridden by the command line argument *loan-core-test*.
 

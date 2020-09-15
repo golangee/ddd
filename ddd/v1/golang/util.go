@@ -15,17 +15,7 @@ const (
 	maxValueCitateLength = 40
 )
 
-// safename returns a lowercase name which just contains a..z, nothing else.
-func safename(str string) string {
-	str = strings.ToLower(str)
-	sb := &strings.Builder{}
-	for _, r := range str {
-		if r >= 'a' && r <= 'z' {
-			sb.WriteRune(r)
-		}
-	}
-	return sb.String()
-}
+
 
 // findEmptyFolders returns those directories which are actually empty. Garbage files like
 // .DS_Store are ignored. The map counts contains a flat key list of all folders.

@@ -63,8 +63,8 @@ func main() {
 								SetJsonName("full-text-SEARCH"),
 							Field("Namespace", String, "...is a weired option.").
 								SetDefault("\"some ugly stuff\""),
-							Field("MyInt64", Int64, "... is an int64."),
-							Field("MyFloat64", Float64, "... is a float64.").
+							Field("MyInt64", Int64, "... is an integer with 8 byte."),
+							Field("MyFloat64", Float64, "... is a float with 64 bits.").
 								SetDefault("5"),
 							Field("MyDuration", Duration, "... is a duration."),
 						),
@@ -296,7 +296,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	const uml = false
+	const uml = true
 
 	if uml {
 		prj, err := architecture.Detect()

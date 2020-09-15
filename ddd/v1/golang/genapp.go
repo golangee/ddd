@@ -13,7 +13,7 @@ const (
 
 // generateCmdSrv emits the main package
 func generateCmdSrv(ctx *genctx) error {
-	ctx.newFile("cmd/"+safename(ctx.spec.Name()), "main", "main").
+	ctx.newFile("cmd/"+text.Safename(ctx.spec.Name()), "main", "main").
 		SetPackageDoc("Package main contains the executable to launch the actual " + ctx.spec.Name() + " server process.").
 		AddFuncs(
 			src.NewFunc("main").AddBody(src.NewBlock().

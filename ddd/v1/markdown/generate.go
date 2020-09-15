@@ -29,7 +29,11 @@ func generateDocument(ctx *genctx) error {
 		md.Printf("It is separated into the following %d bounded contexts.\n\n", len(ctx.spec.BoundedContexts()))
 	}
 
-	return generateLayers(ctx)
+	if err := generateLayers(ctx); err != nil {
+		return err
+	}
+
+	return generateCommandlineArgs(ctx)
 }
 
 func generateLayers(ctx *genctx) error {
@@ -154,6 +158,96 @@ func generateLayers(ctx *genctx) error {
 				panic("not yet implemented: " + reflect.TypeOf(l).String())
 			}
 
+		}
+
+	}
+
+	return nil
+}
+
+func generateCommandlineArgs(ctx *genctx) error {
+	binName := text.Safename(ctx.spec.Name())
+	md := ctx.markdown(mainMarkdown)
+	md.H2("usage")
+	md.P("The application can be launched from the command line. One can display any available options using the *-help* flag:")
+	md.Code("bash", binName+" -help")
+
+	flagCount := 0
+	for _, bc := range ctx.spec.BoundedContexts() {
+		for _, layer := range bc.Layers() {
+			_ = layer.Walk(func(obj interface{}) error {
+				if spec, ok := obj.(*ddd.ServiceImplSpec); ok {
+					for range spec.Options().Fields() {
+						flagCount++
+					}
+				}
+				return nil
+			})
+		}
+	}
+
+	if flagCount == 0 {
+		md.P("There are not further options available.")
+		return nil
+	}
+
+	intro := "The application can be configured using the following command line or environment options.\n"
+	if flagCount == 1 {
+		intro += "Currently, there is only one option.\n"
+	} else {
+		intro += "Currently, there are " + strconv.Itoa(flagCount) + " options.\n"
+	}
+	intro += "At first, the default value is loaded into the variable.\n"
+	intro += "Afterwards the environment variable is considered and finally the command line argument takes precedence."
+	md.P(intro)
+
+	for _, bc := range ctx.spec.BoundedContexts() {
+		for _, layer := range bc.Layers() {
+			envPrefix := strings.ToUpper(bc.Name() + "." + layer.Name() + ".")
+			err := layer.Walk(func(obj interface{}) error {
+				if spec, ok := obj.(*ddd.ServiceImplSpec); ok {
+					for _, field := range spec.Options().Fields() {
+						envName := strings.ReplaceAll(strings.ToUpper(envPrefix+field.Name()), ".", "_")
+						cmdName := strings.ReplaceAll(strings.ToLower(envPrefix+field.Name()), ".", "-")
+
+						md.H3(field.Name())
+						str := "The bounded context *" + bc.Name() + "* declares in the layer *" + layer.Name() + "* the *" + string(field.TypeName()) + "* option **" + field.Name() + "** which " + text.TrimComment(field.Comment()) + "\n"
+						if field.Default() != "" {
+							str += "The default value is " + field.Default() + ".\n"
+						} else {
+							str += "The default value is " + field.Default()
+							switch field.TypeName() {
+							case ddd.String:
+								str += "the empty string"
+							case ddd.Int64:
+								str += "0 (zero)"
+							case ddd.Float64:
+								str += "0.0"
+							case ddd.Bool:
+								str += "false"
+							default:
+								str += "the native zero value"
+							}
+							str += ".\n"
+						}
+						str += "The environment variable *" + envName + "* is evaluated, if present and is only overridden by the command line argument *" + cmdName + "*."
+						md.P(str)
+
+						if field.Default() != "" {
+							md.P("Example")
+							tmp := "export " + envName + "=" + field.Default() + "\n"
+							tmp += binName + " -" + cmdName + "=" + field.Default()
+							md.Code("bash", tmp)
+						}
+					}
+				}
+
+				return nil
+			})
+
+			if err != nil {
+				return err
+			}
 		}
 
 	}

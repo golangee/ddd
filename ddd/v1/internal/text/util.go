@@ -5,6 +5,18 @@ import (
 	"unicode"
 )
 
+// Safename returns a lowercase name which just contains a..z, nothing else.
+func Safename(str string) string {
+	str = strings.ToLower(str)
+	sb := &strings.Builder{}
+	for _, r := range str {
+		if r >= 'a' && r <= 'z' {
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}
+
 // JoinSlashes assembles the path segments and ensures that they have only 1 slash per segment. Leading
 // or trailing slashes are purged.
 func JoinSlashes(paths ...string) string {

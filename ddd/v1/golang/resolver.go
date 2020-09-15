@@ -3,6 +3,7 @@ package golang
 import (
 	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
+	"github.com/golangee/architecture/ddd/v1/internal/text"
 	"github.com/golangee/src"
 	"reflect"
 	"strconv"
@@ -124,7 +125,7 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 	for _, layer := range ctx.Layers() {
 		switch l := layer.(type) {
 		case *ddd.CoreLayerSpec:
-			layerPath := modPath + "/internal/" + safename(ctx.Name()) + "/" + pkgNameCore
+			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + pkgNameCore
 			tlayer := typeLayer{
 				layer: layer,
 				path:  layerPath,
@@ -137,7 +138,7 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 			r.core = tlayer
 
 		case *ddd.UseCaseLayerSpec:
-			layerPath := modPath + "/internal/" + safename(ctx.Name()) + "/" + pkgNameUseCase
+			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + pkgNameUseCase
 			tlayer := typeLayer{
 				layer: layer,
 				path:  layerPath,
@@ -155,7 +156,7 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 			r.usecase = tlayer
 
 		case *ddd.RestLayerSpec:
-			layerPath := modPath + "/internal/" + safename(ctx.Name()) + "/" + l.Name()
+			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + l.Name()
 			tlayer := typeLayer{
 				layer: layer,
 				path:  layerPath,

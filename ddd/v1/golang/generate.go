@@ -20,9 +20,9 @@ func generateLayers(ctx *genctx) error {
 	for _, bc := range ctx.spec.BoundedContexts() {
 
 		rslv := newResolver(ctx.mod.Main().Path, bc)
-		bcPath := filepath.Join("internal", safename(bc.Name()))
+		bcPath := filepath.Join("internal", text.Safename(bc.Name()))
 		ctx.newFile(bcPath, "doc", "").SetPackageDoc(
-			"Package " + safename(bc.Name()) + " contains all bounded domain API models, the according use cases and \n" +
+			"Package " + text.Safename(bc.Name()) + " contains all bounded domain API models, the according use cases and \n" +
 				"all other port and adapter implementations.\n\n" + bc.Description(),
 		)
 
