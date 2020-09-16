@@ -53,6 +53,7 @@ type resolver struct {
 	core       typeLayer
 	usecase    typeLayer
 	restLayers []typeLayer
+	mysqlLayer typeLayer
 }
 
 type typeLayer struct {
@@ -174,6 +175,15 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 			}
 
 			r.restLayers = append(r.restLayers, tlayer)
+
+		case *ddd.MySQLLayerSpec:
+			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + l.Name()
+			tlayer := typeLayer{
+				layer: layer,
+				path:  layerPath,
+			}
+			r.mysqlLayer = tlayer
+
 		default:
 			panic("not yet implemented: " + reflect.TypeOf(l).String())
 		}

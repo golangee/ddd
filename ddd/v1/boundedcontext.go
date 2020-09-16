@@ -72,6 +72,17 @@ func (s *BoundedContextSpec) SPIServices() []*InterfaceSpec {
 	return res
 }
 
+// SPIServiceByName returns nil or the matching service.
+func (s *BoundedContextSpec) SPIServiceByName(name string) *InterfaceSpec {
+	for _, spec := range s.SPIServices() {
+		if spec.name == name {
+			return spec
+		}
+	}
+
+	return nil
+}
+
 func (s *BoundedContextSpec) Layers() []Layer {
 	return s.layers
 }

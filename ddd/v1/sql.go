@@ -1,5 +1,23 @@
 package ddd
 
+// SQLLayer is the common layer interface for all kinds of SQL db layers.
+type SQLLayer interface {
+	// Name of the layer.
+	Name() string
+	// Description of the layer.
+	Description() string
+	// Stereotype of the layer.
+	Stereotype() Stereotype
+	// Migrations returns the underlying slice of migrations.
+	Migrations() []*MigrationSpec
+	// Repositories returns the underlying slice of repositories.
+	Repositories() []*RepoSpec
+	// Pos returns the debug position.
+	Pos() Pos
+	// Walks loops over self and migrations and repositories.
+	Walk(f func(obj interface{}) error) error
+}
+
 // A MySQLLayerSpec represents a stereotyped IMPLEMENTATION Layer.
 type MySQLLayerSpec struct {
 	name        string
@@ -64,7 +82,7 @@ func (u *MySQLLayerSpec) Walk(f func(obj interface{}) error) error {
 func MySQL(migrations []*MigrationSpec, genSpecs []*RepoSpec) *MySQLLayerSpec {
 	return &MySQLLayerSpec{
 		name:        "Mysql",
-		description: "Package mysql contains specific repository implementations for the mysql dialect.",
+		description: "Package mysql contains specific repository implementations (aka SPI or driven adapter) for the mysql dialect.\nThe repository is defined at the core layer (aka domain API).",
 		migrations:  migrations,
 		genSpecs:    genSpecs,
 		pos:         capturePos("MySQL", 1),

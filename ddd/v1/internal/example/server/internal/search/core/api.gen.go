@@ -26,10 +26,30 @@ type BookRepository interface {
 	//
 	// The parameter 'ctx' is the context to control timeouts and cancellations.
 	//
+	// The parameter 'offset' is the offset to return the entries for paging.
+	//
+	// The parameter 'limit' is the maximum amount of entries to return.
+	//
 	// The result '[]Book' is the list of books.
 	//
 	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-	ReadAll(ctx context.Context) ([]Book, error)
+	ReadAll(ctx context.Context, offset int64, limit int64) ([]core.Book, error)
+	// Count enumerates all stored elements.
+	//
+	// The parameter 'ctx' is the context to control timeouts and cancellations.
+	//
+	// The result 'int64' is the actual count.
+	//
+	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
+	Count(ctx context.Context) (int64, error)
+	// FindOne finds exactly one entry.
+	//
+	// The parameter 'ctx' is the context to control timeouts and cancellations.
+	//
+	// The parameter 'dto' is the data transfer object to read into.
+	//
+	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
+	FindOne(ctx context.Context, dto *core.Book) error
 }
 
 // SearchService is the domain specific service API.

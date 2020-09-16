@@ -52,6 +52,11 @@ func generateLayers(ctx *genctx) error {
 
 						if l.IsService(t.Name()) {
 							mock.AddTypes(src.ImplementMock(iface))
+						} else {
+							ctx.repoSpecs = append(ctx.repoSpecs, &repoSpec{
+								file:  api,
+								iface: iface,
+							})
 						}
 					default:
 						panic("not yet implemented: " + reflect.TypeOf(t).String())
@@ -148,6 +153,11 @@ func generateLayers(ctx *genctx) error {
 				if err := createRestLayer(ctx, rslv, bc, l); err != nil {
 					return fmt.Errorf("%s: %w", layer.Name(), err)
 				}
+			case *ddd.MySQLLayerSpec:
+				if err := createSQLLayer(ctx, rslv, bc, l); err != nil {
+					return fmt.Errorf("%s: %w", layer.Name(), err)
+				}
+
 			default:
 				panic("not yet implemented: " + reflect.TypeOf(l).String())
 			}

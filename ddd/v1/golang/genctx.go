@@ -17,6 +17,12 @@ type genctx struct {
 	spec         *ddd.AppSpec
 	files        []genfile
 	factorySpecs []*factorySpec
+	repoSpecs    []*repoSpec
+}
+
+type repoSpec struct {
+	file  *src.FileBuilder
+	iface *src.TypeBuilder
 }
 
 type factorySpec struct {
@@ -56,6 +62,17 @@ func (g *genctx) newFile(path, fname, pkgname string) *src.FileBuilder {
 	g.files = append(g.files, f)
 
 	return f.file
+}
+
+// repoSpecByName returns nil or the instance.
+func (g *genctx) repoSpecByName(name string) *repoSpec {
+	for _, spec := range g.repoSpecs {
+		if spec.iface.Name() == name {
+			return spec
+		}
+	}
+
+	return nil
 }
 
 func (g *genctx) addFactorySpec(file *src.FileBuilder, factoryFunc *src.FuncBuilder, opts *src.TypeBuilder) {
