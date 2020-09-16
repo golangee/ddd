@@ -3,12 +3,12 @@ package ddd
 type BucketSpec struct {
 }
 
-func S3(genSpecs ...*GenSpec) *UseCaseLayerSpec {
+func S3(genSpecs ...*RepoSpec) *UseCaseLayerSpec {
 	return nil
 }
 
 
 
-func Filesystem(genSpecs ...*GenSpec) *UseCaseLayerSpec {
+func Filesystem(genSpecs ...*RepoSpec) *UseCaseLayerSpec {
 	return nil
 }

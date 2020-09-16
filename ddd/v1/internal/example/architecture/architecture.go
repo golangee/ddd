@@ -33,11 +33,29 @@ func main() {
 							Func("ReadAll", "...returns all books.",
 								In(
 									WithContext(),
+									Var("offset", Int64, "...is the offset to return the entries for paging."),
+									Var("limit", Int64, "...is the maximum amount of entries to return."),
 								),
 								Out(
 									Return(Slice("Book"), "...is the list of books."),
 									Err(),
 								),
+							),
+
+							Func("Count", "...enumerates all stored elements.",
+								In(WithContext()),
+								Out(
+									Return(Int64, "...is the actual count."),
+									Err(),
+								),
+							),
+
+							Func("FindOne", "...finds exactly one entry.",
+								In(
+									WithContext(),
+									Var("dto", Optional("Book"), "...is the data transfer object to read into."),
+								),
+								Out(Err()),
 							),
 						),
 						Interface("SearchService", "...is the domain specific service API.",
@@ -70,6 +88,31 @@ func main() {
 						),
 					),
 
+				),
+
+				MySQL(
+					Migrations(
+						Migrate("2020-09-16T11:47:00",
+							"CREATE TABLE book (id BINARY(16), name VARCHAR(255))",
+						),
+					),
+
+					Repositories(
+						Repository("BookRepository",
+							MapFunc("ReadAll", "SELECT * FROM book LIMIT ? OFFSET ?",
+								Prepare("limit", "offset"),
+								MapRow("&.IDd", "&.Title"),
+							),
+							MapFunc("Count", "SELECT count(*) FROM book",
+								Prepare(),
+								MapRow("."),
+							),
+							MapFunc("FindOne", "SELECT * FROM book WHERE ?",
+								Prepare("dto.ID"),
+								MapRow(),
+							),
+						),
+					),
 				),
 
 				// the use case layer

@@ -53,6 +53,25 @@ func (s *BoundedContextSpec) DomainServices() []*InterfaceSpec {
 	return res
 }
 
+// SPIServices returns those interfaces which are not a Core Service but a service provider interface aka
+// driven port.
+func (s *BoundedContextSpec) SPIServices() []*InterfaceSpec {
+	var res []*InterfaceSpec
+	for _, layer := range s.layers {
+		if api, ok := layer.(*CoreLayerSpec); ok {
+			for _, structOrInterface := range api.API() {
+				if !api.IsService(structOrInterface.Name()) {
+					if iface, ok := structOrInterface.(*InterfaceSpec); ok {
+						res = append(res, iface)
+					}
+
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (s *BoundedContextSpec) Layers() []Layer {
 	return s.layers
 }

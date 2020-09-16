@@ -70,6 +70,17 @@ func (m *FuncSpec) In() []*ParamSpec {
 	return m.in
 }
 
+// InByName returns nil or the spec.
+func (m *FuncSpec) InByName(name string) *ParamSpec {
+	for _, spec := range m.in {
+		if spec.name == name {
+			return spec
+		}
+	}
+
+	return nil
+}
+
 // Out returns the according params.
 func (m *FuncSpec) Out() []*ParamSpec {
 	return m.out

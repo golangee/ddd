@@ -3,11 +3,13 @@ package validation
 import (
 	"fmt"
 	"github.com/golangee/architecture/ddd/v1"
+	"github.com/xwb1989/sqlparser"
 	"net/url"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var urlRegex = regexp.MustCompile(`/((\w+)/*|:\w+)*[^/]`)
@@ -50,8 +52,9 @@ func Validate(spec *ddd.AppSpec) error {
 
 	for _, bc := range spec.BoundedContexts() {
 		core := -10
-		usecase := -9
-		rest := -8
+		mysql := -9
+		usecase := -8
+		rest := -7
 
 		for i, layer := range bc.Layers() {
 			switch t := layer.(type) {
@@ -67,6 +70,11 @@ func Validate(spec *ddd.AppSpec) error {
 				usecase = i
 			case *ddd.RestLayerSpec:
 				rest = i
+			case *ddd.MySQLLayerSpec:
+				if mysql >= 0 {
+					return buildErr("BoundedContexts", "mysql", "multiple mysql definitions", t)
+				}
+				mysql = i
 			default:
 				panic("not yet implemented: " + reflect.TypeOf(t).String())
 			}
@@ -78,6 +86,21 @@ func Validate(spec *ddd.AppSpec) error {
 
 		if rest > 0 && rest < usecase {
 			return buildErr("BoundedContexts", "rest vs usecase", "usecase must be defined before the rest layer", bc.Layers()[rest])
+		}
+
+		if mysql >= 0 && mysql < core {
+			return buildErr("BoundedContexts", "core vs mysql", "mysql must be defined after core layer", bc.Layers()[core])
+		}
+
+		for _, layer := range bc.Layers() {
+			switch t := layer.(type) {
+			case *ddd.MySQLLayerSpec:
+				for _, repoSpec := range t.Repositories() {
+					if err := validateSqlMigration(bc, repoSpec); err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 
@@ -127,8 +150,153 @@ func Validate(spec *ddd.AppSpec) error {
 			}
 		}
 
+		if obj, ok := obj.(*ddd.MigrationSpec); ok {
+			format := "2006-01-02T15:04:05"
+			if _, err := time.Parse(format, obj.DateTime()); err != nil {
+				return buildErr("dateTime", obj.DateTime(), err.Error(), obj)
+			}
+
+			for _, statement := range obj.RawStatements() {
+				if err := validateMySQLSyntax(string(statement)); err != nil {
+					return buildErr("statement", string(statement), err.Error(), obj)
+				}
+			}
+		}
+
+		if obj, ok := obj.(*ddd.GenFuncSpec); ok {
+			stmt := string(obj.RawStatement())
+			if err := validateMySQLSyntax(stmt); err != nil {
+				return buildErr("statement", stmt, err.Error(), obj)
+			}
+		}
+
 		return nil
 	})
+}
+
+func validateMySQLSyntax(stmt string) error {
+	_, err := sqlparser.Parse(stmt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateSqlMigration checks if type references are correct and the funcs contains valid signature bits, like
+// context and error.
+func validateSqlMigration(bc *ddd.BoundedContextSpec, repo *ddd.RepoSpec) error {
+	var ifaceSpec *ddd.InterfaceSpec
+	for _, spi := range bc.SPIServices() {
+		if spi.Name() == repo.InterfaceName() {
+			ifaceSpec = spi
+			break
+		}
+	}
+
+	if ifaceSpec == nil {
+		return buildErr("interfaceName", repo.InterfaceName(), "is not defined as an SPI interface in core", repo)
+	}
+
+	// every method from spec has a context and error return?
+	for _, funcSpec := range ifaceSpec.Funcs() {
+		if len(funcSpec.In()) == 0 {
+			return buildErr("In", ifaceSpec.Name(), "method '"+funcSpec.Name()+"' must at least provide a 'context.Context' parameter", funcSpec)
+		}
+
+		if funcSpec.In()[0].TypeName() != ddd.Ctx {
+			return buildErr("In", ifaceSpec.Name(), "the first parameter of method '"+funcSpec.Name()+"' must be of type 'context.Context'", funcSpec)
+		}
+
+		if len(funcSpec.Out()) == 0 {
+			return buildErr("Out", ifaceSpec.Name(), "method '"+funcSpec.Name()+"' must at least provide an 'error' return parameter", funcSpec)
+		}
+
+		if funcSpec.Out()[len(funcSpec.Out())-1].TypeName() != ddd.Error {
+			return buildErr("Out", ifaceSpec.Name(), "the last return parameter of method '"+funcSpec.Name()+"' must be of type 'error'", funcSpec)
+		}
+
+		if len(funcSpec.Out()) > 2 {
+			return buildErr("Out", ifaceSpec.Name(), "the return parameters of method '"+funcSpec.Name()+"' must match (<[]T>, error) or (<T>, error) or (error)", funcSpec)
+		}
+
+	}
+
+	// every method from spec in impl?
+	for _, funcSpec := range ifaceSpec.Funcs() {
+		implSpec := repo.ImplementationByName(funcSpec.Name())
+		if implSpec == nil {
+			return buildErr("interfaceName", ifaceSpec.Name(), "declared method '"+funcSpec.Name()+"' still needs a mapping", repo)
+		}
+
+		// check if all parameters have been used. Because the dev can use any imported struct and nest them deeply we cannot verify correct usage anyway,
+		// but at least the go compiler will check and bail out later in the generated code, so that is not that bad at all.
+		for _, specParam := range funcSpec.In() {
+			if specParam.TypeName() == ddd.Ctx {
+				continue
+			}
+
+			hasUsedSpecParam := false
+			for _, inParam := range implSpec.Params() {
+				path := strings.Split(string(inParam), ".")
+				actualParam := path[0]
+				if specParam.Name() == actualParam {
+					hasUsedSpecParam = true
+					break
+				}
+			}
+
+			if !hasUsedSpecParam {
+				return buildErr("Prepare", ifaceSpec.Name()+"."+funcSpec.Name(), "the core parameter '"+specParam.Name()+"' is unused", implSpec)
+			}
+
+		}
+
+		for _, inParam := range implSpec.Params() {
+			path := strings.Split(string(inParam), ".")
+			actualParam := path[0]
+			if funcSpec.InByName(actualParam) == nil {
+				return buildErr("Prepare", ifaceSpec.Name()+"."+funcSpec.Name(), "the parameter '"+string(inParam)+"' is undeclared in core", implSpec)
+			}
+		}
+
+		// check also return parameter definitions. funcSpec must be one of (code above guarantees that):
+		// 1. (<[]T>, error)
+		// 2. (<T>, error)
+		// 3. (error)
+		switch len(funcSpec.Out()) {
+		case 1:
+			if len(implSpec.Row()) != 0 {
+				return buildErr("Row", ifaceSpec.Name()+"."+funcSpec.Name(), "core does not declare any output, so '"+string(implSpec.Row()[0])+"' superfluous", implSpec)
+			}
+		case 2:
+			myType := funcSpec.Out()[0].TypeName()
+			if strings.HasPrefix(string(myType), "[]") {
+				myType = myType[2:]
+			}
+
+			// this is also to complicated:
+			// - the dev may decide to fill only a subset
+			// - we cannot validate that, because the struct may be nested deeply and from external dependency
+			// - we cannot even validate the returned columns, because the query may use tables out of our scope
+			// - the only thing we can say for sure is, that an empty row mapping is wrong
+			if len(implSpec.Row()) == 0 {
+				return buildErr("Row", ifaceSpec.Name()+"."+funcSpec.Name(), "core requires a mapping to '"+string(myType)+"'", implSpec)
+			}
+		default:
+			panic("internal error")
+		}
+
+	}
+
+	// no extra method in impl?
+	for _, implSpec := range repo.Implementations() {
+		if ifaceSpec.FuncByName(implSpec.Name()) == nil {
+			return buildErr("interfaceName", ifaceSpec.Name(), "extra method '"+implSpec.Name()+"' is not declared in core", repo)
+		}
+	}
+
+	return nil
 }
 
 func checkName(d withName) error {

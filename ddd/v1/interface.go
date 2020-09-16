@@ -67,6 +67,17 @@ func (s *InterfaceSpec) Funcs() []*FuncSpec {
 	return s.funcs
 }
 
+// FuncByName returns nil, if no such FuncSpec has been defined.
+func (s *InterfaceSpec) FuncByName(name string) *FuncSpec {
+	for _, spec := range s.funcs {
+		if spec.name == name {
+			return spec
+		}
+	}
+
+	return nil
+}
+
 // Pos returns the debugging position.
 func (s *InterfaceSpec) Pos() Pos {
 	return s.pos
