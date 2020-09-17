@@ -33,7 +33,7 @@ type BookRepository interface {
 	// The result '[]Book' is the list of books.
 	//
 	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-	ReadAll(ctx context.Context, offset int64, limit int64) ([]core.Book, error)
+	ReadAll(ctx context.Context, offset int64, limit int64) ([]Book, error)
 	// Count enumerates all stored elements.
 	//
 	// The parameter 'ctx' is the context to control timeouts and cancellations.
@@ -51,7 +51,7 @@ type BookRepository interface {
 	// The result 'Book' the found book.
 	//
 	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-	FindOne(ctx context.Context, id uuid.UUID) (core.Book, error)
+	FindOne(ctx context.Context, id uuid.UUID) (Book, error)
 	// Insert adds some stuff.
 	//
 	// The parameter 'ctx' is the context to control timeouts and cancellations.
@@ -59,7 +59,7 @@ type BookRepository interface {
 	// The parameter 'dto' the book to save.
 	//
 	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-	Insert(ctx context.Context, dto core.Book) error
+	Insert(ctx context.Context, dto Book) error
 }
 
 // SearchService is the domain specific service API.
