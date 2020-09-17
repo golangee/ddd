@@ -10,8 +10,10 @@ import (
 	json "encoding/json"
 	flag "flag"
 	fmt "fmt"
+	url "net/url"
 	os "os"
 	strconv "strconv"
+	strings "strings"
 )
 
 // DBTX abstracts from a concrete sql.DB or sql.Tx dependency.
@@ -22,8 +24,8 @@ type DBTX interface {
 	QueryContext(ctx context.Context, query string, args ...interface{}) (sql.Rows, error)
 }
 
-// MySQLsearchOptions contains the connection options for a MySQL database.
-type MySQLsearchOptions struct {
+// MySQLSearchOptions contains the connection options for a MySQL database.
+type MySQLSearchOptions struct {
 	// Port is the database port to connect.
 	Port int64 `json:"port,omitempty"`
 	// User is the database user.
@@ -48,6 +50,8 @@ type MySQLsearchOptions struct {
 	WriteTimeout string `json:"writeTimeout"`
 	// Tls configures connection security. Valid values are true, false, skip-verify or preferred.
 	Tls string `json:"tls,omitempty"`
+	// SqlMode is flag which influences the sql parser.
+	SqlMode string `json:"sqlMode,omitempty"`
 }
 
 // Reset restores this instance to the default state.
@@ -63,7 +67,8 @@ type MySQLsearchOptions struct {
 //  * The default value of Timeout is ''.
 //  * The default value of WriteTimeout is ''.
 //  * The default value of Tls is '"false"'.
-func (m *MySQLsearchOptions) Reset() {
+//  * The default value of SqlMode is '"ANSI"'.
+func (m *MySQLSearchOptions) Reset() {
 	m.Port = 3306
 	m.User = "root"
 	m.Password = ""
@@ -76,6 +81,7 @@ func (m *MySQLsearchOptions) Reset() {
 	m.Timeout = ""
 	m.WriteTimeout = ""
 	m.Tls = "false"
+	m.SqlMode = "ANSI"
 }
 
 // ParseEnv tries to parse the environment variables into this instance. It will only set those values, which have been actually defined. If values cannot be parsed, an error is returned.
@@ -91,7 +97,8 @@ func (m *MySQLsearchOptions) Reset() {
 //  * Timeout is parsed from flag 'MYSQL_SEARCH_TIMEOUT'
 //  * WriteTimeout is parsed from flag 'MYSQL_SEARCH_WRITETIMEOUT'
 //  * Tls is parsed from flag 'MYSQL_SEARCH_TLS'
-func (m *MySQLsearchOptions) ParseEnv() error {
+//  * SqlMode is parsed from flag 'MYSQL_SEARCH_SQLMODE'
+func (m *MySQLSearchOptions) ParseEnv() error {
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_PORT"); ok {
 		v, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
@@ -150,6 +157,10 @@ func (m *MySQLsearchOptions) ParseEnv() error {
 		m.Tls = value
 	}
 
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_SQLMODE"); ok {
+		m.SqlMode = value
+	}
+
 	return nil
 }
 
@@ -168,7 +179,8 @@ func (m *MySQLsearchOptions) ParseEnv() error {
 //  * Timeout is parsed from flag 'mysql-search-timeout'
 //  * WriteTimeout is parsed from flag 'mysql-search-writetimeout'
 //  * Tls is parsed from flag 'mysql-search-tls'
-func (m *MySQLsearchOptions) ConfigureFlags() {
+//  * SqlMode is parsed from flag 'mysql-search-sqlmode'
+func (m *MySQLSearchOptions) ConfigureFlags() {
 	flag.Int64Var(&m.Port, "mysql-search-port", m.Port, "Port is the database port to connect.")
 	flag.StringVar(&m.User, "mysql-search-user", m.User, "User is the database user.")
 	flag.StringVar(&m.Password, "mysql-search-password", m.Password, "Password is the database user password.")
@@ -181,10 +193,11 @@ func (m *MySQLsearchOptions) ConfigureFlags() {
 	flag.StringVar(&m.Timeout, "mysql-search-timeout", m.Timeout, "Timeout is the duration for the timeout. If empty, OS default applies.")
 	flag.StringVar(&m.WriteTimeout, "mysql-search-writetimeout", m.WriteTimeout, "WriteTimeout is the duration for the write timeout.")
 	flag.StringVar(&m.Tls, "mysql-search-tls", m.Tls, "Tls configures connection security. Valid values are true, false, skip-verify or preferred.")
+	flag.StringVar(&m.SqlMode, "mysql-search-sqlmode", m.SqlMode, "SqlMode is flag which influences the sql parser.")
 }
 
 // String serializes the struct into a json string.
-func (m *MySQLsearchOptions) String() string {
+func (m *MySQLSearchOptions) String() string {
 	buf, err := json.Marshal(m)
 	if err != nil {
 		panic("invalid state: " + err.Error())
@@ -194,7 +207,7 @@ func (m *MySQLsearchOptions) String() string {
 }
 
 // Parse tries to parse the given buffer as json and updates the current values accordingly.
-func (m *MySQLsearchOptions) Parse(buf []byte) error {
+func (m *MySQLSearchOptions) Parse(buf []byte) error {
 	if err := json.Unmarshal(buf, m); err != nil {
 		return err
 	}
@@ -203,6 +216,42 @@ func (m *MySQLsearchOptions) Parse(buf []byte) error {
 }
 
 // DSN returns the options as a fully serialized datasource name.
-func (m MySQLsearchOptions) DSN() string {
+// The returned string is of the form:
+//   username:password@protocol(address)/dbname?param=value
+func (m *MySQLSearchOptions) DSN() string {
+	sb := &strings.Builder{}
+	sb.WriteString(url.PathEscape(m.User))
+	sb.WriteString(":")
+	sb.WriteString(url.PathEscape(m.Password))
+	sb.WriteString("@")
+	sb.WriteString(m.Protocol)
+	sb.WriteString("(")
+	sb.WriteString(m.Address)
+	sb.WriteString(")")
+	sb.WriteString("/")
+	sb.WriteString(m.Database)
+	sb.WriteString("?")
+	sb.WriteString(fmt.Sprintf("%s=%s&", "sql_mode", url.QueryEscape(m.SqlMode)))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "charset", url.QueryEscape(m.Charset)))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "collation", url.QueryEscape(m.Collation)))
+	sb.WriteString(fmt.Sprintf("%s=%v&", "maxAllowedPacket", m.MaxAllowedPacket))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "tls", url.QueryEscape(m.Tls)))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "timeout", url.QueryEscape(m.Timeout)))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "writeTimeout", url.QueryEscape(m.WriteTimeout)))
 	return sb.String()
+}
+
+// Open tries to connect to a mysql compatible database.
+func Open(opts MySQLSearchOptions) (*sql.DB, error) {
+	db, err := sql.Open("mysql", opts.DSN())
+	if err != nil {
+		return nil, fmt.Errorf("cannot open database: %w", err)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("cannot ping database: %w", err)
+	}
+
+	return db, nil
 }

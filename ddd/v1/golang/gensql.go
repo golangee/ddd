@@ -213,13 +213,17 @@ func createSQLUtil(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql 
 			),
 	)
 
-	file.AddTypes(createMySQLOptions(rslv, bc))
+	opts := createMySQLOptions(rslv, bc)
+	file.AddTypes(opts)
 
+	file.AddFuncs(createMySQLOpen(opts.Name()))
+
+	// TODO add side effect import
 	return nil
 }
 
 func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBuilder {
-	opt := ddd.Struct("MySQL"+bc.Name()+"Options",
+	opt := ddd.Struct("MySQL"+text.MakePublic(bc.Name())+"Options",
 
 		"...contains the connection options for a MySQL database.",
 		ddd.Field("Port", ddd.Int64, "...is the database port to connect.").SetDefault("3306"),
@@ -241,6 +245,7 @@ func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBui
 		ddd.Field("Timeout", ddd.String, "...is the duration for the timeout. If empty, OS default applies."),
 		ddd.Field("WriteTimeout", ddd.String, "...is the duration for the write timeout."),
 		ddd.Field("Tls", ddd.String, "...configures connection security. Valid values are true, false, skip-verify or preferred.").SetDefault("\"false\""),
+		ddd.Field("SqlMode", ddd.String, "...is flag which influences the sql parser.").SetDefault("\"ANSI\""),
 	)
 
 	genOpt, err := generateStruct(rslv, rUniverse, opt)
@@ -265,13 +270,74 @@ func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBui
 	genOpt.AddMethodToJson("String", true, true, true)
 	genOpt.AddMethodFromJson("Parse")
 
-	genOpt.AddMethods(src.NewFunc("DSN").
-		SetDoc("...returns the options as a fully serialized datasource name.").
-		AddResults(src.NewParameter("", src.NewTypeDecl("string"))).
-		AddBody(src.NewBlock().
-			AddLine("return sb.String()"),
-		),
-	)
+	dsn := src.NewFunc("DSN").SetPointerReceiver(true)
+	genOpt.AddMethods(dsn)
+	r := dsn.ReceiverName()
+	dsn.
+		SetDoc("...returns the options as a fully serialized datasource name.\n" +
+			"The returned string is of the form:\n" +
+			"  username:password@protocol(address)/dbname?param=value").
+		AddResults(src.NewParameter("", src.NewTypeDecl("string")))
+
+	body := src.NewBlock().
+		AddLine("sb := &", src.NewTypeDecl("strings.Builder{}")).
+		AddLine("sb.WriteString(", src.NewTypeDecl("net/url.PathEscape"), "(", r, ".User))").
+		AddLine("sb.WriteString(\":\")").
+		AddLine("sb.WriteString(", src.NewTypeDecl("net/url.PathEscape"), "(", r, ".Password))").
+		AddLine("sb.WriteString(\"@\")").
+		AddLine("sb.WriteString(", r, ".Protocol)").
+		AddLine("sb.WriteString(\"(\")").
+		AddLine("sb.WriteString(", r, ".Address)").
+		AddLine("sb.WriteString(\")\")").
+		AddLine("sb.WriteString(\"/\")").
+		AddLine("sb.WriteString(", r, ".Database)").
+		AddLine("sb.WriteString(\"?\")")
+
+	options := map[string]string{
+		"Charset":          "charset",
+		"Collation":        "collation",
+		"MaxAllowedPacket": "maxAllowedPacket",
+		"Tls":              "tls",
+		"Timeout":          "timeout",
+		"WriteTimeout":     "writeTimeout",
+		"SqlMode":          "sql_mode",
+	}
+
+	for k, v := range options {
+		body.Add("sb.WriteString(")
+		if genOpt.FieldByName(k).Type().Qualifier() == "string" {
+			body.Add(src.NewTypeDecl("fmt.Sprintf"), "(\"%s=%s&\",", `"`+v+`",`, src.NewTypeDecl("net/url.QueryEscape"), "(", r, "."+k, "))")
+		} else {
+			body.Add(src.NewTypeDecl("fmt.Sprintf"), "(\"%s=%v&\",", `"`+v+`",`, r, "."+k, ")")
+		}
+		body.AddLine(")")
+	}
+
+	body.AddLine("return sb.String()")
+	dsn.AddBody(body)
 
 	return genOpt
+}
+
+func createMySQLOpen(optsName string) *src.FuncBuilder {
+	return src.NewFunc("Open").
+		SetDoc("...tries to connect to a mysql compatible database.").
+		AddParams(src.NewParameter("opts", src.NewTypeDecl(src.Qualifier(optsName)))).
+		AddResults(
+			src.NewParameter("", src.NewPointerDecl(src.NewTypeDecl("database/sql.DB"))),
+			src.NewParameter("", src.NewTypeDecl("error")),
+		).
+		AddBody(src.NewBlock().
+			AddLine("db,err := ", src.NewTypeDecl("database/sql.Open"), "(\"mysql\", opts.DSN())").
+			Check("err", "cannot open database", "nil").NewLine().
+			AddLine("err = db.Ping()").
+			Check("err", "cannot ping database", "nil").
+			NewLine().
+			//TODO
+			//db.SetConnMaxLifetime(time.Minute * 3)
+			//db.SetMaxOpenConns(10)
+			//db.SetMaxIdleConns(10)
+			AddLine("return db,nil"),
+
+		)
 }
