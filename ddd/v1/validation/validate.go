@@ -157,7 +157,7 @@ func Validate(spec *ddd.AppSpec) error {
 			}
 
 			for _, statement := range obj.RawStatements() {
-				if err := validateMySQLSyntax(string(statement)); err != nil {
+				if _, err := validateMySQLSyntax(string(statement)); err != nil {
 					return buildErr("statement", string(statement), err.Error(), obj)
 				}
 			}
@@ -165,8 +165,12 @@ func Validate(spec *ddd.AppSpec) error {
 
 		if obj, ok := obj.(*ddd.GenFuncSpec); ok {
 			stmt := string(obj.RawStatement())
-			if err := validateMySQLSyntax(stmt); err != nil {
+			n, err := validateMySQLSyntax(stmt)
+			if err != nil {
 				return buildErr("statement", stmt, err.Error(), obj)
+			}
+			if len(obj.Params()) != n {
+				return buildErr("statement", string(obj.RawStatement()), "placeholder count does not match parameter count in 'Prepare'", obj)
 			}
 		}
 
@@ -174,13 +178,15 @@ func Validate(spec *ddd.AppSpec) error {
 	})
 }
 
-func validateMySQLSyntax(stmt string) error {
+// validateMySQLSyntax tries if the statement is parseable and returns the amount of prepared statement placeholders.
+func validateMySQLSyntax(stmt string) (int, error) {
 	_, err := sqlparser.Parse(stmt)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	return nil
+	// TODO this is not correct and we should inspect the AST output instead
+	return strings.Count(stmt, "?"), nil
 }
 
 // validateSqlMigration checks if type references are correct and the funcs contains valid signature bits, like
@@ -267,7 +273,7 @@ func validateSqlMigration(bc *ddd.BoundedContextSpec, repo *ddd.RepoSpec) error 
 		switch len(funcSpec.Out()) {
 		case 1:
 			if len(implSpec.Row()) != 0 {
-				return buildErr("Row", ifaceSpec.Name()+"."+funcSpec.Name(), "core does not declare any output, so '"+string(implSpec.Row()[0])+"' superfluous", implSpec)
+				return buildErr("Row", ifaceSpec.Name()+"."+funcSpec.Name(), "core does not declare any output, so '"+string(implSpec.Row()[0])+"' is superfluous", implSpec)
 			}
 		case 2:
 			myType := funcSpec.Out()[0].TypeName()

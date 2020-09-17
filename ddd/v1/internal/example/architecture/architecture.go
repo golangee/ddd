@@ -53,9 +53,22 @@ func main() {
 							Func("FindOne", "...finds exactly one entry.",
 								In(
 									WithContext(),
-									Var("dto", Optional("Book"), "...is the data transfer object to read into."),
+									Var("id", UUID, "...is the data transfer object to read into."),
 								),
-								Out(Err()),
+								Out(
+									Return("Book", "...the found book."),
+									Err(),
+								),
+							),
+
+							Func("Insert", "...adds some stuff.",
+								In(
+									WithContext(),
+									Var("dto", "Book", "...the book to save."),
+								),
+								Out(
+									Err(),
+								),
 							),
 						),
 						Interface("SearchService", "...is the domain specific service API.",
@@ -99,17 +112,22 @@ func main() {
 
 					Repositories(
 						Repository("BookRepository",
-							MapFunc("ReadAll", "SELECT * FROM book LIMIT ? OFFSET ?",
+							MapFunc("ReadAll", "SELECT * FROM book LIMIT ? OFFSET ? ",
 								Prepare("limit", "offset"),
-								MapRow("&.IDd", "&.Title"),
+								MapRow("&.ID", "&.Title"),
 							),
 							MapFunc("Count", "SELECT count(*) FROM book",
 								Prepare(),
-								MapRow("."),
+								MapRow("&."),
 							),
-							MapFunc("FindOne", "SELECT * FROM book WHERE ?",
+							MapFunc("Insert", "INSERT INTO book(id) VALUES (?)",
 								Prepare("dto.ID"),
 								MapRow(),
+							),
+
+							MapFunc("FindOne", "SELECT * FROM book WHERE id=?",
+								Prepare("id"),
+								MapRow("&.ID", "&.Title"),
 							),
 						),
 					),

@@ -46,10 +46,20 @@ type BookRepository interface {
 	//
 	// The parameter 'ctx' is the context to control timeouts and cancellations.
 	//
-	// The parameter 'dto' is the data transfer object to read into.
+	// The parameter 'id' is the data transfer object to read into.
+	//
+	// The result 'Book' the found book.
 	//
 	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-	FindOne(ctx context.Context, dto *core.Book) error
+	FindOne(ctx context.Context, id uuid.UUID) (core.Book, error)
+	// Insert adds some stuff.
+	//
+	// The parameter 'ctx' is the context to control timeouts and cancellations.
+	//
+	// The parameter 'dto' the book to save.
+	//
+	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
+	Insert(ctx context.Context, dto core.Book) error
 }
 
 // SearchService is the domain specific service API.
