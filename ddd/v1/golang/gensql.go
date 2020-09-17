@@ -12,7 +12,7 @@ func createSQLLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql
 	bcPath := filepath.Join("internal", text.Safename(bc.Name()))
 	layerPath := filepath.Join(bcPath, sql.Name())
 
-	if err := createSQLUtil(ctx, bc, sql); err != nil {
+	if err := createSQLUtil(ctx, rslv, bc, sql); err != nil {
 		return err
 	}
 
@@ -56,6 +56,13 @@ func createSQLLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql
 			}
 
 		}
+
+		file.AddFuncs(src.NewFunc("New" + impl.Name()).
+			SetDoc("...creates a new instance of " + impl.Name() + ".").
+			AddParams(src.NewParameter("db", src.NewTypeDecl("DBTX"))).
+			AddResults(src.NewParameter("", src.NewPointerDecl(src.NewTypeDecl(src.Qualifier(impl.Name()))))).
+			AddBody(src.NewBlock("return &" + impl.Name() + "{db:db}")),
+		)
 	}
 
 	return nil
@@ -169,7 +176,7 @@ func createSQLExec(sqlSpec *ddd.GenFuncSpec, method *src.FuncBuilder, body *src.
 	body.AddLine("return nil")
 }
 
-func createSQLUtil(ctx *genctx, bc *ddd.BoundedContextSpec, sql ddd.SQLLayer) error {
+func createSQLUtil(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql ddd.SQLLayer) error {
 	bcPath := filepath.Join("internal", text.Safename(bc.Name()))
 	layerPath := filepath.Join(bcPath, sql.Name())
 
@@ -206,5 +213,65 @@ func createSQLUtil(ctx *genctx, bc *ddd.BoundedContextSpec, sql ddd.SQLLayer) er
 			),
 	)
 
+	file.AddTypes(createMySQLOptions(rslv, bc))
+
 	return nil
+}
+
+func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBuilder {
+	opt := ddd.Struct("MySQL"+bc.Name()+"Options",
+
+		"...contains the connection options for a MySQL database.",
+		ddd.Field("Port", ddd.Int64, "...is the database port to connect.").SetDefault("3306"),
+		ddd.Field("User", ddd.String, "...is the database user.").SetDefault("\"root\""),
+		ddd.Field("Password", ddd.String, "...is the database user password.").SetDefault(""),
+		ddd.Field("Protocol", ddd.String, "...is the protocol to use.").SetDefault("\"tcp\""),
+		ddd.Field("Database", ddd.String, "...is the database name."),
+		ddd.Field("Address", ddd.String, "...is the host or path to socket.").SetDefault("\"localhost\""),
+
+		// see https://stackoverflow.com/questions/766809/whats-the-difference-between-utf8-general-ci-and-utf8-unicode-ci/766996#766996
+		// https://www.percona.com/live/e17/sites/default/files/slides/Collations%20in%20MySQL%208.0.pdf
+		//
+		// we enforce correct unicode support for mysql and index/sorting collations. For mysql 8.0 using
+		// accent insensitive/case insensitive Unicode 9 support utf8mb4_0900_ai_ci would be better but not compatible
+		// with mariadb, so we use a fixed older version for reproducibility across different database servers.
+		ddd.Field("Collation", ddd.String, "...declares the connections default collation for sorting and indexing.").SetDefault("\"utf8mb4_unicode_520_ci\""),
+		ddd.Field("Charset", ddd.String, "...declares the connections default charset encoding for text.").SetDefault("\"utf8mb4\""),
+		ddd.Field("MaxAllowedPacket", ddd.Int64, "...is the max packet size in bytes.").SetDefault("4194304"),
+		ddd.Field("Timeout", ddd.String, "...is the duration for the timeout. If empty, OS default applies."),
+		ddd.Field("WriteTimeout", ddd.String, "...is the duration for the write timeout."),
+		ddd.Field("Tls", ddd.String, "...configures connection security. Valid values are true, false, skip-verify or preferred.").SetDefault("\"false\""),
+	)
+
+	genOpt, err := generateStruct(rslv, rUniverse, opt)
+	if err != nil {
+		panic("illegal state: " + err.Error())
+	}
+
+	if err := generateSetDefault("Reset", genOpt, opt); err != nil {
+		panic("illegal state: " + err.Error())
+	}
+
+	envPrefix := "MySQL." + bc.Name() + "."
+
+	if err := generateParseEnv(envPrefix, "ParseEnv", genOpt, opt); err != nil {
+		panic("illegal state: " + err.Error())
+	}
+
+	if err := generateFlagsConfigure(envPrefix, "ConfigureFlags", genOpt, opt); err != nil {
+		panic("illegal state: " + err.Error())
+	}
+
+	genOpt.AddMethodToJson("String", true, true, true)
+	genOpt.AddMethodFromJson("Parse")
+
+	genOpt.AddMethods(src.NewFunc("DSN").
+		SetDoc("...returns the options as a fully serialized datasource name.").
+		AddResults(src.NewParameter("", src.NewTypeDecl("string"))).
+		AddBody(src.NewBlock().
+			AddLine("return sb.String()"),
+		),
+	)
+
+	return genOpt
 }

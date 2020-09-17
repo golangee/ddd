@@ -7,6 +7,11 @@ package mysql
 import (
 	context "context"
 	sql "database/sql"
+	json "encoding/json"
+	flag "flag"
+	fmt "fmt"
+	os "os"
+	strconv "strconv"
 )
 
 // DBTX abstracts from a concrete sql.DB or sql.Tx dependency.
@@ -15,4 +20,189 @@ type DBTX interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	// QueryContext represents an according call to sql.DB or sql.Tx
 	QueryContext(ctx context.Context, query string, args ...interface{}) (sql.Rows, error)
+}
+
+// MySQLsearchOptions contains the connection options for a MySQL database.
+type MySQLsearchOptions struct {
+	// Port is the database port to connect.
+	Port int64 `json:"port,omitempty"`
+	// User is the database user.
+	User string `json:"user,omitempty"`
+	// Password is the database user password.
+	Password string `json:"password,omitempty"`
+	// Protocol is the protocol to use.
+	Protocol string `json:"protocol,omitempty"`
+	// Database is the database name.
+	Database string `json:"database"`
+	// Address is the host or path to socket.
+	Address string `json:"address,omitempty"`
+	// Collation declares the connections default collation for sorting and indexing.
+	Collation string `json:"collation,omitempty"`
+	// Charset declares the connections default charset encoding for text.
+	Charset string `json:"charset,omitempty"`
+	// MaxAllowedPacket is the max packet size in bytes.
+	MaxAllowedPacket int64 `json:"maxAllowedPacket,omitempty"`
+	// Timeout is the duration for the timeout. If empty, OS default applies.
+	Timeout string `json:"timeout"`
+	// WriteTimeout is the duration for the write timeout.
+	WriteTimeout string `json:"writeTimeout"`
+	// Tls configures connection security. Valid values are true, false, skip-verify or preferred.
+	Tls string `json:"tls,omitempty"`
+}
+
+// Reset restores this instance to the default state.
+//  * The default value of Port is '3306'.
+//  * The default value of User is '"root"'.
+//  * The default value of Password is ''.
+//  * The default value of Protocol is '"tcp"'.
+//  * The default value of Database is ''.
+//  * The default value of Address is '"localhost"'.
+//  * The default value of Collation is '"utf8mb4_unicode_520_ci"'.
+//  * The default value of Charset is '"utf8mb4"'.
+//  * The default value of MaxAllowedPacket is '4194304'.
+//  * The default value of Timeout is ''.
+//  * The default value of WriteTimeout is ''.
+//  * The default value of Tls is '"false"'.
+func (m *MySQLsearchOptions) Reset() {
+	m.Port = 3306
+	m.User = "root"
+	m.Password = ""
+	m.Protocol = "tcp"
+	m.Database = ""
+	m.Address = "localhost"
+	m.Collation = "utf8mb4_unicode_520_ci"
+	m.Charset = "utf8mb4"
+	m.MaxAllowedPacket = 4194304
+	m.Timeout = ""
+	m.WriteTimeout = ""
+	m.Tls = "false"
+}
+
+// ParseEnv tries to parse the environment variables into this instance. It will only set those values, which have been actually defined. If values cannot be parsed, an error is returned.
+//  * Port is parsed from flag 'MYSQL_SEARCH_PORT'
+//  * User is parsed from flag 'MYSQL_SEARCH_USER'
+//  * Password is parsed from flag 'MYSQL_SEARCH_PASSWORD'
+//  * Protocol is parsed from flag 'MYSQL_SEARCH_PROTOCOL'
+//  * Database is parsed from flag 'MYSQL_SEARCH_DATABASE'
+//  * Address is parsed from flag 'MYSQL_SEARCH_ADDRESS'
+//  * Collation is parsed from flag 'MYSQL_SEARCH_COLLATION'
+//  * Charset is parsed from flag 'MYSQL_SEARCH_CHARSET'
+//  * MaxAllowedPacket is parsed from flag 'MYSQL_SEARCH_MAXALLOWEDPACKET'
+//  * Timeout is parsed from flag 'MYSQL_SEARCH_TIMEOUT'
+//  * WriteTimeout is parsed from flag 'MYSQL_SEARCH_WRITETIMEOUT'
+//  * Tls is parsed from flag 'MYSQL_SEARCH_TLS'
+func (m *MySQLsearchOptions) ParseEnv() error {
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_PORT"); ok {
+		v, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_PORT': %w", err)
+		}
+
+		m.Port = v
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_USER"); ok {
+		m.User = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_PASSWORD"); ok {
+		m.Password = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_PROTOCOL"); ok {
+		m.Protocol = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_DATABASE"); ok {
+		m.Database = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_ADDRESS"); ok {
+		m.Address = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_COLLATION"); ok {
+		m.Collation = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_CHARSET"); ok {
+		m.Charset = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_MAXALLOWEDPACKET"); ok {
+		v, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_MAXALLOWEDPACKET': %w", err)
+		}
+
+		m.MaxAllowedPacket = v
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_TIMEOUT"); ok {
+		m.Timeout = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_WRITETIMEOUT"); ok {
+		m.WriteTimeout = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_TLS"); ok {
+		m.Tls = value
+	}
+
+	return nil
+}
+
+// ConfigureFlags configures the flags to be ready to get evaluated. The default values are taken from the struct at calling time.
+// After calling, use flag.Parse() to load the values. You can only use it once, otherwise the flag package will panic.
+// The following flags will be tied to this instance:
+//  * Port is parsed from flag 'mysql-search-port'
+//  * User is parsed from flag 'mysql-search-user'
+//  * Password is parsed from flag 'mysql-search-password'
+//  * Protocol is parsed from flag 'mysql-search-protocol'
+//  * Database is parsed from flag 'mysql-search-database'
+//  * Address is parsed from flag 'mysql-search-address'
+//  * Collation is parsed from flag 'mysql-search-collation'
+//  * Charset is parsed from flag 'mysql-search-charset'
+//  * MaxAllowedPacket is parsed from flag 'mysql-search-maxallowedpacket'
+//  * Timeout is parsed from flag 'mysql-search-timeout'
+//  * WriteTimeout is parsed from flag 'mysql-search-writetimeout'
+//  * Tls is parsed from flag 'mysql-search-tls'
+func (m *MySQLsearchOptions) ConfigureFlags() {
+	flag.Int64Var(&m.Port, "mysql-search-port", m.Port, "Port is the database port to connect.")
+	flag.StringVar(&m.User, "mysql-search-user", m.User, "User is the database user.")
+	flag.StringVar(&m.Password, "mysql-search-password", m.Password, "Password is the database user password.")
+	flag.StringVar(&m.Protocol, "mysql-search-protocol", m.Protocol, "Protocol is the protocol to use.")
+	flag.StringVar(&m.Database, "mysql-search-database", m.Database, "Database is the database name.")
+	flag.StringVar(&m.Address, "mysql-search-address", m.Address, "Address is the host or path to socket.")
+	flag.StringVar(&m.Collation, "mysql-search-collation", m.Collation, "Collation declares the connections default collation for sorting and indexing.")
+	flag.StringVar(&m.Charset, "mysql-search-charset", m.Charset, "Charset declares the connections default charset encoding for text.")
+	flag.Int64Var(&m.MaxAllowedPacket, "mysql-search-maxallowedpacket", m.MaxAllowedPacket, "MaxAllowedPacket is the max packet size in bytes.")
+	flag.StringVar(&m.Timeout, "mysql-search-timeout", m.Timeout, "Timeout is the duration for the timeout. If empty, OS default applies.")
+	flag.StringVar(&m.WriteTimeout, "mysql-search-writetimeout", m.WriteTimeout, "WriteTimeout is the duration for the write timeout.")
+	flag.StringVar(&m.Tls, "mysql-search-tls", m.Tls, "Tls configures connection security. Valid values are true, false, skip-verify or preferred.")
+}
+
+// String serializes the struct into a json string.
+func (m *MySQLsearchOptions) String() string {
+	buf, err := json.Marshal(m)
+	if err != nil {
+		panic("invalid state: " + err.Error())
+	}
+
+	return string(buf)
+}
+
+// Parse tries to parse the given buffer as json and updates the current values accordingly.
+func (m *MySQLsearchOptions) Parse(buf []byte) error {
+	if err := json.Unmarshal(buf, m); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DSN returns the options as a fully serialized datasource name.
+func (m MySQLsearchOptions) DSN() string {
+	return sb.String()
 }
