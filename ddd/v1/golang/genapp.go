@@ -105,11 +105,11 @@ func generateAppConstructor(ctx *genctx) *src.FuncBuilder {
 
 		warnDepNotFoundComment := src.NewBlock()
 		body.Add(warnDepNotFoundComment)
-		body.Add("if a.", fieldName, ", err =", src.NewTypeDecl(serviceType.Qualifier()+"Factory"), "(")
+		body.Add("if a.", fieldName, ", err =", src.NewTypeDecl(src.Qualifier(factory.file.ImportPath()+"."+factory.factoryFunc.Name())), "(")
 		for i, p := range factory.factoryFunc.Params() {
-			if i == 0 {
+			if i == 0 && p.Name() == "opts" {
 				fieldName := getUberOptionsFieldName(factory.factoryFunc.Params()[0].Decl().Qualifier())
-				body.Add("options.", fieldName)
+				body.Add("options.", fieldName, ",")
 				continue
 			}
 			dependencyFound := false
@@ -117,7 +117,7 @@ func generateAppConstructor(ctx *genctx) *src.FuncBuilder {
 				// we just compare qualifiers, because our dependencies are always interfaces
 				if p.Decl().Qualifier() == decl.Qualifier() {
 					dependencyFound = true
-					body.Add(",a." + field)
+					body.Add("a.", field, ",")
 					break
 				}
 			}
@@ -156,6 +156,9 @@ func generateUberOptions(ctx *genctx) {
 	opt.AddMethods(configureFlagsFun.AddBody(configureFlagsFunBody))
 
 	for _, factory := range ctx.factorySpecs {
+		if factory.options == nil {
+			continue
+		}
 		serviceType := factory.factoryFunc.Params()[0].Decl().Clone()
 		fieldName := getUberOptionsFieldName(serviceType.Qualifier())
 		field := src.NewField(fieldName, serviceType)

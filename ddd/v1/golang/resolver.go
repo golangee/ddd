@@ -18,6 +18,7 @@ const (
 	rUniverse
 	rUsecase
 	rRest
+	rMysql
 )
 
 func (r resolverScope) Has(flag resolverScope) bool {
@@ -168,7 +169,7 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 			r.usecase = tlayer
 
 		case *ddd.RestLayerSpec:
-			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + l.Name()
+			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + text.Safename(l.Name())
 			tlayer := typeLayer{
 				layer: layer,
 				path:  layerPath,
@@ -177,7 +178,7 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 			r.restLayers = append(r.restLayers, tlayer)
 
 		case *ddd.MySQLLayerSpec:
-			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + l.Name()
+			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + text.Safename(l.Name())
 			tlayer := typeLayer{
 				layer: layer,
 				path:  layerPath,
@@ -190,6 +191,15 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 	}
 
 	return r
+}
+
+// assembleQualifier creates a Qualifier blindly, without actually resolving anything.
+func (r *resolver) assembleQualifier(scope resolverScope, name string) src.Qualifier {
+	if scope == rMysql {
+		return src.Qualifier(r.mysqlLayer.path + "." + name)
+	}
+
+	panic("not yet implemented: " + scope.String())
 }
 
 func appendStructOrInterfaces(dst *typeLayer, structOrInterfaces []ddd.StructOrInterface) {

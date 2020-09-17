@@ -8,14 +8,14 @@ import (
 	os "os"
 )
 
-// LoanServiceFactory is the factory function to create a new instance of LoanService.
+// NewLoanService is the factory function to create a new instance of LoanService.
 //
 // The parameter 'opts' contains the options to create the instance.
 //
 // The result 'LoanService' is the new instance or nil in case of an error.
 //
 // The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-var LoanServiceFactory = func(opts LoanServiceOpts) (LoanService, error) {
+var NewLoanService = func(opts LoanServiceOpts) (LoanService, error) {
 	return &LoanServiceMock{}, nil
 }
 

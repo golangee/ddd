@@ -150,6 +150,6 @@ func (b *MysqlBookRepository) Insert(ctx context.Context, dto core.Book) error {
 }
 
 // NewMysqlBookRepository creates a new instance of MysqlBookRepository.
-func NewMysqlBookRepository(db DBTX) *MysqlBookRepository {
-	return &MysqlBookRepository{db: db}
+func NewMysqlBookRepository(db DBTX) (core.BookRepository, error) {
+	return &MysqlBookRepository{db: db}, nil
 }

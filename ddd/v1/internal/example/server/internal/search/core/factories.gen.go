@@ -11,7 +11,7 @@ import (
 	time "time"
 )
 
-// SearchServiceFactory is the factory function to create a new instance of SearchService.
+// NewSearchService is the factory function to create a new instance of SearchService.
 //
 // The parameter 'opts' contains the options to create the instance.
 //
@@ -20,7 +20,7 @@ import (
 // The result 'SearchService' is the new instance or nil in case of an error.
 //
 // The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-var SearchServiceFactory = func(opts SearchServiceOpts, bookRepository BookRepository) (SearchService, error) {
+var NewSearchService = func(opts SearchServiceOpts, bookRepository BookRepository) (SearchService, error) {
 	return &SearchServiceMock{}, nil
 }
 

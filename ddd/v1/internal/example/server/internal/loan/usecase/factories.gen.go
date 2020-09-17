@@ -7,14 +7,14 @@ import (
 	core "example-server/internal/loan/core"
 )
 
-// BookLoaningFactory is the factory function to create a new instance of BookLoaning.
+// NewBookLoaning is the factory function to create a new instance of BookLoaning.
 //
 // The parameter 'opts' contains the options to create the instance.
 //
 // The result 'BookLoaning' is the new instance or nil in case of an error.
 //
 // The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-var BookLoaningFactory = func(opts BookLoaningOpts, loanService core.LoanService) (BookLoaning, error) {
+var NewBookLoaning = func(opts BookLoaningOpts, loanService core.LoanService) (BookLoaning, error) {
 	return &BookLoaningMock{}, nil
 }
 

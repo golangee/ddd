@@ -12,10 +12,6 @@ func createSQLLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql
 	bcPath := filepath.Join("internal", text.Safename(bc.Name()))
 	layerPath := filepath.Join(bcPath, sql.Name())
 
-	if err := createSQLUtil(ctx, rslv, bc, sql); err != nil {
-		return err
-	}
-
 	for _, repo := range sql.Repositories() {
 		file := ctx.newFile(layerPath, text.Safename(repo.InterfaceName()), "").
 			SetPackageDoc(sql.Description())
@@ -33,7 +29,7 @@ func createSQLLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql
 		impl := src.Implement(repoSpec.iface, true)
 		impl.SetName(sql.Name() + repo.InterfaceName())
 		impl.AddFields(
-			src.NewField("db", src.NewTypeDecl("DBTX")),
+			src.NewField("db", src.NewTypeDecl(rslv.assembleQualifier(rMysql, "DBTX"))),
 		)
 		impl.SetDoc("...is an implementation of the " + pkgNameCore + "." + repo.InterfaceName() + " defined as SPI/driven port in the domain/core layer.\nThe queries are specific for the " + strings.ToLower(sql.Name()) + " dialect.")
 		file.AddTypes(impl)
@@ -57,12 +53,30 @@ func createSQLLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql
 
 		}
 
-		file.AddFuncs(src.NewFunc("New" + impl.Name()).
-			SetDoc("...creates a new instance of " + impl.Name() + ".").
-			AddParams(src.NewParameter("db", src.NewTypeDecl("DBTX"))).
-			AddResults(src.NewParameter("", src.NewPointerDecl(src.NewTypeDecl(src.Qualifier(impl.Name()))))).
-			AddBody(src.NewBlock("return &" + impl.Name() + "{db:db}")),
-		)
+		repoTypeDecl, err := rslv.resolveTypeName(rCore, ddd.TypeName(iface.Name()))
+		if err != nil {
+			return err
+		}
+
+		repoFac := src.NewFunc("New"+impl.Name()).
+			SetDoc("...creates a new instance of "+impl.Name()+".").
+			AddParams(src.NewParameter("db", src.NewTypeDecl(rslv.assembleQualifier(rMysql, "DBTX")))).
+			AddResults(
+				src.NewParameter("", repoTypeDecl),
+				src.NewParameter("", src.NewTypeDecl("error")),
+			).
+			AddBody(src.NewBlock("return &" + impl.Name() + "{db:db},nil"))
+
+		file.AddFuncs(repoFac)
+
+		ctx.factorySpecs = append([]*factorySpec{{
+			file:        file,
+			factoryFunc: repoFac,
+		}}, ctx.factorySpecs...)
+	}
+
+	if err := createSQLUtil(ctx, rslv, bc, sql); err != nil {
+		return err
 	}
 
 	return nil
@@ -207,7 +221,7 @@ func createSQLUtil(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql 
 					).
 					SetVariadic(true).
 					AddResults(
-						src.NewParameter("", src.NewTypeDecl("database/sql.Rows")),
+						src.NewParameter("", src.NewPointerDecl(src.NewTypeDecl("database/sql.Rows"))),
 						src.NewParameter("", src.NewTypeDecl("error")),
 					),
 			),
@@ -216,14 +230,22 @@ func createSQLUtil(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql 
 	opts := createMySQLOptions(rslv, bc)
 	file.AddTypes(opts)
 
-	file.AddFuncs(createMySQLOpen(opts.Name()))
+	dbFactory := createMySQLOpen(rslv.assembleQualifier(rMysql, opts.Name()))
+	file.AddFuncs(dbFactory)
 
-	// TODO add side effect import
+	file.AddSideEffectImports("github.com/go-sql-driver/mysql")
+
+	ctx.factorySpecs = append([]*factorySpec{{
+		file:        file,
+		factoryFunc: dbFactory,
+		options:     opts,
+	}}, ctx.factorySpecs...)
+
 	return nil
 }
 
 func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBuilder {
-	opt := ddd.Struct("MySQL"+text.MakePublic(bc.Name())+"Options",
+	opt := ddd.Struct("Options",
 
 		"...contains the connection options for a MySQL database.",
 		ddd.Field("Port", ddd.Int64, "...is the database port to connect.").SetDefault("3306"),
@@ -242,10 +264,14 @@ func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBui
 		ddd.Field("Collation", ddd.String, "...declares the connections default collation for sorting and indexing.").SetDefault("\"utf8mb4_unicode_520_ci\""),
 		ddd.Field("Charset", ddd.String, "...declares the connections default charset encoding for text.").SetDefault("\"utf8mb4\""),
 		ddd.Field("MaxAllowedPacket", ddd.Int64, "...is the max packet size in bytes.").SetDefault("4194304"),
-		ddd.Field("Timeout", ddd.String, "...is the duration for the timeout. If empty, OS default applies."),
-		ddd.Field("WriteTimeout", ddd.String, "...is the duration for the write timeout."),
+		ddd.Field("Timeout", ddd.Duration, "...is the duration until the dial receives a timeout.").SetDefault("30s"),
+		ddd.Field("WriteTimeout", ddd.Duration, "...is the duration for the write timeout.").SetDefault("30s"),
 		ddd.Field("Tls", ddd.String, "...configures connection security. Valid values are true, false, skip-verify or preferred.").SetDefault("\"false\""),
-		ddd.Field("SqlMode", ddd.String, "...is flag which influences the sql parser.").SetDefault("\"ANSI\""),
+		ddd.Field("SqlMode", ddd.String, "...is a flag which influences the sql parser.").SetDefault("\"ANSI\""),
+		ddd.Field("ConnMaxLifetime", ddd.Duration, "...is the duration of how long pooled connections are kept alive.").SetDefault("3m"),
+		ddd.Field("MaxOpenConns", ddd.Int64, "...is the amount of how many open connections can be kept in the pool.").SetDefault("25"),
+		ddd.Field("MaxIdleConns", ddd.Int64, "...is the amount of how many open connections can be idle.").SetDefault("25"),
+
 	)
 
 	genOpt, err := generateStruct(rslv, rUniverse, opt)
@@ -319,12 +345,12 @@ func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBui
 	return genOpt
 }
 
-func createMySQLOpen(optsName string) *src.FuncBuilder {
+func createMySQLOpen(opts src.Qualifier) *src.FuncBuilder {
 	return src.NewFunc("Open").
 		SetDoc("...tries to connect to a mysql compatible database.").
-		AddParams(src.NewParameter("opts", src.NewTypeDecl(src.Qualifier(optsName)))).
+		AddParams(src.NewParameter("opts", src.NewTypeDecl(opts))).
 		AddResults(
-			src.NewParameter("", src.NewPointerDecl(src.NewTypeDecl("database/sql.DB"))),
+			src.NewParameter("", src.NewTypeDecl(src.Qualifier(opts.Path()+".DBTX"))), // actually this is just "database/sql.DB" but our injector in genapp.go cannot match types and interfaces yet
 			src.NewParameter("", src.NewTypeDecl("error")),
 		).
 		AddBody(src.NewBlock().
@@ -333,10 +359,9 @@ func createMySQLOpen(optsName string) *src.FuncBuilder {
 			AddLine("err = db.Ping()").
 			Check("err", "cannot ping database", "nil").
 			NewLine().
-			//TODO
-			//db.SetConnMaxLifetime(time.Minute * 3)
-			//db.SetMaxOpenConns(10)
-			//db.SetMaxIdleConns(10)
+			AddLine("db.SetConnMaxLifetime(opts.ConnMaxLifetime)").
+			AddLine("db.SetMaxOpenConns(int(opts.MaxOpenConns))").
+			AddLine("db.SetMaxIdleConns(int(opts.MaxIdleConns))").
 			AddLine("return db,nil"),
 
 		)

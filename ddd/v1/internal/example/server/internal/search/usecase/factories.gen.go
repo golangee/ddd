@@ -11,14 +11,14 @@ import (
 	strconv "strconv"
 )
 
-// BookSearchFactory is the factory function to create a new instance of BookSearch.
+// NewBookSearch is the factory function to create a new instance of BookSearch.
 //
 // The parameter 'opts' contains the options to create the instance.
 //
 // The result 'BookSearch' is the new instance or nil in case of an error.
 //
 // The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-var BookSearchFactory = func(opts BookSearchOpts, searchService core.SearchService) (BookSearch, error) {
+var NewBookSearch = func(opts BookSearchOpts, searchService core.SearchService) (BookSearch, error) {
 	return &BookSearchMock{}, nil
 }
 

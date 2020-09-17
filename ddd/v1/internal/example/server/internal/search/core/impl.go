@@ -16,7 +16,7 @@ func (s MySearchServiceImpl) Search(ctx context.Context, query string) ([]Book, 
 
 func init() {
 	fmt.Println("2")
-	SearchServiceFactory = func(opts SearchServiceOpts, bookRepository BookRepository) (SearchService, error) {
+	NewSearchService = func(opts SearchServiceOpts, bookRepository BookRepository) (SearchService, error) {
 		return MySearchServiceImpl{}, nil
 	}
 }

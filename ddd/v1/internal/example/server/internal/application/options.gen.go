@@ -6,12 +6,14 @@ import (
 	loancore "example-server/internal/loan/core"
 	loanusecase "example-server/internal/loan/usecase"
 	core "example-server/internal/search/core"
+	mysql "example-server/internal/search/mysql"
 	usecase "example-server/internal/search/usecase"
 )
 
 // Options represents the uber options and bundles all options from all
 // bounded contexts and layers in one monolithic instance.
 type Options struct {
+	SearchMysqlOptions          mysql.Options
 	SearchCoreSearchServiceOpts core.SearchServiceOpts
 	SearchUsecaseBookSearchOpts usecase.BookSearchOpts
 	LoanCoreLoanServiceOpts     loancore.LoanServiceOpts
@@ -20,6 +22,7 @@ type Options struct {
 
 // Reset restores all default values.
 func (o *Options) Reset() {
+	o.SearchMysqlOptions.Reset()
 	o.SearchCoreSearchServiceOpts.Reset()
 	o.SearchUsecaseBookSearchOpts.Reset()
 	o.LoanCoreLoanServiceOpts.Reset()
@@ -28,6 +31,10 @@ func (o *Options) Reset() {
 
 // ParseEnv parses values from the environment.
 func (o *Options) ParseEnv() error {
+	if err := o.SearchMysqlOptions.ParseEnv(); err != nil {
+		return err
+	}
+
 	if err := o.SearchCoreSearchServiceOpts.ParseEnv(); err != nil {
 		return err
 	}
@@ -49,6 +56,7 @@ func (o *Options) ParseEnv() error {
 
 // ConfigureFlags configures the flag package to receive parsed flags.
 func (o *Options) ConfigureFlags() {
+	o.SearchMysqlOptions.ConfigureFlags()
 	o.SearchCoreSearchServiceOpts.ConfigureFlags()
 	o.SearchUsecaseBookSearchOpts.ConfigureFlags()
 	o.LoanCoreLoanServiceOpts.ConfigureFlags()

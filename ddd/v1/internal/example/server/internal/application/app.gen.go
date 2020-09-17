@@ -6,6 +6,7 @@ import (
 	loancore "example-server/internal/loan/core"
 	loanusecase "example-server/internal/loan/usecase"
 	core "example-server/internal/search/core"
+	mysql "example-server/internal/search/mysql"
 	usecase "example-server/internal/search/usecase"
 	flag "flag"
 	fmt "fmt"
@@ -14,10 +15,12 @@ import (
 
 // App is the actual application, which glues all layers together and is launched from the command line.
 type App struct {
-	searchService core.SearchService
-	bookSearch    usecase.BookSearch
-	loanService   loancore.LoanService
-	bookLoaning   loanusecase.BookLoaning
+	dBTX           mysql.DBTX
+	bookRepository core.BookRepository
+	searchService  core.SearchService
+	bookSearch     usecase.BookSearch
+	loanService    loancore.LoanService
+	bookLoaning    loanusecase.BookLoaning
 }
 
 // Start launches any blocking background processes, like e.g. an http server.
@@ -42,20 +45,27 @@ func NewApp() (*App, error) {
 		os.Exit(0)
 	}
 	a := &App{}
-	// TODO dependency to bookRepository of type BookRepository cannot be resolved.
-	if a.searchService, err = core.SearchServiceFactory(options.SearchCoreSearchServiceOpts, nil); err != nil {
+	if a.dBTX, err = mysql.Open(options.SearchMysqlOptions); err != nil {
 		return nil, err
 	}
 
-	if a.bookSearch, err = usecase.BookSearchFactory(options.SearchUsecaseBookSearchOpts, a.searchService); err != nil {
+	if a.bookRepository, err = mysql.NewMysqlBookRepository(a.dBTX); err != nil {
 		return nil, err
 	}
 
-	if a.loanService, err = loancore.LoanServiceFactory(options.LoanCoreLoanServiceOpts); err != nil {
+	if a.searchService, err = core.NewSearchService(options.SearchCoreSearchServiceOpts, a.bookRepository); err != nil {
 		return nil, err
 	}
 
-	if a.bookLoaning, err = loanusecase.BookLoaningFactory(options.LoanUsecaseBookLoaningOpts, a.loanService); err != nil {
+	if a.bookSearch, err = usecase.NewBookSearch(options.SearchUsecaseBookSearchOpts, a.searchService); err != nil {
+		return nil, err
+	}
+
+	if a.loanService, err = loancore.NewLoanService(options.LoanCoreLoanServiceOpts); err != nil {
+		return nil, err
+	}
+
+	if a.bookLoaning, err = loanusecase.NewBookLoaning(options.LoanUsecaseBookLoaningOpts, a.loanService); err != nil {
 		return nil, err
 	}
 

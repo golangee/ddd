@@ -6,6 +6,7 @@ import (
 	"github.com/golangee/src"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // generateSetDefault appends a method to reset each struct value to either their natural default
@@ -21,7 +22,16 @@ func generateSetDefault(name string, rec *src.TypeBuilder, origin *ddd.StructSpe
 
 		if oType.Default() != "" {
 			comment += oType.Default()
-			body.AddLine(fun.ReceiverName(), ".", field.Name(), " = ", oType.Default())
+			if oType.TypeName() == ddd.Duration {
+				d, err := time.ParseDuration(oType.Default())
+				if err != nil {
+					return buildErr("literal", oType.Default(), err.Error(), origin.Pos())
+				}
+				body.AddLine(fun.ReceiverName(), ".", field.Name(), " = ", src.NewTypeDecl("time.Duration"), "(", d.Nanoseconds(), ") // "+oType.Default())
+
+			} else {
+				body.AddLine(fun.ReceiverName(), ".", field.Name(), " = ", oType.Default())
+			}
 		} else {
 			switch oType.TypeName() {
 			case "string":

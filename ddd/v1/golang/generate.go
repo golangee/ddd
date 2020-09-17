@@ -73,14 +73,21 @@ func generateLayers(ctx *genctx) error {
 					facs.AddTypes(opt)
 
 					facs.AddVars(
-						src.NewVar(impl.Of() + "Factory").SetRHS(src.NewBlock(fun)).SetDoc(fun.Doc()),
+						src.NewVar("New" + impl.Of()).SetRHS(src.NewBlock(fun)).SetDoc(fun.Doc()),
 					)
-					fun.SetDoc("")
-					fun.SetName("")
 
 					// keep a central reference, to build the uber options
-					ctx.addFactorySpec(facs, fun, opt)
+					fakeNamedFun := src.NewFunc("New" + impl.Of()).SetDoc(fun.Doc())
+					for _, p := range fun.Params() {
+						fakeNamedFun.AddParams(src.NewParameter(p.Name(), p.Decl().Clone()))
+					}
+					for _, p := range fun.Results() {
+						fakeNamedFun.AddResults(src.NewParameter(p.Name(), p.Decl().Clone()))
+					}
+					ctx.addFactorySpec(facs, fakeNamedFun, opt)
 
+					fun.SetDoc("")
+					fun.SetName("")
 				}
 
 			case *ddd.UseCaseLayerSpec:
@@ -139,13 +146,22 @@ func generateLayers(ctx *genctx) error {
 					facs.AddTypes(opt)
 
 					facs.AddVars(
-						src.NewVar(impl.Of() + "Factory").SetRHS(src.NewBlock(fun)).SetDoc(fun.Doc()),
+						src.NewVar("New" + impl.Of()).SetRHS(src.NewBlock(fun)).SetDoc(fun.Doc()),
 					)
-					fun.SetDoc("")
-					fun.SetName("")
 
 					// keep a central reference, to build the uber options
-					ctx.addFactorySpec(facs, fun, opt)
+					fakeNamedFun := src.NewFunc("New" + impl.Of()).SetDoc(fun.Doc())
+					for _, p := range fun.Params() {
+						fakeNamedFun.AddParams(src.NewParameter(p.Name(), p.Decl().Clone()))
+					}
+					for _, p := range fun.Results() {
+						fakeNamedFun.AddResults(src.NewParameter(p.Name(), p.Decl().Clone()))
+					}
+					ctx.addFactorySpec(facs, fakeNamedFun, opt)
+
+					// reset inline func
+					fun.SetDoc("")
+					fun.SetName("")
 
 					uFace.SetDoc(myDoc)
 				}

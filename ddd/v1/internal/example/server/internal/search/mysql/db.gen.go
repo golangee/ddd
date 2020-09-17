@@ -10,10 +10,12 @@ import (
 	json "encoding/json"
 	flag "flag"
 	fmt "fmt"
+	_ "github.com/go-sql-driver/mysql"
 	url "net/url"
 	os "os"
 	strconv "strconv"
 	strings "strings"
+	time "time"
 )
 
 // DBTX abstracts from a concrete sql.DB or sql.Tx dependency.
@@ -21,11 +23,11 @@ type DBTX interface {
 	// ExecContext represents an according call to sql.DB or sql.Tx
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	// QueryContext represents an according call to sql.DB or sql.Tx
-	QueryContext(ctx context.Context, query string, args ...interface{}) (sql.Rows, error)
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
-// MySQLSearchOptions contains the connection options for a MySQL database.
-type MySQLSearchOptions struct {
+// Options contains the connection options for a MySQL database.
+type Options struct {
 	// Port is the database port to connect.
 	Port int64 `json:"port,omitempty"`
 	// User is the database user.
@@ -44,14 +46,20 @@ type MySQLSearchOptions struct {
 	Charset string `json:"charset,omitempty"`
 	// MaxAllowedPacket is the max packet size in bytes.
 	MaxAllowedPacket int64 `json:"maxAllowedPacket,omitempty"`
-	// Timeout is the duration for the timeout. If empty, OS default applies.
-	Timeout string `json:"timeout"`
+	// Timeout is the duration until the dial receives a timeout.
+	Timeout time.Duration `json:"timeout,omitempty"`
 	// WriteTimeout is the duration for the write timeout.
-	WriteTimeout string `json:"writeTimeout"`
+	WriteTimeout time.Duration `json:"writeTimeout,omitempty"`
 	// Tls configures connection security. Valid values are true, false, skip-verify or preferred.
 	Tls string `json:"tls,omitempty"`
-	// SqlMode is flag which influences the sql parser.
+	// SqlMode is a flag which influences the sql parser.
 	SqlMode string `json:"sqlMode,omitempty"`
+	// ConnMaxLifetime is the duration of how long pooled connections are kept alive.
+	ConnMaxLifetime time.Duration `json:"connMaxLifetime,omitempty"`
+	// MaxOpenConns is the amount of how many open connections can be kept in the pool.
+	MaxOpenConns int64 `json:"maxOpenConns,omitempty"`
+	// MaxIdleConns is the amount of how many open connections can be idle.
+	MaxIdleConns int64 `json:"maxIdleConns,omitempty"`
 }
 
 // Reset restores this instance to the default state.
@@ -64,24 +72,30 @@ type MySQLSearchOptions struct {
 //  * The default value of Collation is '"utf8mb4_unicode_520_ci"'.
 //  * The default value of Charset is '"utf8mb4"'.
 //  * The default value of MaxAllowedPacket is '4194304'.
-//  * The default value of Timeout is ''.
-//  * The default value of WriteTimeout is ''.
+//  * The default value of Timeout is '30s'.
+//  * The default value of WriteTimeout is '30s'.
 //  * The default value of Tls is '"false"'.
 //  * The default value of SqlMode is '"ANSI"'.
-func (m *MySQLSearchOptions) Reset() {
-	m.Port = 3306
-	m.User = "root"
-	m.Password = ""
-	m.Protocol = "tcp"
-	m.Database = ""
-	m.Address = "localhost"
-	m.Collation = "utf8mb4_unicode_520_ci"
-	m.Charset = "utf8mb4"
-	m.MaxAllowedPacket = 4194304
-	m.Timeout = ""
-	m.WriteTimeout = ""
-	m.Tls = "false"
-	m.SqlMode = "ANSI"
+//  * The default value of ConnMaxLifetime is '3m'.
+//  * The default value of MaxOpenConns is '25'.
+//  * The default value of MaxIdleConns is '25'.
+func (o *Options) Reset() {
+	o.Port = 3306
+	o.User = "root"
+	o.Password = ""
+	o.Protocol = "tcp"
+	o.Database = ""
+	o.Address = "localhost"
+	o.Collation = "utf8mb4_unicode_520_ci"
+	o.Charset = "utf8mb4"
+	o.MaxAllowedPacket = 4194304
+	o.Timeout = time.Duration(30000000000)      // 30s
+	o.WriteTimeout = time.Duration(30000000000) // 30s
+	o.Tls = "false"
+	o.SqlMode = "ANSI"
+	o.ConnMaxLifetime = time.Duration(180000000000) // 3m
+	o.MaxOpenConns = 25
+	o.MaxIdleConns = 25
 }
 
 // ParseEnv tries to parse the environment variables into this instance. It will only set those values, which have been actually defined. If values cannot be parsed, an error is returned.
@@ -98,42 +112,45 @@ func (m *MySQLSearchOptions) Reset() {
 //  * WriteTimeout is parsed from flag 'MYSQL_SEARCH_WRITETIMEOUT'
 //  * Tls is parsed from flag 'MYSQL_SEARCH_TLS'
 //  * SqlMode is parsed from flag 'MYSQL_SEARCH_SQLMODE'
-func (m *MySQLSearchOptions) ParseEnv() error {
+//  * ConnMaxLifetime is parsed from flag 'MYSQL_SEARCH_CONNMAXLIFETIME'
+//  * MaxOpenConns is parsed from flag 'MYSQL_SEARCH_MAXOPENCONNS'
+//  * MaxIdleConns is parsed from flag 'MYSQL_SEARCH_MAXIDLECONNS'
+func (o *Options) ParseEnv() error {
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_PORT"); ok {
 		v, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_PORT': %w", err)
 		}
 
-		m.Port = v
+		o.Port = v
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_USER"); ok {
-		m.User = value
+		o.User = value
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_PASSWORD"); ok {
-		m.Password = value
+		o.Password = value
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_PROTOCOL"); ok {
-		m.Protocol = value
+		o.Protocol = value
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_DATABASE"); ok {
-		m.Database = value
+		o.Database = value
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_ADDRESS"); ok {
-		m.Address = value
+		o.Address = value
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_COLLATION"); ok {
-		m.Collation = value
+		o.Collation = value
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_CHARSET"); ok {
-		m.Charset = value
+		o.Charset = value
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_MAXALLOWEDPACKET"); ok {
@@ -142,23 +159,60 @@ func (m *MySQLSearchOptions) ParseEnv() error {
 			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_MAXALLOWEDPACKET': %w", err)
 		}
 
-		m.MaxAllowedPacket = v
+		o.MaxAllowedPacket = v
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_TIMEOUT"); ok {
-		m.Timeout = value
+		v, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_TIMEOUT': %w", err)
+		}
+
+		o.Timeout = v
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_WRITETIMEOUT"); ok {
-		m.WriteTimeout = value
+		v, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_WRITETIMEOUT': %w", err)
+		}
+
+		o.WriteTimeout = v
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_TLS"); ok {
-		m.Tls = value
+		o.Tls = value
 	}
 
 	if value, ok := os.LookupEnv("MYSQL_SEARCH_SQLMODE"); ok {
-		m.SqlMode = value
+		o.SqlMode = value
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_CONNMAXLIFETIME"); ok {
+		v, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_CONNMAXLIFETIME': %w", err)
+		}
+
+		o.ConnMaxLifetime = v
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_MAXOPENCONNS"); ok {
+		v, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_MAXOPENCONNS': %w", err)
+		}
+
+		o.MaxOpenConns = v
+	}
+
+	if value, ok := os.LookupEnv("MYSQL_SEARCH_MAXIDLECONNS"); ok {
+		v, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return fmt.Errorf("cannot parse environment variable 'MYSQL_SEARCH_MAXIDLECONNS': %w", err)
+		}
+
+		o.MaxIdleConns = v
 	}
 
 	return nil
@@ -180,25 +234,31 @@ func (m *MySQLSearchOptions) ParseEnv() error {
 //  * WriteTimeout is parsed from flag 'mysql-search-writetimeout'
 //  * Tls is parsed from flag 'mysql-search-tls'
 //  * SqlMode is parsed from flag 'mysql-search-sqlmode'
-func (m *MySQLSearchOptions) ConfigureFlags() {
-	flag.Int64Var(&m.Port, "mysql-search-port", m.Port, "Port is the database port to connect.")
-	flag.StringVar(&m.User, "mysql-search-user", m.User, "User is the database user.")
-	flag.StringVar(&m.Password, "mysql-search-password", m.Password, "Password is the database user password.")
-	flag.StringVar(&m.Protocol, "mysql-search-protocol", m.Protocol, "Protocol is the protocol to use.")
-	flag.StringVar(&m.Database, "mysql-search-database", m.Database, "Database is the database name.")
-	flag.StringVar(&m.Address, "mysql-search-address", m.Address, "Address is the host or path to socket.")
-	flag.StringVar(&m.Collation, "mysql-search-collation", m.Collation, "Collation declares the connections default collation for sorting and indexing.")
-	flag.StringVar(&m.Charset, "mysql-search-charset", m.Charset, "Charset declares the connections default charset encoding for text.")
-	flag.Int64Var(&m.MaxAllowedPacket, "mysql-search-maxallowedpacket", m.MaxAllowedPacket, "MaxAllowedPacket is the max packet size in bytes.")
-	flag.StringVar(&m.Timeout, "mysql-search-timeout", m.Timeout, "Timeout is the duration for the timeout. If empty, OS default applies.")
-	flag.StringVar(&m.WriteTimeout, "mysql-search-writetimeout", m.WriteTimeout, "WriteTimeout is the duration for the write timeout.")
-	flag.StringVar(&m.Tls, "mysql-search-tls", m.Tls, "Tls configures connection security. Valid values are true, false, skip-verify or preferred.")
-	flag.StringVar(&m.SqlMode, "mysql-search-sqlmode", m.SqlMode, "SqlMode is flag which influences the sql parser.")
+//  * ConnMaxLifetime is parsed from flag 'mysql-search-connmaxlifetime'
+//  * MaxOpenConns is parsed from flag 'mysql-search-maxopenconns'
+//  * MaxIdleConns is parsed from flag 'mysql-search-maxidleconns'
+func (o *Options) ConfigureFlags() {
+	flag.Int64Var(&o.Port, "mysql-search-port", o.Port, "Port is the database port to connect.")
+	flag.StringVar(&o.User, "mysql-search-user", o.User, "User is the database user.")
+	flag.StringVar(&o.Password, "mysql-search-password", o.Password, "Password is the database user password.")
+	flag.StringVar(&o.Protocol, "mysql-search-protocol", o.Protocol, "Protocol is the protocol to use.")
+	flag.StringVar(&o.Database, "mysql-search-database", o.Database, "Database is the database name.")
+	flag.StringVar(&o.Address, "mysql-search-address", o.Address, "Address is the host or path to socket.")
+	flag.StringVar(&o.Collation, "mysql-search-collation", o.Collation, "Collation declares the connections default collation for sorting and indexing.")
+	flag.StringVar(&o.Charset, "mysql-search-charset", o.Charset, "Charset declares the connections default charset encoding for text.")
+	flag.Int64Var(&o.MaxAllowedPacket, "mysql-search-maxallowedpacket", o.MaxAllowedPacket, "MaxAllowedPacket is the max packet size in bytes.")
+	flag.DurationVar(&o.Timeout, "mysql-search-timeout", o.Timeout, "Timeout is the duration until the dial receives a timeout.")
+	flag.DurationVar(&o.WriteTimeout, "mysql-search-writetimeout", o.WriteTimeout, "WriteTimeout is the duration for the write timeout.")
+	flag.StringVar(&o.Tls, "mysql-search-tls", o.Tls, "Tls configures connection security. Valid values are true, false, skip-verify or preferred.")
+	flag.StringVar(&o.SqlMode, "mysql-search-sqlmode", o.SqlMode, "SqlMode is a flag which influences the sql parser.")
+	flag.DurationVar(&o.ConnMaxLifetime, "mysql-search-connmaxlifetime", o.ConnMaxLifetime, "ConnMaxLifetime is the duration of how long pooled connections are kept alive.")
+	flag.Int64Var(&o.MaxOpenConns, "mysql-search-maxopenconns", o.MaxOpenConns, "MaxOpenConns is the amount of how many open connections can be kept in the pool.")
+	flag.Int64Var(&o.MaxIdleConns, "mysql-search-maxidleconns", o.MaxIdleConns, "MaxIdleConns is the amount of how many open connections can be idle.")
 }
 
 // String serializes the struct into a json string.
-func (m *MySQLSearchOptions) String() string {
-	buf, err := json.Marshal(m)
+func (o *Options) String() string {
+	buf, err := json.Marshal(o)
 	if err != nil {
 		panic("invalid state: " + err.Error())
 	}
@@ -207,8 +267,8 @@ func (m *MySQLSearchOptions) String() string {
 }
 
 // Parse tries to parse the given buffer as json and updates the current values accordingly.
-func (m *MySQLSearchOptions) Parse(buf []byte) error {
-	if err := json.Unmarshal(buf, m); err != nil {
+func (o *Options) Parse(buf []byte) error {
+	if err := json.Unmarshal(buf, o); err != nil {
 		return err
 	}
 
@@ -218,31 +278,31 @@ func (m *MySQLSearchOptions) Parse(buf []byte) error {
 // DSN returns the options as a fully serialized datasource name.
 // The returned string is of the form:
 //   username:password@protocol(address)/dbname?param=value
-func (m *MySQLSearchOptions) DSN() string {
+func (o *Options) DSN() string {
 	sb := &strings.Builder{}
-	sb.WriteString(url.PathEscape(m.User))
+	sb.WriteString(url.PathEscape(o.User))
 	sb.WriteString(":")
-	sb.WriteString(url.PathEscape(m.Password))
+	sb.WriteString(url.PathEscape(o.Password))
 	sb.WriteString("@")
-	sb.WriteString(m.Protocol)
+	sb.WriteString(o.Protocol)
 	sb.WriteString("(")
-	sb.WriteString(m.Address)
+	sb.WriteString(o.Address)
 	sb.WriteString(")")
 	sb.WriteString("/")
-	sb.WriteString(m.Database)
+	sb.WriteString(o.Database)
 	sb.WriteString("?")
-	sb.WriteString(fmt.Sprintf("%s=%s&", "sql_mode", url.QueryEscape(m.SqlMode)))
-	sb.WriteString(fmt.Sprintf("%s=%s&", "charset", url.QueryEscape(m.Charset)))
-	sb.WriteString(fmt.Sprintf("%s=%s&", "collation", url.QueryEscape(m.Collation)))
-	sb.WriteString(fmt.Sprintf("%s=%v&", "maxAllowedPacket", m.MaxAllowedPacket))
-	sb.WriteString(fmt.Sprintf("%s=%s&", "tls", url.QueryEscape(m.Tls)))
-	sb.WriteString(fmt.Sprintf("%s=%s&", "timeout", url.QueryEscape(m.Timeout)))
-	sb.WriteString(fmt.Sprintf("%s=%s&", "writeTimeout", url.QueryEscape(m.WriteTimeout)))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "charset", url.QueryEscape(o.Charset)))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "collation", url.QueryEscape(o.Collation)))
+	sb.WriteString(fmt.Sprintf("%s=%v&", "maxAllowedPacket", o.MaxAllowedPacket))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "tls", url.QueryEscape(o.Tls)))
+	sb.WriteString(fmt.Sprintf("%s=%v&", "timeout", o.Timeout))
+	sb.WriteString(fmt.Sprintf("%s=%v&", "writeTimeout", o.WriteTimeout))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "sql_mode", url.QueryEscape(o.SqlMode)))
 	return sb.String()
 }
 
 // Open tries to connect to a mysql compatible database.
-func Open(opts MySQLSearchOptions) (*sql.DB, error) {
+func Open(opts Options) (DBTX, error) {
 	db, err := sql.Open("mysql", opts.DSN())
 	if err != nil {
 		return nil, fmt.Errorf("cannot open database: %w", err)
@@ -253,5 +313,8 @@ func Open(opts MySQLSearchOptions) (*sql.DB, error) {
 		return nil, fmt.Errorf("cannot ping database: %w", err)
 	}
 
+	db.SetConnMaxLifetime(opts.ConnMaxLifetime)
+	db.SetMaxOpenConns(int(opts.MaxOpenConns))
+	db.SetMaxIdleConns(int(opts.MaxIdleConns))
 	return db, nil
 }
