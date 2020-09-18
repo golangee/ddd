@@ -291,13 +291,13 @@ func (o *Options) DSN() string {
 	sb.WriteString("/")
 	sb.WriteString(o.Database)
 	sb.WriteString("?")
+	sb.WriteString(fmt.Sprintf("%s=%s&", "charset", url.QueryEscape(o.Charset)))
 	sb.WriteString(fmt.Sprintf("%s=%s&", "collation", url.QueryEscape(o.Collation)))
 	sb.WriteString(fmt.Sprintf("%s=%v&", "maxAllowedPacket", o.MaxAllowedPacket))
-	sb.WriteString(fmt.Sprintf("%s=%s&", "tls", url.QueryEscape(o.Tls)))
-	sb.WriteString(fmt.Sprintf("%s=%v&", "timeout", o.Timeout))
-	sb.WriteString(fmt.Sprintf("%s=%v&", "writeTimeout", o.WriteTimeout))
 	sb.WriteString(fmt.Sprintf("%s=%s&", "sql_mode", url.QueryEscape(o.SqlMode)))
-	sb.WriteString(fmt.Sprintf("%s=%s&", "charset", url.QueryEscape(o.Charset)))
+	sb.WriteString(fmt.Sprintf("%s=%v&", "timeout", o.Timeout))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "tls", url.QueryEscape(o.Tls)))
+	sb.WriteString(fmt.Sprintf("%s=%v&", "writeTimeout", o.WriteTimeout))
 	return sb.String()
 }
 

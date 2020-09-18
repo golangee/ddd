@@ -7,6 +7,7 @@ import (
 	"github.com/golangee/src"
 	"golang.org/x/crypto/sha3"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -78,8 +79,6 @@ func createSQLLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql
 			factoryFunc: repoFac,
 		}}, ctx.factorySpecs...)
 	}
-
-
 
 	migrationFile, err := createSQLMigration(ctx, rslv, bc, sql)
 	if err != nil {
@@ -345,7 +344,14 @@ func createMySQLOptions(rslv *resolver, defaultDBName string, bc *ddd.BoundedCon
 		"SqlMode":          "sql_mode",
 	}
 
-	for k, v := range options {
+	var sortedKeys []string
+	for k, _ := range options {
+		sortedKeys = append(sortedKeys, k)
+	}
+	sort.Strings(sortedKeys)
+
+	for _, k := range sortedKeys {
+		v := options[k]
 		body.Add("sb.WriteString(")
 		if genOpt.FieldByName(k).Type().Qualifier() == "string" {
 			body.Add(src.NewTypeDecl("fmt.Sprintf"), "(\"%s=%s&\",", `"`+v+`",`, src.NewTypeDecl("net/url.QueryEscape"), "(", r, "."+k, "))")
@@ -517,7 +523,7 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
     "file"               VARCHAR(255) NOT NULL,
     "line"               INT          NOT NULL,
     "checksum"           CHAR(32)     NOT NULL,
-    "applied_at"         TIMESTAMP    NOT NULL,
+    "applied_at"         BIGINT       NOT NULL,
     "execution_duration" BIGINT       NOT NULL,
     PRIMARY KEY ("version")
 )`
@@ -531,7 +537,7 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 				src.NewParameter("", src.NewTypeDecl("error")),
 			).AddBody(src.NewBlock().
 			AddLine("var res []migrationEntry").
-			AddLine("rows, err := db.QueryContext(", src.NewTypeDecl("context.Background"), "(),\"", "SELECT * FROM "+tableName+" ORDER BY version ASC\")").
+			AddLine("rows, err := db.QueryContext(", src.NewTypeDecl("context.Background"), "(),\"", "SELECT version, file, line, checksum, applied_at, execution_duration FROM "+tableName+" ORDER BY version ASC\")").
 			Check("err", "cannot query history", "nil").
 			AddLine("defer rows.Close()").
 			AddLine("for rows.Next() {").

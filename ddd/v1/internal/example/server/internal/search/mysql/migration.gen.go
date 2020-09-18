@@ -74,7 +74,7 @@ func (m migrationEntry) String() string {
 // readMigrationHistoryTable reads the entire history into memory, which are only a few bytes.
 func readMigrationHistoryTable(db DBTX) ([]migrationEntry, error) {
 	var res []migrationEntry
-	rows, err := db.QueryContext(context.Background(), "SELECT * FROM search_migration_schema_history ORDER BY version ASC")
+	rows, err := db.QueryContext(context.Background(), "SELECT version, file, line, checksum, applied_at, execution_duration FROM search_migration_schema_history ORDER BY version ASC")
 	if err != nil {
 		return nil, fmt.Errorf("cannot query history: %w", err)
 	}
@@ -141,7 +141,7 @@ func Migrate(db DBTX) error {
     "file"               VARCHAR(255) NOT NULL,
     "line"               INT          NOT NULL,
     "checksum"           CHAR(32)     NOT NULL,
-    "applied_at"         TIMESTAMP    NOT NULL,
+    "applied_at"         BIGINT       NOT NULL,
     "execution_duration" BIGINT       NOT NULL,
     PRIMARY KEY ("version")
 )`
