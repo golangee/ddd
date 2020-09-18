@@ -106,14 +106,20 @@ func main() {
 				MySQL(
 					Migrations(
 						Migrate("2020-09-16T11:47:00",
-							"CREATE TABLE book (id BINARY(16), name VARCHAR(255))",
+							"CREATE TABLE book (`id` BINARY(16), name VARCHAR(255))",
+							"CREATE TABLE book3 (id BINARY(16))",
+							//"SELECT blub from BLA",
+						),
+
+						Migrate("2020-09-17T11:47:00",
+							"CREATE TABLE book2 (id BINARY(16), name VARCHAR(255))",
 						),
 					),
 
 					Repositories(
 						Repository("BookRepository",
 							MapFunc("ReadAll", "SELECT * FROM book LIMIT ? OFFSET ? ",
-								Prepare("limit", "offset"),
+								Prepare("limit","offset"),
 								MapRow("&.ID", "&.Title"),
 							),
 							MapFunc("Count", "SELECT count(*) FROM book",
@@ -366,7 +372,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	const uml = false
+	const uml = true
 
 	if uml {
 		prj, err := architecture.Detect()

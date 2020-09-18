@@ -46,8 +46,9 @@ func (g *generator) make() error {
 	}
 
 	gctx := &genctx{
-		mod:  g.server,
-		spec: g.spec,
+		mod:     g.server,
+		spec:    g.spec,
+		archMod: g.arch,
 	}
 
 	if err := generateCmdSrv(gctx); err != nil {

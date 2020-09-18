@@ -37,7 +37,7 @@ type Options struct {
 	// Protocol is the protocol to use.
 	Protocol string `json:"protocol,omitempty"`
 	// Database is the database name.
-	Database string `json:"database"`
+	Database string `json:"database,omitempty"`
 	// Address is the host or path to socket.
 	Address string `json:"address,omitempty"`
 	// Collation declares the connections default collation for sorting and indexing.
@@ -67,7 +67,7 @@ type Options struct {
 //  * The default value of User is '"root"'.
 //  * The default value of Password is ''.
 //  * The default value of Protocol is '"tcp"'.
-//  * The default value of Database is ''.
+//  * The default value of Database is '"booklibrary"'.
 //  * The default value of Address is '"localhost"'.
 //  * The default value of Collation is '"utf8mb4_unicode_520_ci"'.
 //  * The default value of Charset is '"utf8mb4"'.
@@ -84,7 +84,7 @@ func (o *Options) Reset() {
 	o.User = "root"
 	o.Password = ""
 	o.Protocol = "tcp"
-	o.Database = ""
+	o.Database = "booklibrary"
 	o.Address = "localhost"
 	o.Collation = "utf8mb4_unicode_520_ci"
 	o.Charset = "utf8mb4"
@@ -291,13 +291,13 @@ func (o *Options) DSN() string {
 	sb.WriteString("/")
 	sb.WriteString(o.Database)
 	sb.WriteString("?")
-	sb.WriteString(fmt.Sprintf("%s=%s&", "charset", url.QueryEscape(o.Charset)))
 	sb.WriteString(fmt.Sprintf("%s=%s&", "collation", url.QueryEscape(o.Collation)))
 	sb.WriteString(fmt.Sprintf("%s=%v&", "maxAllowedPacket", o.MaxAllowedPacket))
 	sb.WriteString(fmt.Sprintf("%s=%s&", "tls", url.QueryEscape(o.Tls)))
 	sb.WriteString(fmt.Sprintf("%s=%v&", "timeout", o.Timeout))
 	sb.WriteString(fmt.Sprintf("%s=%v&", "writeTimeout", o.WriteTimeout))
 	sb.WriteString(fmt.Sprintf("%s=%s&", "sql_mode", url.QueryEscape(o.SqlMode)))
+	sb.WriteString(fmt.Sprintf("%s=%s&", "charset", url.QueryEscape(o.Charset)))
 	return sb.String()
 }
 

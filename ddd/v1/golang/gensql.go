@@ -1,11 +1,15 @@
 package golang
 
 import (
+	"encoding/hex"
 	"github.com/golangee/architecture/ddd/v1"
 	"github.com/golangee/architecture/ddd/v1/internal/text"
 	"github.com/golangee/src"
+	"golang.org/x/crypto/sha3"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func createSQLLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql ddd.SQLLayer) error {
@@ -74,6 +78,18 @@ func createSQLLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql
 			factoryFunc: repoFac,
 		}}, ctx.factorySpecs...)
 	}
+
+
+
+	migrationFile, err := createSQLMigration(ctx, rslv, bc, sql)
+	if err != nil {
+		return err
+	}
+
+	ctx.addFirstFactorySpec(migrationFile, src.NewFunc("Migrate").
+		AddParams(src.NewParameter("db", src.NewTypeDecl(rslv.assembleQualifier(rMysql, "DBTX")))).
+		AddResults(src.NewParameter("", src.NewTypeDecl("error"))),
+		nil)
 
 	if err := createSQLUtil(ctx, rslv, bc, sql); err != nil {
 		return err
@@ -227,7 +243,7 @@ func createSQLUtil(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql 
 			),
 	)
 
-	opts := createMySQLOptions(rslv, bc)
+	opts := createMySQLOptions(rslv, text.Safename(ctx.spec.Name()), bc)
 	file.AddTypes(opts)
 
 	dbFactory := createMySQLOpen(rslv.assembleQualifier(rMysql, opts.Name()))
@@ -244,7 +260,7 @@ func createSQLUtil(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql 
 	return nil
 }
 
-func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBuilder {
+func createMySQLOptions(rslv *resolver, defaultDBName string, bc *ddd.BoundedContextSpec) *src.TypeBuilder {
 	opt := ddd.Struct("Options",
 
 		"...contains the connection options for a MySQL database.",
@@ -252,7 +268,7 @@ func createMySQLOptions(rslv *resolver, bc *ddd.BoundedContextSpec) *src.TypeBui
 		ddd.Field("User", ddd.String, "...is the database user.").SetDefault("\"root\""),
 		ddd.Field("Password", ddd.String, "...is the database user password.").SetDefault(""),
 		ddd.Field("Protocol", ddd.String, "...is the protocol to use.").SetDefault("\"tcp\""),
-		ddd.Field("Database", ddd.String, "...is the database name."),
+		ddd.Field("Database", ddd.String, "...is the database name.").SetDefault(`"`+defaultDBName+`"`),
 		ddd.Field("Address", ddd.String, "...is the host or path to socket.").SetDefault("\"localhost\""),
 
 		// see https://stackoverflow.com/questions/766809/whats-the-difference-between-utf8-general-ci-and-utf8-unicode-ci/766996#766996
@@ -365,4 +381,292 @@ func createMySQLOpen(opts src.Qualifier) *src.FuncBuilder {
 			AddLine("return db,nil"),
 
 		)
+}
+
+// createSQLMigrationTooling
+func createSQLMigration(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, sql ddd.SQLLayer) (*src.FileBuilder, error) {
+	const format = "2006-01-02T15:04:05"
+	bcPath := filepath.Join("internal", text.Safename(bc.Name()))
+	layerPath := filepath.Join(bcPath, sql.Name())
+	file := ctx.newFile(layerPath, "migration", "")
+
+	if err := createSQLMigrationTooling(ctx, rslv, file, bc, sql); err != nil {
+		return nil, err
+	}
+
+	migrationBody := src.NewBlock().AddLine("return []", src.NewTypeDecl("migration"), "{")
+	file.AddFuncs(src.NewFunc("migrations").
+		SetDoc("...returns all available migrations in sorted order from oldest to latest.").
+		AddResults(src.NewParameter("", src.NewSliceDecl(src.NewTypeDecl("migration")))).
+		AddBody(migrationBody))
+
+	for _, m := range sql.Migrations() {
+		t, err := time.Parse(format, m.DateTime())
+		if err != nil {
+			panic("illegal state: validate the model first: " + err.Error())
+		}
+		relPath, err := filepath.Rel(ctx.archMod.Main().Dir, m.Pos().File)
+		if err != nil {
+			panic("illegal state: " + err.Error())
+		}
+
+		var statements []string
+		for _, s := range m.RawStatements() {
+			statements = append(statements, string(s))
+		}
+
+		migrationBody.AddLine("{")
+		migrationBody.AddLine("Version: ", t.Unix(), ", // ", m.DateTime())
+		migrationBody.AddLine("File: \"", relPath, "\",")
+		migrationBody.AddLine("Line: ", m.Pos().Line, ",")
+		migrationBody.AddLine("Checksum: \"", sqlChecksum(statements), "\",")
+		migrationBody.AddLine("Statements: []string{")
+		for _, statement := range statements {
+			migrationBody.AddLine(strconv.Quote(normalizeSQLStatement(statement)), ",")
+		}
+		migrationBody.AddLine("},")
+		migrationBody.AddLine("},")
+		migrationBody.AddLine()
+	}
+	migrationBody.AddLine("}")
+
+	return file, nil
+}
+
+// sqlChecksum normalizes whitespaces of linebreaks and calculates a partially white space invariant checksum.
+// The returned value is the hex encoded value of the first 16 byte of a sha3-256 sum. So the result is always 32 byte
+// long.
+// Checksums of
+//    CREATE TABLE book (id BINARY(16))
+// should be equal to
+//    CREATE TABLE
+//         book
+//            (id BINARY(16))
+func sqlChecksum(statements []string) string {
+	sb := &strings.Builder{}
+	for _, statement := range statements {
+		sb.WriteString(normalizeSQLStatement(statement))
+		sb.WriteString(" ")
+	}
+	digest := sha3.Sum256([]byte(strings.TrimSpace(sb.String())))
+	return hex.EncodeToString(digest[:16])
+}
+
+// normalizeSQLStatement normalizes the sql string and removes line breaks and leading/trailing whitespaces.
+func normalizeSQLStatement(statement string) string {
+	sb := &strings.Builder{}
+	lines := strings.Split(statement, "\n")
+	for _, line := range lines {
+		t := strings.TrimSpace(line)
+		if t == "" {
+			continue
+		}
+		sb.WriteString(t)
+		sb.WriteString(" ")
+	}
+
+	return strings.TrimSpace(sb.String())
+}
+
+// createSQLMigrationTooling emits all generic bits to handle database migrations
+func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilder, bc *ddd.BoundedContextSpec, sql ddd.SQLLayer) error {
+
+	file.PutNamedImport("time", "time")
+	file.PutNamedImport("database/sql", "sql")
+
+	file.AddTypes(
+		src.NewStruct("migration").
+			SetDoc("...represents a single isolated database migration, which may consist of multiple statements but which must be executed atomically.").
+			AddFields(
+				src.NewField("Version", src.NewTypeDecl("int64")).SetDoc("...is the unix timestamp in seconds, at which this migration was defined."),
+				src.NewField("Statements", src.NewSliceDecl(src.NewTypeDecl("string"))).SetDoc("...contains e.g. CREATE, ALTER or DROP statements to apply."),
+				src.NewField("File", src.NewTypeDecl("string")).SetDoc("...is the file path indicating the origin of the statements."),
+				src.NewField("Line", src.NewTypeDecl("int32")).SetDoc("...is the line number indicating the origin of the statements."),
+				src.NewField("Checksum", src.NewTypeDecl("string")).SetDoc("...is the hex encoded first 16 byte sha3-256 checksum of all trimmed statements."),
+			).AddMethodToJson("String", true, false, true).
+			AddMethods(
+				src.NewFunc("Apply").SetDoc("... executes the statements.").
+					AddParams(src.NewParameter("db", src.NewTypeDecl("DBTX"))).
+					AddResults(src.NewParameter("", src.NewTypeDecl("error"))).
+					AddBody(src.NewBlock().
+						AddLine("for _, s := range m.Statements {").
+						AddLine("_, err := db.ExecContext(", src.NewTypeDecl("context.Background"), "(), s)").
+						Check("err", "cannot ExecContext").
+						AddLine("}").
+						AddLine("return nil"),
+					),
+			),
+		src.NewStruct("migrationEntry").
+			SetDoc("...represents a row entry from the migration schema history table.").
+			AddFields(
+				src.NewField("Version", src.NewTypeDecl("int64")).SetDoc("...is the unix timestamp in seconds, at which this migration was defined."),
+				src.NewField("File", src.NewTypeDecl("string")).SetDoc("...is the file path indicating the origin of the statements."),
+				src.NewField("Line", src.NewTypeDecl("int32")).SetDoc("...is the line number indicating the origin of the statements."),
+				src.NewField("Checksum", src.NewTypeDecl("string")).SetDoc("...is the hex encoded first 16 byte sha3-256 checksum of all trimmed statements."),
+				src.NewField("AppliedAt", src.NewTypeDecl("int64")).SetDoc("...is the unix timestamp in seconds when this migration has been applied."),
+				src.NewField("ExecutionDuration", src.NewTypeDecl("int64")).SetDoc("...is the amount of nanoseconds which were needed to apply this migration."),
+			).AddMethodToJson("String", true, false, true),
+	)
+
+	tableName := text.Safename(bc.Name()) + "_migration_schema_history"
+
+	createMigrationTable := "CREATE TABLE IF NOT EXISTS \"" + tableName
+	createMigrationTable += `"
+(
+    "version"            BIGINT       NOT NULL,
+    "file"               VARCHAR(255) NOT NULL,
+    "line"               INT          NOT NULL,
+    "checksum"           CHAR(32)     NOT NULL,
+    "applied_at"         TIMESTAMP    NOT NULL,
+    "execution_duration" BIGINT       NOT NULL,
+    PRIMARY KEY ("version")
+)`
+
+	file.AddFuncs(
+		src.NewFunc("readMigrationHistoryTable").
+			SetDoc("...reads the entire history into memory, which are only a few bytes.").
+			AddParams(src.NewParameter("db", src.NewTypeDecl(rslv.assembleQualifier(rMysql, "DBTX")))).
+			AddResults(
+				src.NewParameter("", src.NewSliceDecl(src.NewTypeDecl(rslv.assembleQualifier(rMysql, "migrationEntry")))),
+				src.NewParameter("", src.NewTypeDecl("error")),
+			).AddBody(src.NewBlock().
+			AddLine("var res []migrationEntry").
+			AddLine("rows, err := db.QueryContext(", src.NewTypeDecl("context.Background"), "(),\"", "SELECT * FROM "+tableName+" ORDER BY version ASC\")").
+			Check("err", "cannot query history", "nil").
+			AddLine("defer rows.Close()").
+			AddLine("for rows.Next() {").
+			AddLine("var i migrationEntry").
+			AddLine("if err := rows.Scan(&i.Version, &i.File, &i.Line, &i.Checksum, &i.AppliedAt, &i.ExecutionDuration);err!=nil{").
+			AddLine("return nil, ", src.NewTypeDecl("fmt.Errorf"), "(\"scan failed: %w\",err)").
+			AddLine("}").
+			AddLine("res = append(res, i)").
+			AddLine("}").
+
+			AddLine("err = rows.Close()").
+			Check("err", "cannot close rows", "res").
+			NewLine().
+
+			AddLine("err = rows.Err()").
+			Check("err", "query failed", "res").
+			NewLine().
+
+			AddLine("return res, nil"),
+
+		),
+
+		src.NewFunc("insertMigrationEntry").SetDoc("...writes a migration entry into the history table.").
+			AddParams(
+				src.NewParameter("db", src.NewTypeDecl("DBTX")),
+				src.NewParameter("entry", src.NewTypeDecl("migrationEntry")),
+			).
+			AddResults(src.NewParameter("", src.NewTypeDecl("error"))).
+			AddBody(src.NewBlock().
+				AddLine(`const q = "INSERT INTO `+tableName+`(version, file, line, checksum, applied_at, execution_duration) VALUES (?, ?, ?, ?, ?, ?)"`).
+				AddLine("_, err := db.ExecContext(", src.NewTypeDecl("context.Background"), "(), q, entry.Version, entry.File, entry.Line, entry.Checksum, entry.AppliedAt, entry.ExecutionDuration)").
+				Check("err", "cannot ExecContext").
+				NewLine().
+				AddLine("return nil"),
+			),
+
+
+		src.NewFunc("Migrate").
+			SetDoc("...ensures that the migration history table exists, checks the checksums of all already applied migrations\nand applies all missing migrations in the defined version order.").
+			AddParams(src.NewParameter("db", src.NewTypeDecl(rslv.assembleQualifier(rMysql, "DBTX")))).
+			AddResults(src.NewParameter("", src.NewTypeDecl("error"))).
+			AddBody(src.NewBlock().
+				AddLine(`
+					// if we can start a transaction on our own, do so and invoke recursively
+						if db,ok := db.(*sql.DB);ok{
+							tx, err := db.BeginTx(context.Background(),nil)
+							if err != nil{
+								return fmt.Errorf("cannot begin transaction: %w",err)
+							}
+							
+							if err := Migrate(tx);err!=nil{
+								if suppressedErr := tx.Rollback(); suppressedErr != nil {
+									fmt.Println(suppressedErr.Error())
+								}
+								return err
+							}
+					
+							if err := tx.Commit(); err != nil {
+								return err
+							}
+							
+							return nil
+						}
+
+`).
+				AddLine("const q = `", createMigrationTable, "`").
+				AddLine("if _,err := db.ExecContext(", src.NewTypeDecl("context.Background"), "(), q); err!=nil {").
+				AddLine("return ", src.NewTypeDecl("fmt.Errorf"), "(\"cannot create "+tableName+": %w\", err)").
+				AddLine("}").
+				NewLine().
+				AddLine("history, err := readMigrationHistoryTable(db)").
+				Check("err", "cannot read history").
+				NewLine().
+				AddLine(
+					`
+				availMigrations := migrations()
+
+				// check history validity:
+				// 1. is everything which has been applied still defined?
+				// 2. has any checksum changed?
+				for _, entry := range history {
+					found := false
+					for _, m := range availMigrations {
+						if entry.Version == m.Version {
+							if entry.Checksum != m.Checksum {
+								return fmt.Errorf("already applied migration %s has been modified. Expected %s but found %s", entry.String(), entry.Checksum, m.Checksum)
+							}
+
+							found = true
+							break
+						}
+					}
+
+					if !found {
+						return fmt.Errorf("already applied migration %s is undefined", entry.String())
+					}
+				}
+
+				// pick migrations to apply
+				for _, m := range availMigrations {
+					alreadyApplied := false
+					for _, entry := range history {
+						if m.Version == entry.Version {
+							alreadyApplied = true
+							break
+						}
+					}
+
+					if !alreadyApplied {
+						start := time.Now()
+						err := m.Apply(db)
+						if err != nil {
+							return fmt.Errorf("unable to apply migration %s: %w", m.String(), err)
+						}
+						duration := time.Now().Sub(start)
+						err = insertMigrationEntry(db, migrationEntry{
+							Version:           m.Version,
+							File:              m.File,
+							Line:              m.Line,
+							Checksum:          m.Checksum,
+							AppliedAt:         start.Unix(),
+							ExecutionDuration: duration.Nanoseconds(),
+						})
+						
+						if err != nil {
+							return fmt.Errorf("unable to persist migration state %s: %w", m.String(), err)
+						}
+					}
+				}
+`).
+
+
+				AddLine("return nil"),
+			),
+	)
+
+	return nil
 }

@@ -16,6 +16,7 @@ import (
 // App is the actual application, which glues all layers together and is launched from the command line.
 type App struct {
 	dBTX           mysql.DBTX
+	error          error
 	bookRepository core.BookRepository
 	searchService  core.SearchService
 	bookSearch     usecase.BookSearch
@@ -46,6 +47,10 @@ func NewApp() (*App, error) {
 	}
 	a := &App{}
 	if a.dBTX, err = mysql.Open(options.SearchMysqlOptions); err != nil {
+		return nil, err
+	}
+
+	if err = mysql.Migrate(a.dBTX); err != nil {
 		return nil, err
 	}
 

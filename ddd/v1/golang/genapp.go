@@ -88,24 +88,35 @@ func generateAppConstructor(ctx *genctx) *src.FuncBuilder {
 	knownDependencies := map[string]*src.TypeDecl{}
 
 	for _, factory := range ctx.factorySpecs {
+		justSideEffectFunction := factory.options == nil && factory.factoryFunc.Results()[0].Decl().Qualifier() == "error"
+
 		serviceType := factory.factoryFunc.Results()[0].Decl().Clone()
 		fieldName := makePackagePrivate(serviceType.Qualifier().Name())
 
-		no := 2
-		for {
-			_, has := knownDependencies[fieldName]
-			if has {
-				fieldName = makePackagePrivate(serviceType.Qualifier().Name()) + strconv.Itoa(no)
-				continue
+		if !justSideEffectFunction{
+			no := 2
+			for {
+				_, has := knownDependencies[fieldName]
+				if has {
+					fieldName = makePackagePrivate(serviceType.Qualifier().Name()) + strconv.Itoa(no)
+					continue
+				}
+				break
 			}
-			break
+
+			knownDependencies[fieldName] = serviceType
 		}
 
-		knownDependencies[fieldName] = serviceType
+
+
 
 		warnDepNotFoundComment := src.NewBlock()
 		body.Add(warnDepNotFoundComment)
-		body.Add("if a.", fieldName, ", err =", src.NewTypeDecl(src.Qualifier(factory.file.ImportPath()+"."+factory.factoryFunc.Name())), "(")
+		if justSideEffectFunction{
+			body.Add("if err =", src.NewTypeDecl(src.Qualifier(factory.file.ImportPath()+"."+factory.factoryFunc.Name())), "(")
+		}else{
+			body.Add("if a.", fieldName, ", err =", src.NewTypeDecl(src.Qualifier(factory.file.ImportPath()+"."+factory.factoryFunc.Name())), "(")
+		}
 		for i, p := range factory.factoryFunc.Params() {
 			if i == 0 && p.Name() == "opts" {
 				fieldName := getUberOptionsFieldName(factory.factoryFunc.Params()[0].Decl().Qualifier())

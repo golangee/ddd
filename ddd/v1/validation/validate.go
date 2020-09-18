@@ -163,6 +163,16 @@ func Validate(spec *ddd.AppSpec) error {
 			}
 		}
 
+		if obj, ok := obj.(ddd.SQLLayer); ok {
+			last := ""
+			for _, migration := range obj.Migrations() {
+				if last >= migration.DateTime() {
+					return buildErr("dateTime", migration.DateTime(), "migrations must be ordered from oldest to newest but "+last+" > "+migration.DateTime(), migration)
+				}
+				last = migration.DateTime()
+			}
+		}
+
 		if obj, ok := obj.(*ddd.GenFuncSpec); ok {
 			stmt := string(obj.RawStatement())
 			n, err := validateMySQLSyntax(stmt)
@@ -180,7 +190,7 @@ func Validate(spec *ddd.AppSpec) error {
 
 // validateMySQLSyntax tries if the statement is parseable and returns the amount of prepared statement placeholders.
 func validateMySQLSyntax(stmt string) (int, error) {
-	_, err := sqlparser.Parse(stmt)
+	_, err := sqlparser.ParseStrictDDL(stmt)
 	if err != nil {
 		return -1, err
 	}

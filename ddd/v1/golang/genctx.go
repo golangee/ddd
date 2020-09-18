@@ -14,6 +14,7 @@ import (
 
 type genctx struct {
 	mod          mod.Modules
+	archMod mod.Modules
 	spec         *ddd.AppSpec
 	files        []genfile
 	factorySpecs []*factorySpec
@@ -81,6 +82,14 @@ func (g *genctx) addFactorySpec(file *src.FileBuilder, factoryFunc *src.FuncBuil
 		factoryFunc: factoryFunc,
 		options:     opts,
 	})
+}
+
+func (g *genctx) addFirstFactorySpec(file *src.FileBuilder, factoryFunc *src.FuncBuilder, opts *src.TypeBuilder) {
+	g.factorySpecs = append([]*factorySpec{{
+		file:        file,
+		factoryFunc: factoryFunc,
+		options:     opts,
+	}}, g.factorySpecs...)
 }
 
 func (g *genctx) emit() error {

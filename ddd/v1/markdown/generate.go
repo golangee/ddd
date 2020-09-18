@@ -154,6 +154,8 @@ func generateLayers(ctx *genctx) error {
 
 			case *ddd.RestLayerSpec:
 				addRestAPI(md, l)
+			case *ddd.MySQLLayerSpec:
+				//TODO
 			default:
 				panic("not yet implemented: " + reflect.TypeOf(l).String())
 			}
@@ -173,6 +175,9 @@ func generateCommandlineArgs(ctx *genctx) error {
 	md.Code("bash", binName+" -help")
 
 	flagCount := 0
+
+	// TODO how to access the artificial data types like the generated factories and mysql options?
+
 	for _, bc := range ctx.spec.BoundedContexts() {
 		for _, layer := range bc.Layers() {
 			_ = layer.Walk(func(obj interface{}) error {

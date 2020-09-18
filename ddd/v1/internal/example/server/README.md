@@ -232,7 +232,7 @@ Afterwards the environment variable is considered and finally the command line a
 
 ### FulltextSearch
 
-The bounded context *search* declares in the layer *core* the *bool* option **FulltextSearch** which is a flag to enable fulltext search in items.
+The bounded context *search* declares in the layer *Core* the *bool* option **FulltextSearch** which is a flag to enable fulltext search in items.
 The default value is false.
 The environment variable *SEARCH_CORE_FULLTEXTSEARCH* is evaluated, if present and is only overridden by the command line argument *search-core-fulltextsearch*.
 
@@ -244,7 +244,7 @@ booklibrary -search-core-fulltextsearch=false
 ```
 ### Namespace
 
-The bounded context *search* declares in the layer *core* the *string* option **Namespace** which is a weired option.
+The bounded context *search* declares in the layer *Core* the *string* option **Namespace** which is a weired option.
 The default value is "some ugly stuff".
 The environment variable *SEARCH_CORE_NAMESPACE* is evaluated, if present and is only overridden by the command line argument *search-core-namespace*.
 
@@ -256,7 +256,7 @@ booklibrary -search-core-namespace="some ugly stuff"
 ```
 ### MyInt64
 
-The bounded context *search* declares in the layer *core* the *int64* option **MyInt64** which is an integer with 8 byte.
+The bounded context *search* declares in the layer *Core* the *int64* option **MyInt64** which is an integer with 8 byte.
 The default value is The default value is 0 (zero).
 The environment variable *SEARCH_CORE_MYINT64* is evaluated, if present and is only overridden by the command line argument *search-core-myint64*.
 
@@ -268,7 +268,7 @@ booklibrary -search-core-myint64=0
 ```
 ### MyFloat64
 
-The bounded context *search* declares in the layer *core* the *float64* option **MyFloat64** which is a float with 64 bits.
+The bounded context *search* declares in the layer *Core* the *float64* option **MyFloat64** which is a float with 64 bits.
 The default value is 5.
 The environment variable *SEARCH_CORE_MYFLOAT64* is evaluated, if present and is only overridden by the command line argument *search-core-myfloat64*.
 
@@ -280,7 +280,7 @@ booklibrary -search-core-myfloat64=5
 ```
 ### MyDuration
 
-The bounded context *search* declares in the layer *core* the *time.Duration* option **MyDuration** which is a duration.
+The bounded context *search* declares in the layer *Core* the *time.Duration* option **MyDuration** which is a duration.
 The default value is The default value is 0s.
 The environment variable *SEARCH_CORE_MYDURATION* is evaluated, if present and is only overridden by the command line argument *search-core-myduration*.
 
@@ -292,7 +292,7 @@ booklibrary -search-core-myduration=0s
 ```
 ### Test
 
-The bounded context *loan* declares in the layer *core* the *string* option **Test** which a test string.
+The bounded context *loan* declares in the layer *Core* the *string* option **Test** which a test string.
 The default value is The default value is the empty string.
 The environment variable *LOAN_CORE_TEST* is evaluated, if present and is only overridden by the command line argument *loan-core-test*.
 
