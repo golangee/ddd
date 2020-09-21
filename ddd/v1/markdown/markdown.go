@@ -85,7 +85,7 @@ func (m *Markdown) EmitGraphics(dir string) error {
 		filename := filepath.Join(dir, fname)
 		buf, err := plantuml.RenderLocal("svg", diagram)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to render svg: %s: %w", string(buf), err)
 		}
 
 		log.Printf("write: %s\n", filename)

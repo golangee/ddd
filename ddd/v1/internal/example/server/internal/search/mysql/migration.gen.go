@@ -253,18 +253,21 @@ func migrations() []migration {
 			Version:     1600256820, // 2020-09-16T11:47:00
 			File:        "architecture.go",
 			Line:        108,
-			Checksum:    "b68ae1d97f336d3025f406699453d1cc",
+			Checksum:    "d961978f6bd240de8d5c0588c47733b2",
 			Description: "Creates the initial schema.",
 			Statements: []string{
 				"CREATE TABLE book (`id` BINARY(16), name VARCHAR(255))",
 				"CREATE TABLE book3 (id BINARY(16))",
 				"CREATE TABLE book3 (id JSON)",
+				"SELECT blub from BLA",
+				"INSERT INTO book3 VALUES(1,2)",
+				"ALTER TABLE BLA ADD COLUMN (id TEXT)",
 			},
 		},
 		{
 			Version:     1600343220, // 2020-09-17T11:47:00
 			File:        "architecture.go",
-			Line:        115,
+			Line:        117,
 			Checksum:    "b520b7ccb7c9117078f00ad3373070f5",
 			Description: "Adding another table to support other books.",
 			Statements: []string{

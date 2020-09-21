@@ -13,6 +13,7 @@ This is the central service of the book library of capital city, for searching a
         * [Type *BookRepository*](#type-bookrepository)
         * [Type *SearchService*](#type-searchservice)
         * [Factory *SearchService*](#factory-searchservice)
+      * [Persistence layer: *Mysql*](#persistence-layer-mysql)
       * [The use case or application layer](#the-use-case-or-application-layer)
         * [BookSearch](#booksearch)
       * [REST API *v1.0.1*](#rest-api-v101)
@@ -82,6 +83,19 @@ The instance must be configured using the following options:
  * MyDuration (... is a duration.)
 
 ![search core API](uml-search-core-api.gen.svg?raw=true)
+
+#### Persistence layer: *Mysql*
+
+The *mysql* persistence layer for the domain *search* consists of
+2 migrations and has been evolved as shown in the following table:
+
+|Introduced at|Description|Statements|
+|---|---|---|
+|2020-09-16T11:47:00|Creates the initial schema.|1x alter<br>3x create<br>1x insert<br>1x other<br>|
+|2020-09-17T11:47:00|Adding another table to support other books.|1x create<br>|
+After applying all migrations (as of 2020-09-17T11:47:00), the final sql schema looks like follows:
+
+![Mysql-er](uml-mysql-er.gen.svg?raw=true)
 
 #### The use case or application layer
 

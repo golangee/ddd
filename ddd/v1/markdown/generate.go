@@ -155,7 +155,7 @@ func generateLayers(ctx *genctx) error {
 			case *ddd.RestLayerSpec:
 				addRestAPI(md, l)
 			case *ddd.MySQLLayerSpec:
-				//TODO
+				generateSQL(md, bc, l)
 			default:
 				panic("not yet implemented: " + reflect.TypeOf(l).String())
 			}
