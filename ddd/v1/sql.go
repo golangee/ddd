@@ -233,14 +233,20 @@ func MapRow(references ...MapRowParamSpec) []MapRowParamSpec {
 
 // A MigrationSpec combines a version (which is a parsed time.Time) and a bunch of DataDefinitionStatement.
 type MigrationSpec struct {
-	dateTime   string
-	statements []RawStatement
-	pos        Pos
+	dateTime    string
+	description string
+	statements  []RawStatement
+	pos         Pos
 }
 
 // Migration requires dateTime in ISO 8601 format (2006-01-02T15:04:05)
-func Migrate(dateTime string, statements ...RawStatement) *MigrationSpec {
-	return &MigrationSpec{dateTime: dateTime, statements: statements, pos: capturePos("Migrate", 1)}
+func Migrate(dateTime, description string, statements ...RawStatement) *MigrationSpec {
+	return &MigrationSpec{dateTime: dateTime, statements: statements, description: description, pos: capturePos("Migrate", 1)}
+}
+
+// Description returns the description.
+func (m *MigrationSpec) Description() string {
+	return m.description
 }
 
 // DateTime returns a string in ISO 8601 format

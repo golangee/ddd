@@ -14,6 +14,8 @@ import (
 type migration struct {
 	// Version is the unix timestamp in seconds, at which this migration was defined.
 	Version int64
+	// Description describes at least why the migration is needed.
+	Description string
 	// Statements contains e.g. CREATE, ALTER or DROP statements to apply.
 	Statements []string
 	// File is the file path indicating the origin of the statements.
@@ -59,6 +61,10 @@ type migrationEntry struct {
 	AppliedAt int64
 	// ExecutionDuration is the amount of nanoseconds which were needed to apply this migration.
 	ExecutionDuration int64
+	// Description describes at least why the migration is needed.
+	Description string
+	// Status is the status of the migration
+	Status string
 }
 
 // String serializes the struct into a json string.
@@ -71,17 +77,39 @@ func (m migrationEntry) String() string {
 	return string(buf)
 }
 
+// insert writes a migrationEntry into the history table.
+func (m migrationEntry) insert(db DBTX) error {
+	const q = "INSERT INTO search_migration_schema_history(version, file, line, checksum, applied_at, execution_duration, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+	_, err := db.ExecContext(context.Background(), q, m.Version, m.File, m.Line, m.Checksum, m.AppliedAt, m.ExecutionDuration, m.Description, m.Status)
+	if err != nil {
+		return fmt.Errorf("cannot ExecContext: %w", err)
+	}
+
+	return nil
+}
+
+// update writes a migrationEntry into the history table and replaces the exiting entry identified by version.
+func (m migrationEntry) update(db DBTX) error {
+	const q = "UPDATE search_migration_schema_history SET file = ?, line = ?, checksum = ?, applied_at = ?, execution_duration = ?, description = ?, status = ? WHERE version = ?"
+	_, err := db.ExecContext(context.Background(), q, m.File, m.Line, m.Checksum, m.AppliedAt, m.ExecutionDuration, m.Description, m.Status, m.Version)
+	if err != nil {
+		return fmt.Errorf("cannot ExecContext: %w", err)
+	}
+
+	return nil
+}
+
 // readMigrationHistoryTable reads the entire history into memory, which are only a few bytes.
 func readMigrationHistoryTable(db DBTX) ([]migrationEntry, error) {
 	var res []migrationEntry
-	rows, err := db.QueryContext(context.Background(), "SELECT version, file, line, checksum, applied_at, execution_duration FROM search_migration_schema_history ORDER BY version ASC")
+	rows, err := db.QueryContext(context.Background(), "SELECT version, file, line, checksum, applied_at, execution_duration, description, status FROM search_migration_schema_history ORDER BY version ASC")
 	if err != nil {
 		return nil, fmt.Errorf("cannot query history: %w", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var i migrationEntry
-		if err := rows.Scan(&i.Version, &i.File, &i.Line, &i.Checksum, &i.AppliedAt, &i.ExecutionDuration); err != nil {
+		if err := rows.Scan(&i.Version, &i.File, &i.Line, &i.Checksum, &i.AppliedAt, &i.ExecutionDuration, &i.Description, &i.Status); err != nil {
 			return nil, fmt.Errorf("scan failed: %w", err)
 		}
 		res = append(res, i)
@@ -97,17 +125,6 @@ func readMigrationHistoryTable(db DBTX) ([]migrationEntry, error) {
 	}
 
 	return res, nil
-}
-
-// insertMigrationEntry writes a migration entry into the history table.
-func insertMigrationEntry(db DBTX, entry migrationEntry) error {
-	const q = "INSERT INTO search_migration_schema_history(version, file, line, checksum, applied_at, execution_duration) VALUES (?, ?, ?, ?, ?, ?)"
-	_, err := db.ExecContext(context.Background(), q, entry.Version, entry.File, entry.Line, entry.Checksum, entry.AppliedAt, entry.ExecutionDuration)
-	if err != nil {
-		return fmt.Errorf("cannot ExecContext: %w", err)
-	}
-
-	return nil
 }
 
 // Migrate ensures that the migration history table exists, checks the checksums of all already applied migrations
@@ -143,6 +160,8 @@ func Migrate(db DBTX) error {
     "checksum"           CHAR(32)     NOT NULL,
     "applied_at"         BIGINT       NOT NULL,
     "execution_duration" BIGINT       NOT NULL,
+	"description"		 TEXT         NOT NULL,
+	"status"			 VARCHAR(255) NOT NULL,
     PRIMARY KEY ("version")
 )`
 	if _, err := db.ExecContext(context.Background(), q); err != nil {
@@ -159,9 +178,14 @@ func Migrate(db DBTX) error {
 	// check history validity:
 	// 1. is everything which has been applied still defined?
 	// 2. has any checksum changed?
+	// 3. do we have any unclean migration?
 	for _, entry := range history {
 		found := false
 		for _, m := range availMigrations {
+			if entry.Status != "success" {
+				return fmt.Errorf("found an incomplete migration. Your database is inconsistent and you have to solve this manually. Affected migration: %s", entry.String())
+			}
+
 			if entry.Version == m.Version {
 				if entry.Checksum != m.Checksum {
 					return fmt.Errorf("already applied migration %s has been modified. Expected %s but found %s", entry.String(), entry.Checksum, m.Checksum)
@@ -170,6 +194,7 @@ func Migrate(db DBTX) error {
 				found = true
 				break
 			}
+
 		}
 
 		if !found {
@@ -189,22 +214,31 @@ func Migrate(db DBTX) error {
 
 		if !alreadyApplied {
 			start := time.Now()
+
+			entry := migrationEntry{
+				Version:     m.Version,
+				File:        m.File,
+				Line:        m.Line,
+				Checksum:    m.Checksum,
+				AppliedAt:   start.Unix(),
+				Description: m.Description,
+				Status:      "pending",
+			}
+			err = entry.insert(db)
+			if err != nil {
+				return fmt.Errorf("unable to insert migration state %s: %w", m.String(), err)
+			}
+
 			err := m.Apply(db)
 			if err != nil {
 				return fmt.Errorf("unable to apply migration %s: %w", m.String(), err)
 			}
-			duration := time.Now().Sub(start)
-			err = insertMigrationEntry(db, migrationEntry{
-				Version:           m.Version,
-				File:              m.File,
-				Line:              m.Line,
-				Checksum:          m.Checksum,
-				AppliedAt:         start.Unix(),
-				ExecutionDuration: duration.Nanoseconds(),
-			})
 
+			entry.ExecutionDuration = time.Now().Sub(start).Nanoseconds()
+			entry.Status = "success"
+			err = entry.update(db)
 			if err != nil {
-				return fmt.Errorf("unable to persist migration state %s: %w", m.String(), err)
+				return fmt.Errorf("unable to update migration state %s: %w", m.String(), err)
 			}
 		}
 	}
@@ -216,22 +250,25 @@ func Migrate(db DBTX) error {
 func migrations() []migration {
 	return []migration{
 		{
-			Version:  1600256820, // 2020-09-16T11:47:00
-			File:     "architecture.go",
-			Line:     108,
-			Checksum: "e93111049a17c9e27a2aeebfd6e57210",
+			Version:     1600256820, // 2020-09-16T11:47:00
+			File:        "architecture.go",
+			Line:        108,
+			Checksum:    "b68ae1d97f336d3025f406699453d1cc",
+			Description: "Creates the initial schema.",
 			Statements: []string{
 				"CREATE TABLE book (`id` BINARY(16), name VARCHAR(255))",
 				"CREATE TABLE book3 (id BINARY(16))",
+				"CREATE TABLE book3 (id JSON)",
 			},
 		},
 		{
-			Version:  1600343220, // 2020-09-17T11:47:00
-			File:     "architecture.go",
-			Line:     114,
-			Checksum: "7a78a1f10776298895bda4accd08087c",
+			Version:     1600343220, // 2020-09-17T11:47:00
+			File:        "architecture.go",
+			Line:        115,
+			Checksum:    "b520b7ccb7c9117078f00ad3373070f5",
+			Description: "Adding another table to support other books.",
 			Statements: []string{
-				"CREATE TABLE book2 (id BINARY(16), name VARCHAR(255))",
+				"CREATE TABLE book5 (id BINARY(16), name VARCHAR(255))",
 			},
 		},
 	}

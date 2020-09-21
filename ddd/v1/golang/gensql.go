@@ -426,6 +426,7 @@ func createSQLMigration(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec,
 		migrationBody.AddLine("File: \"", relPath, "\",")
 		migrationBody.AddLine("Line: ", m.Pos().Line, ",")
 		migrationBody.AddLine("Checksum: \"", sqlChecksum(statements), "\",")
+		migrationBody.AddLine("Description: ", strconv.Quote(m.Description()), ",")
 		migrationBody.AddLine("Statements: []string{")
 		for _, statement := range statements {
 			migrationBody.AddLine(strconv.Quote(normalizeSQLStatement(statement)), ",")
@@ -477,6 +478,8 @@ func normalizeSQLStatement(statement string) string {
 // createSQLMigrationTooling emits all generic bits to handle database migrations
 func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilder, bc *ddd.BoundedContextSpec, sql ddd.SQLLayer) error {
 
+	tableName := text.Safename(bc.Name()) + "_migration_schema_history"
+
 	file.PutNamedImport("time", "time")
 	file.PutNamedImport("database/sql", "sql")
 
@@ -485,6 +488,7 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 			SetDoc("...represents a single isolated database migration, which may consist of multiple statements but which must be executed atomically.").
 			AddFields(
 				src.NewField("Version", src.NewTypeDecl("int64")).SetDoc("...is the unix timestamp in seconds, at which this migration was defined."),
+				src.NewField("Description", src.NewTypeDecl("string")).SetDoc("...describes at least why the migration is needed."),
 				src.NewField("Statements", src.NewSliceDecl(src.NewTypeDecl("string"))).SetDoc("...contains e.g. CREATE, ALTER or DROP statements to apply."),
 				src.NewField("File", src.NewTypeDecl("string")).SetDoc("...is the file path indicating the origin of the statements."),
 				src.NewField("Line", src.NewTypeDecl("int32")).SetDoc("...is the line number indicating the origin of the statements."),
@@ -511,10 +515,36 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 				src.NewField("Checksum", src.NewTypeDecl("string")).SetDoc("...is the hex encoded first 16 byte sha3-256 checksum of all trimmed statements."),
 				src.NewField("AppliedAt", src.NewTypeDecl("int64")).SetDoc("...is the unix timestamp in seconds when this migration has been applied."),
 				src.NewField("ExecutionDuration", src.NewTypeDecl("int64")).SetDoc("...is the amount of nanoseconds which were needed to apply this migration."),
-			).AddMethodToJson("String", true, false, true),
+				src.NewField("Description", src.NewTypeDecl("string")).SetDoc("...describes at least why the migration is needed."),
+				src.NewField("Status", src.NewTypeDecl("string")).SetDoc("...is the status of the migration"),
+			).AddMethodToJson("String", true, false, true).
+			AddMethods(
+				src.NewFunc("insert").SetDoc("...writes a migrationEntry into the history table.").
+					AddParams(
+						src.NewParameter("db", src.NewTypeDecl("DBTX")),
+					).
+					AddResults(src.NewParameter("", src.NewTypeDecl("error"))).
+					AddBody(src.NewBlock().
+						AddLine(`const q = "INSERT INTO `+tableName+`(version, file, line, checksum, applied_at, execution_duration, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"`).
+						AddLine("_, err := db.ExecContext(", src.NewTypeDecl("context.Background"), "(), q, m.Version, m.File, m.Line, m.Checksum, m.AppliedAt, m.ExecutionDuration, m.Description, m.Status)").
+						Check("err", "cannot ExecContext").
+						NewLine().
+						AddLine("return nil"),
+					),
+				src.NewFunc("update").SetDoc("...writes a migrationEntry into the history table and replaces the exiting entry identified by version.").
+					AddParams(
+						src.NewParameter("db", src.NewTypeDecl("DBTX")),
+					).
+					AddResults(src.NewParameter("", src.NewTypeDecl("error"))).
+					AddBody(src.NewBlock().
+						AddLine(`const q = "UPDATE `+tableName+` SET file = ?, line = ?, checksum = ?, applied_at = ?, execution_duration = ?, description = ?, status = ? WHERE version = ?"`).
+						AddLine("_, err := db.ExecContext(", src.NewTypeDecl("context.Background"), "(), q,  m.File, m.Line, m.Checksum, m.AppliedAt, m.ExecutionDuration, m.Description, m.Status, m.Version)").
+						Check("err", "cannot ExecContext").
+						NewLine().
+						AddLine("return nil"),
+					),
+			),
 	)
-
-	tableName := text.Safename(bc.Name()) + "_migration_schema_history"
 
 	createMigrationTable := "CREATE TABLE IF NOT EXISTS \"" + tableName
 	createMigrationTable += `"
@@ -525,6 +555,8 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
     "checksum"           CHAR(32)     NOT NULL,
     "applied_at"         BIGINT       NOT NULL,
     "execution_duration" BIGINT       NOT NULL,
+	"description"		 TEXT         NOT NULL,
+	"status"			 VARCHAR(255) NOT NULL,
     PRIMARY KEY ("version")
 )`
 
@@ -537,12 +569,12 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 				src.NewParameter("", src.NewTypeDecl("error")),
 			).AddBody(src.NewBlock().
 			AddLine("var res []migrationEntry").
-			AddLine("rows, err := db.QueryContext(", src.NewTypeDecl("context.Background"), "(),\"", "SELECT version, file, line, checksum, applied_at, execution_duration FROM "+tableName+" ORDER BY version ASC\")").
+			AddLine("rows, err := db.QueryContext(", src.NewTypeDecl("context.Background"), "(),\"", "SELECT version, file, line, checksum, applied_at, execution_duration, description, status FROM "+tableName+" ORDER BY version ASC\")").
 			Check("err", "cannot query history", "nil").
 			AddLine("defer rows.Close()").
 			AddLine("for rows.Next() {").
 			AddLine("var i migrationEntry").
-			AddLine("if err := rows.Scan(&i.Version, &i.File, &i.Line, &i.Checksum, &i.AppliedAt, &i.ExecutionDuration);err!=nil{").
+			AddLine("if err := rows.Scan(&i.Version, &i.File, &i.Line, &i.Checksum, &i.AppliedAt, &i.ExecutionDuration, &i.Description, &i.Status);err!=nil{").
 			AddLine("return nil, ", src.NewTypeDecl("fmt.Errorf"), "(\"scan failed: %w\",err)").
 			AddLine("}").
 			AddLine("res = append(res, i)").
@@ -559,20 +591,6 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 			AddLine("return res, nil"),
 
 		),
-
-		src.NewFunc("insertMigrationEntry").SetDoc("...writes a migration entry into the history table.").
-			AddParams(
-				src.NewParameter("db", src.NewTypeDecl("DBTX")),
-				src.NewParameter("entry", src.NewTypeDecl("migrationEntry")),
-			).
-			AddResults(src.NewParameter("", src.NewTypeDecl("error"))).
-			AddBody(src.NewBlock().
-				AddLine(`const q = "INSERT INTO `+tableName+`(version, file, line, checksum, applied_at, execution_duration) VALUES (?, ?, ?, ?, ?, ?)"`).
-				AddLine("_, err := db.ExecContext(", src.NewTypeDecl("context.Background"), "(), q, entry.Version, entry.File, entry.Line, entry.Checksum, entry.AppliedAt, entry.ExecutionDuration)").
-				Check("err", "cannot ExecContext").
-				NewLine().
-				AddLine("return nil"),
-			),
 
 
 		src.NewFunc("Migrate").
@@ -618,9 +636,14 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 				// check history validity:
 				// 1. is everything which has been applied still defined?
 				// 2. has any checksum changed?
+				// 3. do we have any unclean migration?
 				for _, entry := range history {
 					found := false
 					for _, m := range availMigrations {
+						if entry.Status != "success" {
+							return fmt.Errorf("found an incomplete migration. Your database is inconsistent and you have to solve this manually. Affected migration: %s", entry.String())
+						}
+
 						if entry.Version == m.Version {
 							if entry.Checksum != m.Checksum {
 								return fmt.Errorf("already applied migration %s has been modified. Expected %s but found %s", entry.String(), entry.Checksum, m.Checksum)
@@ -629,6 +652,7 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 							found = true
 							break
 						}
+	
 					}
 
 					if !found {
@@ -648,22 +672,31 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 
 					if !alreadyApplied {
 						start := time.Now()
-						err := m.Apply(db)
-						if err != nil {
-							return fmt.Errorf("unable to apply migration %s: %w", m.String(), err)
-						}
-						duration := time.Now().Sub(start)
-						err = insertMigrationEntry(db, migrationEntry{
+
+						entry := migrationEntry{
 							Version:           m.Version,
 							File:              m.File,
 							Line:              m.Line,
 							Checksum:          m.Checksum,
 							AppliedAt:         start.Unix(),
-							ExecutionDuration: duration.Nanoseconds(),
-						})
-						
+							Description:       m.Description,
+							Status:			   "pending",
+						}
+						err = entry.insert(db)
 						if err != nil {
-							return fmt.Errorf("unable to persist migration state %s: %w", m.String(), err)
+							return fmt.Errorf("unable to insert migration state %s: %w", m.String(), err)
+						}
+
+						err := m.Apply(db)
+						if err != nil {
+							return fmt.Errorf("unable to apply migration %s: %w", m.String(), err)
+						}
+
+						entry.ExecutionDuration = time.Now().Sub(start).Nanoseconds()
+						entry.Status = "success"
+						err = entry.update(db)
+						if err != nil {
+							return fmt.Errorf("unable to update migration state %s: %w", m.String(), err)
 						}
 					}
 				}
