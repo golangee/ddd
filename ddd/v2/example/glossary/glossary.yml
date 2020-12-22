@@ -1,0 +1,6 @@
+- moderator: A moderator is a cool guy, which is one kind of user.
+- user: this term is not used, because it is ambigous.
+- admin: a user with sudo rights who can see everything.
+- fish:
+    A multiline
+    fish text.

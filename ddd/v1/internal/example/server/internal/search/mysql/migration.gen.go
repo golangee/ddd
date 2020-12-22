@@ -252,7 +252,7 @@ func migrations() []migration {
 		{
 			Version:     1600256820, // 2020-09-16T11:47:00
 			File:        "architecture.go",
-			Line:        108,
+			Line:        142,
 			Checksum:    "d961978f6bd240de8d5c0588c47733b2",
 			Description: "Creates the initial schema.",
 			Statements: []string{
@@ -267,7 +267,7 @@ func migrations() []migration {
 		{
 			Version:     1600343220, // 2020-09-17T11:47:00
 			File:        "architecture.go",
-			Line:        117,
+			Line:        151,
 			Checksum:    "b520b7ccb7c9117078f00ad3373070f5",
 			Description: "Adding another table to support other books.",
 			Statements: []string{

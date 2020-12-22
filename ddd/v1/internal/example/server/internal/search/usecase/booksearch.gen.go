@@ -43,10 +43,12 @@ type BookSearch interface {
 	//
 	// The parameter 'id' is the Id of a book.
 	//
+	// The parameter 'user' is the authenticated user.
+	//
 	// The result 'Book' is the according book.
 	//
 	// The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-	Details(ctx context.Context, id uuid.UUID) (core.Book, error)
+	Details(ctx context.Context, id uuid.UUID, user AuthUser) (core.Book, error)
 	// ChangeBookTitle changes the book title.
 	//
 	// The parameter 'titleModel' is to short.
@@ -65,6 +67,12 @@ type AutoCompleteValue struct {
 	Score float32 `json:"score"`
 	// Synonyms alternative search suggestions.
 	Synonyms []string `json:"synonyms"`
+}
+
+// AuthUser represents an authenticated user.
+type AuthUser struct {
+	// Age is the age of a user and determines if he can view the book or not.
+	Age int `json:"age"`
 }
 
 // BookTitleSpec is for changing book titles.

@@ -7,7 +7,6 @@ import (
 	"github.com/golangee/src"
 	"path/filepath"
 	"strconv"
-	"strings"
 )
 
 // StringParser is hacky way to allow custom serialization codes
@@ -70,10 +69,21 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 
 	ctx.newFile(layerPath, "doc", pkgNameRest).
 		SetPackageDoc("Package " + pkgNameRest + " contains subpackages for each major REST API version.")
-	ctx.newFile(filepath.Join(layerPath, rest.MajorVersion()), "doc", pkgNameRest).
-		SetPackageDoc(rest.Description() + "\nThe current api version is " + rest.Version() + ".")
 
-	var generatedResourceIfaces []*src.TypeBuilder
+	for _, version := range rest.Versions() {
+		if err := createRestVersion(ctx, layerPath, rslv, bc, rest, version); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func createRestVersion(ctx *genctx, layerPath string, rslv *resolver, bc *ddd.BoundedContextSpec, rest *ddd.RestLayerSpec, version *ddd.VersionSpec) error {
+	ctx.newFile(filepath.Join(layerPath, version.MajorVersion()), "doc", pkgNameRest).
+		SetPackageDoc(rest.Description() + "\nThe current api version is " + version.Version() + ".")
+
+	/*var generatedResourceIfaces []*src.TypeBuilder
 	var resourcePaths []string
 	for _, resource := range rest.Resources() {
 		goResName := text2GoIdentifier(strings.ReplaceAll(resource.Path(), ":", "-By-"))
@@ -129,11 +139,11 @@ func createRestLayer(ctx *genctx, rslv *resolver, bc *ddd.BoundedContextSpec, re
 	api.AddTypes(commonIface)
 
 	// add the all-in-one configure method for the commonIface
-	api.AddFuncs(createMainConfigureFunc(generatedResourceIfaces))
+	api.AddFuncs(createMainConfigureFunc(generatedResourceIfaces))*/
 
 	return nil
 }
-
+/*
 // createRestResourceInterface creates an interface which represents the http verbs as methods.
 func createRestResourceInterface(resFile *src.FileBuilder, rslv *resolver, ifaceName string, resource *ddd.HttpResourceSpec) (*src.TypeBuilder, error) {
 	resIface := src.NewInterface(ifaceName)
@@ -223,7 +233,7 @@ func createMainConfigureFunc(ifaces []*src.TypeBuilder) *src.FuncBuilder {
 
 	return cfgFunc
 }
-
+	*/
 // createWrapHandlerFunc emits a wrap function to convert between the julienschmidt-router handle the stdlib handlerFunc.
 func createWrapHandlerFunc() *src.FuncBuilder {
 

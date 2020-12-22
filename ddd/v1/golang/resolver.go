@@ -53,7 +53,7 @@ type resolver struct {
 	universe   []typeDef
 	core       typeLayer
 	usecase    typeLayer
-	restLayers []typeLayer
+	restLayer  typeLayer
 	mysqlLayer typeLayer
 }
 
@@ -77,6 +77,10 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 		path: modPath,
 		ctx:  ctx,
 		universe: []typeDef{
+			{
+				typeName: ddd.Int,
+				typeDecl: src.NewTypeDecl("int"),
+			},
 			{
 				typeName: ddd.UUID,
 				typeDecl: src.NewTypeDecl("github.com/golangee/uuid.UUID"),
@@ -175,7 +179,7 @@ func newResolver(modPath string, ctx *ddd.BoundedContextSpec) *resolver {
 				path:  layerPath,
 			}
 
-			r.restLayers = append(r.restLayers, tlayer)
+			r.restLayer = tlayer
 
 		case *ddd.MySQLLayerSpec:
 			layerPath := modPath + "/internal/" + text.Safename(ctx.Name()) + "/" + text.Safename(l.Name())

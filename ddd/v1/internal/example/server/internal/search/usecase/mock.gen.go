@@ -15,7 +15,7 @@ type BookSearchMock struct {
 	// AutocompleteFunc mocks the Autocomplete function.
 	AutocompleteFunc func(ctx context.Context, text string) ([]AutoCompleteValue, error)
 	// DetailsFunc mocks the Details function.
-	DetailsFunc func(ctx context.Context, id uuid.UUID) (core.Book, error)
+	DetailsFunc func(ctx context.Context, id uuid.UUID, user AuthUser) (core.Book, error)
 	// ChangeBookTitleFunc mocks the ChangeBookTitle function.
 	ChangeBookTitleFunc func(titleModel BookTitleSpec) (core.Book, error)
 }
@@ -60,12 +60,14 @@ func (m BookSearchMock) Autocomplete(ctx context.Context, text string) ([]AutoCo
 //
 // The parameter 'id' is the Id of a book.
 //
+// The parameter 'user' is the authenticated user.
+//
 // The result 'Book' is the according book.
 //
 // The result 'error' indicates a violation of pre- or invariants and represents an implementation specific failure.
-func (m BookSearchMock) Details(ctx context.Context, id uuid.UUID) (core.Book, error) {
+func (m BookSearchMock) Details(ctx context.Context, id uuid.UUID, user AuthUser) (core.Book, error) {
 	if m.DetailsFunc != nil {
-		return m.DetailsFunc(ctx, id)
+		return m.DetailsFunc(ctx, id, user)
 	}
 
 	panic("mock not available: Details")

@@ -32,7 +32,7 @@ func Core(api []StructOrInterface, implementations ...*ServiceImplSpec) *CoreLay
 			"private implementation accessible by factory functions.",
 		api:             api,
 		implementations: implementations,
-		pos:             capturePos("Core", -1),
+		pos:             capturePos("Core", 1),
 	}
 }
 

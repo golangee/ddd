@@ -13,6 +13,40 @@ func main() {
 		"BookLibrary",
 		"This is the central service of the book library of capital city, for searching and loaning books.",
 		BoundedContexts(
+			Context("security",
+				"This context provides authentication (is a user the one he pretends to be?) and authorization "+
+					"(has a user a specific role or is allowed to access an un(!)specific resource?).",
+				Core(
+					API(
+						Struct("User", "...represents an authenticated user.",
+							Field("ID", UUID, "...is the unique id of a user."),
+							Field("Name", String, "...is the firstname of a user."),
+							Field("Age", Int, "...is the age in years of a user."),
+						),
+						Interface("SecurityService", "...can authenticate and authorize a user from various sources.",
+							Func("FromBearer", "...authenticates from a bearer token.",
+								In(
+									WithContext(),
+									Var("bearer", String, "...is the bearer token from e.g. a http header variable."),
+								),
+								Out(
+									Return("User", "...is the authenticated user."),
+									Err(),
+								),
+							),
+
+						),
+					),
+					Implementation("SecurityService",
+						Requires(),
+						Options(
+							Field("KeycloakSecret", String, "...is an app secret for keycloak."),
+							Field("KeycloakUrl", String, "...is the url of the keycloak service."),
+						),
+					),
+				),
+
+			),
 			Context("search",
 				"This context is about everything around searching for books.\n"+
 					"A search can be issued from a users home or from within the library building by users or\n"+
@@ -183,11 +217,15 @@ func main() {
 									In(
 										WithContext(),
 										Var("id", UUID, "...is the Id of a book."),
+										Var("user", "AuthUser", "...is the authenticated user."),
 									),
 									Out(
 										Return("Book", "...is the according book."),
 										Err(),
 									),
+								),
+								Struct("AuthUser", "...represents an authenticated user.",
+									Field("Age", Int, "...is the age of a user and determines if he can view the book or not."),
 								),
 							),
 
@@ -214,98 +252,57 @@ func main() {
 					),
 
 				),
-				REST("v1.0.1",
-					Servers(
-						Server("https://capital-city-library.com", "The live server."),
-						Server("https://dev.capital-city-library.com", "The development server."),
-					),
-					Resources(
-						Resource("/books",
-							"Resource to manage books.",
-							Parameters(
-								Header(
-									Var("session", String, "...is the global valid session."),
-								),
-							),
-							GET("Returns all books.",
-								Parameters(),
-								Responses(
-									Response(200, "book array response",
-										Header(
-											Var("x-RateLimit-Limit", Int64, "... is the request limit per hour."),
-											Var("x-RateLimit-Remaining", Int64, "...is the number of requests left for the time window."),
-										),
-										Content(Json, Slice("Book")),
-										Content("application/text", Slice("Book")),
-										Content(Xml, Slice("Book")),
-										Content("image/png", Reader),
-										Content("image/jpg", Reader),
-										Content(Any, Reader),
-									),
-									Response(404, "not found", Header()),
-								),
-							),
-							DELETE("Removes all books.",
-								Parameters(),
-								Responses(),
-							),
-						),
-						Resource("/books/:id",
-							"Resource to manage a single book.",
-							Parameters(
-								Header(Var("clientId", String, "...is a comment.")),
-							),
-							GET("Returns a single book.",
-								Parameters(),
-								Responses(),
-							),
-							DELETE("Removes a single book.",
-								Parameters(),
-								Responses(),
-							),
-							PUT("Updates a book.",
-								Parameters(),
-								RequestBody(),
-								Responses(),
-							),
-
-							POST("Creates a new book.",
-								Parameters(
-									Path(
-										Var("id", UUID, "...is a comment."),
-									),
+				REST(
+					Version("v1.0.1",
+						"The initial base API provides all the things, which must be accessible by a mobile App.",
+						Middlewares(
+							Middleware("validateClientId",
+								"...is here to check the validity of the client id.",
+								Parse(
 									Header(
-										Var("bearer", String, "...is a token bearer."),
-										Var("x-special-something", String, "...is something special.").SetOptional(true),
-									),
-									Query(
-										Var("offset", Int64, "...is a comment."),
-										Var("limit", Int64, "...is a comment.").SetOptional(true),
+										Var("clientId", String, "...is a client id"),
 									),
 								),
-								RequestBody(
-									Content("image/png", Reader),
-									Content("image/jpg", Reader),
-									Content("application/octet-stream", Reader),
-									Content(Json, "Book"),
-								),
-								Responses(
-									Response(200, "ok, book array response",
-										Header(
-											Var("x-RateLimit-Limit", Int64, "...is th request limit per hour."),
-											Var("x-RateLimit-Remaining", Int64, "...is the number of requests left for the time window."),
-										),
-										Content("image/png", Reader),
-										Content("image/jpg", Reader),
-										Content("application/octet-stream", Reader),
-										Content(Json, "Book"),
+								Provide(),
+							),
+							Middleware("authenticate",
+								"...takes a bearer or whatever and provides basic user properties.",
+								Parse(
+									Header(
+										Var("authorization", String, "...is the jwt bearer token.").SetOptional(true),
+										Var("cookie", String, "...is some cookie thingy.").SetOptional(true),
 									),
+									Path(),
+									Query(),
+								),
+								Provide(
+									Var("authUser", "AuthUser", "...is the user model from the use case layer."),
+								),
+
+
+							),
+						),
+						Resource("/books/:id/title",
+							POST(
+								After("validateClientId", "authenticate"),
+								Invoke("BookSearch", "ChangeBookTitle",
+									HeaderVar("x-uuid", "id"),
+									BodyVar(Json, "titleModel"),
+								),
+								Response(
+									HeaderVar("x-some-special", ".Title"),
+									BodyVar(Json, ".Chapter"),
 								),
 							),
-
 						),
+					),
+					Version("v2.0.3",
+						"The v2 API introduces incompatible use cases for the usage, which is not only for mobile but also for web apps.",
+						Middlewares(),
+					),
+				),
 
-					)),
+
 			),
 			Context("loan",
 				"This context is about everything around loaning or renting a book.\n"+
@@ -375,7 +372,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	const uml = true
+	const uml = false
 
 	if uml {
 		prj, err := architecture.Detect()

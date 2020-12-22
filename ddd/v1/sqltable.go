@@ -75,10 +75,6 @@ func Binary(name string, len int, opts ...ColumnOptionFunc) *ColumnSpec {
 	return newColumnSpec(name, "BINARY("+strconv.Itoa(len)+")", len, opts...)
 }
 
-// Int creates the according sql column.
-func Int(name string, len int, opts ...ColumnOptionFunc) *ColumnSpec {
-	return newColumnSpec(name, "INT("+strconv.Itoa(len)+")", len, opts...)
-}
 
 // Columns is a factory for a slice of ColumnSpec.
 func Columns(columns ...*ColumnSpec) []*ColumnSpec {

@@ -64,7 +64,7 @@ func generateUMLForStruct(t *ddd.StructSpec) *plantuml.Class {
 }
 
 func addRestAPI(md *Markdown, rest *ddd.RestLayerSpec) {
-	md.H4("REST API *" + rest.Version() + "*")
+	/*md.H4("REST API *" + rest.Version() + "*")
 	md.P(rest.Description())
 	for _, resource := range rest.Resources() {
 		md.H5(resource.Path())
@@ -79,7 +79,7 @@ func addRestAPI(md *Markdown, rest *ddd.RestLayerSpec) {
 			md.Code("bash", tmp)
 		}
 
-	}
+	}*/
 }
 
 func addUseCaseDiagram(ucDiag *plantuml.Diagram, useCase *ddd.EpicSpec) {

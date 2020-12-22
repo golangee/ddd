@@ -80,7 +80,7 @@ func Validate(spec *ddd.AppSpec) error {
 			}
 		}
 
-		if core > usecase {
+		if usecase >= 0 && core > usecase {
 			return buildErr("BoundedContexts", "core vs usecase", "core must be defined before the use case layer", bc.Layers()[core])
 		}
 

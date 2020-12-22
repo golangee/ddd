@@ -7,6 +7,10 @@ This is the central service of the book library of capital city, for searching a
 * [BookLibrary](#booklibrary)
   * [Index](#index)
   * [Architecture](#architecture)
+    * [The context *security*](#the-context-security)
+      * [The domains core layer](#the-domains-core-layer)
+        * [Type *User*](#type-user)
+        * [Type *AuthenticationService*](#type-authenticationservice)
     * [The context *search*](#the-context-search)
       * [The domains core layer](#the-domains-core-layer)
         * [Type *Book*](#type-book)
@@ -45,7 +49,26 @@ This is the central service of the book library of capital city, for searching a
 ## Architecture
 
 The server is organized after the domain driven design principles.
-It is separated into the following 2 bounded contexts.
+It is separated into the following 3 bounded contexts.
+
+### The context *security*
+
+This context provides authentication (is a user the one he pretends to be?) and authorization (has a user a specific role or is allowed to access an un(!)specific resource?).
+
+#### The domains core layer
+
+The core layer or API layer of the domain consists of 1 data types,
+1 service or SPI interfaces and 0 actual service implementations.
+
+##### Type *User*
+
+The data class *User* represents an authenticated user.
+
+##### Type *AuthenticationService*
+
+The SPI interface *AuthenticationService* can authenticate a user from various sources.
+
+![security core API](uml-security-core-api.gen.svg?raw=true)
 
 ### The context *search*
 

@@ -19,6 +19,7 @@ package ddd
 type TypeName string
 
 const (
+	Int      TypeName = "int"
 	Int64    TypeName = "int64"
 	Int32    TypeName = "int32"
 	Bool     TypeName = "bool"

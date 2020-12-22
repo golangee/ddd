@@ -8,6 +8,7 @@ import (
 	core "example-server/internal/search/core"
 	mysql "example-server/internal/search/mysql"
 	usecase "example-server/internal/search/usecase"
+	securitycore "example-server/internal/security/core"
 	flag "flag"
 	fmt "fmt"
 	os "os"
@@ -15,13 +16,14 @@ import (
 
 // App is the actual application, which glues all layers together and is launched from the command line.
 type App struct {
-	dBTX           mysql.DBTX
-	error          error
-	bookRepository core.BookRepository
-	searchService  core.SearchService
-	bookSearch     usecase.BookSearch
-	loanService    loancore.LoanService
-	bookLoaning    loanusecase.BookLoaning
+	dBTX            mysql.DBTX
+	error           error
+	bookRepository  core.BookRepository
+	securityService securitycore.SecurityService
+	searchService   core.SearchService
+	bookSearch      usecase.BookSearch
+	loanService     loancore.LoanService
+	bookLoaning     loanusecase.BookLoaning
 }
 
 // Start launches any blocking background processes, like e.g. an http server.
@@ -55,6 +57,10 @@ func NewApp() (*App, error) {
 	}
 
 	if a.bookRepository, err = mysql.NewMysqlBookRepository(a.dBTX); err != nil {
+		return nil, err
+	}
+
+	if a.securityService, err = securitycore.NewSecurityService(options.SecurityCoreSecurityServiceOpts); err != nil {
 		return nil, err
 	}
 
