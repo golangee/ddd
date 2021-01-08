@@ -1,3 +1,11 @@
+package aclyaml
+
+import (
+	"fmt"
+	"testing"
+)
+
+const test = `
 - Book:
     userstories:
       - 001
@@ -16,4 +24,14 @@
 
 - User:
     - SpecialID: int32
-    - Name: string
+    - Name: string`
+
+func TestDecode(t *testing.T) {
+	pkg,err := Parse("/Users/tschinke/git/github.com/golangee/architecture.git/ddd/v2/example")
+	if err != nil {
+		fmt.Println(err)
+		t.Fatal(err)
+	}
+
+	fmt.Println(pkg)
+}
