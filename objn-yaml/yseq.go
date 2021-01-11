@@ -1,17 +1,17 @@
-package aclyaml
+package objnyaml
 
 import (
-	"github.com/golangee/architecture/acl"
+	"github.com/golangee/architecture/objn"
 	"gopkg.in/yaml.v3"
 )
 
 type YamlSeq struct {
-	pos  acl.Pos
+	pos  objn.Pos
 	node *yaml.Node
 }
 
 func NewYamlSeq(filename string, node *yaml.Node) *YamlSeq {
-	return &YamlSeq{node: node, pos: acl.Pos{
+	return &YamlSeq{node: node, pos: objn.Pos{
 		File: filename,
 		Line: node.Line,
 		Col:  node.Column,
@@ -31,7 +31,11 @@ func (n *YamlSeq) Validate() error {
 	return nil
 }
 
-func (n *YamlSeq) Pos() acl.Pos {
+func (n *YamlSeq) Comment() string {
+	return n.node.HeadComment
+}
+
+func (n *YamlSeq) Pos() objn.Pos {
 	return n.pos
 }
 
@@ -39,6 +43,6 @@ func (n *YamlSeq) Count() int {
 	return len(n.node.Content)
 }
 
-func (n *YamlSeq) Get(idx int) acl.Node {
+func (n *YamlSeq) Get(idx int) objn.Node {
 	return NewNode(n.pos.File, n.node.Content[idx])
 }

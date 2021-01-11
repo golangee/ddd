@@ -1,31 +1,35 @@
-package aclyaml
+package objnyaml
 
 import (
 	"fmt"
-	"github.com/golangee/architecture/acl"
+	"github.com/golangee/architecture/objn"
 	"gopkg.in/yaml.v3"
 	"sort"
 )
 
 type YamlMap struct {
-	pos acl.Pos
+	pos objn.Pos
 	m   *yaml.Node
 }
 
 func NewYamlMap(filename string, m *yaml.Node) *YamlMap {
-	return &YamlMap{m: m, pos: acl.Pos{
+	return &YamlMap{m: m, pos: objn.Pos{
 		File: filename,
 		Line: m.Line,
 		Col:  m.Column,
 	}}
 }
 
-func (n *YamlMap) Pos() acl.Pos {
+func (n *YamlMap) Pos() objn.Pos {
 	return n.pos
 }
 
 func (n *YamlMap) Count() int {
 	return len(n.m.Content) / 2
+}
+
+func (n *YamlMap) Comment() string {
+	return n.m.HeadComment
 }
 
 // Validate checks if each key is unique.
@@ -42,7 +46,7 @@ func (n *YamlMap) Validate() error {
 	for _, s := range tmp {
 		if s == lastKey {
 			if s != "" {
-				return fmt.Errorf(n.pos.String() + ": contains duplicate key '%s'",s)
+				return fmt.Errorf(n.pos.String()+": contains duplicate key '%s'", s)
 			}
 		}
 
@@ -61,8 +65,8 @@ func (n *YamlMap) Validate() error {
 	return nil
 }
 
-func (n *YamlMap) Names() []acl.Lit {
-	tmp := make([]acl.Lit, 0, n.Count())
+func (n *YamlMap) Names() []objn.Lit {
+	tmp := make([]objn.Lit, 0, n.Count())
 	for i := 0; i < len(n.m.Content); i += 2 {
 		node := n.m.Content[i]
 		tmp = append(tmp, n.newLit(node))
@@ -71,7 +75,7 @@ func (n *YamlMap) Names() []acl.Lit {
 	return tmp
 }
 
-func (n *YamlMap) Name(key string) acl.Lit {
+func (n *YamlMap) Name(key string) objn.Lit {
 	for i := 0; i < len(n.m.Content); i += 2 {
 		node := n.m.Content[i]
 		if node.Value == key {
@@ -82,7 +86,7 @@ func (n *YamlMap) Name(key string) acl.Lit {
 	return nil
 }
 
-func (n *YamlMap) Get(key string) acl.Node {
+func (n *YamlMap) Get(key string) objn.Node {
 	for i := 0; i < len(n.m.Content); i += 2 {
 		node := n.m.Content[i]
 		if node.Value == key {
@@ -96,9 +100,9 @@ func (n *YamlMap) Get(key string) acl.Node {
 }
 
 func (n *YamlMap) newLit(node *yaml.Node) *YamlLit {
-	return NewYamlLit(acl.Pos{
+	return NewYamlLit(objn.Pos{
 		File: n.pos.File,
 		Line: node.Line,
 		Col:  node.Column,
-	}, node.Value)
+	}, node.Value, node.HeadComment)
 }

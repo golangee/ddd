@@ -1,0 +1,45 @@
+apply:
+  - arch/Interface@v1.0.0
+
+type:
+  BookRepository:
+    description: ...is a repository to handle books.
+    methods:
+      ReadAll:
+        description: ...returns all books.
+        in:
+          offset:
+            description: ...is the offset to return the entries for paging.
+            in:
+              ctx!: #this is a template for a std type def and description
+              offset:
+                description: ...is the offset to return the entries for paging.
+                type: int64!
+              limit:
+                description: ...is the maximum amount of entries to return.
+                type: int64!
+        out:
+          books:
+            description: ...is the list of books.
+            type: "[]Book"
+          err!: # another template for std type def and description
+      Count:
+        description: ...enumerates all stored elements.
+        in:
+          tx!:
+          out:
+            n:
+              description: ...is the actual count.
+              type: int64!
+            err!:
+      FindOne:
+        description: ...finds exactly one entry.
+        in:
+          ctx!:
+          id:
+            description: ...is the data transfer object to read into.
+            type: uuid!
+
+
+
+

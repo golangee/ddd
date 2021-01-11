@@ -1,7 +1,8 @@
-package aclyaml
+package objnyaml
 
 import (
 	"fmt"
+	objnjson "github.com/golangee/architecture/objn-json"
 	"testing"
 )
 
@@ -27,11 +28,11 @@ const test = `
     - Name: string`
 
 func TestDecode(t *testing.T) {
-	pkg,err := Parse("/Users/tschinke/git/github.com/golangee/architecture.git/ddd/v2/example")
+	pkg, err := Parse("/Users/tschinke/git/github.com/golangee/architecture.git/ddd/v2/example")
 	if err != nil {
 		fmt.Println(err)
 		t.Fatal(err)
 	}
 
-	fmt.Println(pkg)
+	fmt.Println(objnjson.Debug(pkg))
 }

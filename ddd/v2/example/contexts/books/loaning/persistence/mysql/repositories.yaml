@@ -1,0 +1,47 @@
+repositories:
+  - BookRepository:
+      implements:
+        - contexts/books/loaning/api/Repository
+      methods:
+        - ReadAll:
+            Query: SELECT * FROM book LIMIT ? OFFSET ?
+            Prepare:
+              - limit
+              - offset
+            Map:
+              - .ID # automatic & if not already a pointer type?
+              - .Title # automatic & if not already a pointer type?
+        - Count:
+            Query: SELECT count(*) FROM book
+            Map:
+              - . # count has just a single value?
+        - Insert:
+            Query: INSERT INTO book(id) VALUES (?)
+            Prepare:
+              - dto.ID
+        - FindOne:
+            Query: SELECT * FROM book WHERE id=?
+            Prepare:
+              - id # param?
+            Map:
+              - .id
+              - .Title
+        - WeiredStuffVeryComplicated:
+            body:
+              go:
+                import:
+                  - "a/b/c"
+                  - "d/e/f"
+                body: |
+                  var tmp := &c.Blub
+                  sql.Query("select * from xy where"+tmp)
+                  ...
+                  panic("not yet implemented)
+              java:
+                import:
+                  - "java.util.List"
+                body: |
+                  List<String> res := new ArrayList<String>(3);
+                  throw new RuntimeException("not yet implemented");
+
+

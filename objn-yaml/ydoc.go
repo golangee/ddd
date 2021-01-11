@@ -1,21 +1,25 @@
-package aclyaml
+package objnyaml
 
 import (
 	"fmt"
-	"github.com/golangee/architecture/acl"
+	"github.com/golangee/architecture/objn"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"strconv"
 )
 
 type YamlDoc struct {
-	pos  acl.Pos
+	pos  objn.Pos
 	root *yaml.Node
 	text string
 }
 
-func (n *YamlDoc) Pos() acl.Pos {
-	panic("implement me")
+func (n *YamlDoc) Comment() string {
+	return n.root.HeadComment
+}
+
+func (n *YamlDoc) Pos() objn.Pos {
+	return n.pos
 }
 
 func (n *YamlDoc) String() string {
@@ -32,7 +36,7 @@ func (n *YamlDoc) Validate() error {
 	return nil
 }
 
-func (n *YamlDoc) Root() acl.Node {
+func (n *YamlDoc) Root() objn.Node {
 	if len(n.root.Content) == 0 {
 		return nil
 	}
@@ -63,7 +67,7 @@ func NewYamlDoc(fname string) (*YamlDoc, error) {
 	}
 
 	n := &YamlDoc{
-		pos: acl.Pos{
+		pos: objn.Pos{
 			File: fname,
 			Line: node.Line,
 			Col:  node.Column,
@@ -75,18 +79,18 @@ func NewYamlDoc(fname string) (*YamlDoc, error) {
 	return n, nil
 }
 
-func NewNode(filename string, node *yaml.Node) acl.Node {
+func NewNode(filename string, node *yaml.Node) objn.Node {
 	switch node.Kind {
 	case yaml.MappingNode:
 		return NewYamlMap(filename, node)
 	case yaml.SequenceNode:
 		return NewYamlSeq(filename, node)
 	case yaml.ScalarNode:
-		return NewYamlLit(acl.Pos{
+		return NewYamlLit(objn.Pos{
 			File: filename,
 			Line: node.Line,
 			Col:  node.Column,
-		}, node.Value)
+		}, node.Value, node.HeadComment)
 	default:
 		panic("yaml node type not supported: " + strconv.Itoa(int(node.Kind)))
 	}

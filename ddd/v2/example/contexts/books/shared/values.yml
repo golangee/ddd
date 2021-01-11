@@ -1,4 +1,4 @@
 - User:
-    - ID: int32
+    - ID: { type: int32 }
     - Firstname: string
     - Lastname: string

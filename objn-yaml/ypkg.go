@@ -1,8 +1,8 @@
-package aclyaml
+package objnyaml
 
 import (
 	"fmt"
-	"github.com/golangee/architecture/acl"
+	"github.com/golangee/architecture/objn"
 	"io/ioutil"
 	"path/filepath"
 	"sort"
@@ -10,8 +10,9 @@ import (
 )
 
 type YamlPkg struct {
-	pos      acl.Pos
-	children map[string]acl.Node
+	pos      objn.Pos
+	children map[string]objn.Node
+	comment  string
 }
 
 func NewYamlPkg(dir string) (*YamlPkg, error) {
@@ -21,10 +22,16 @@ func NewYamlPkg(dir string) (*YamlPkg, error) {
 	}
 
 	n := &YamlPkg{
-		children: map[string]acl.Node{},
-		pos: acl.Pos{
+		children: map[string]objn.Node{},
+		pos: objn.Pos{
 			File: dir,
 		},
+	}
+
+	// try a doc.txt for package documentation
+	buf, err := ioutil.ReadFile(filepath.Join(dir, "doc.txt"))
+	if err == nil && len(buf) > 0 {
+		n.comment = string(buf)
 	}
 
 	for _, file := range files {
@@ -59,8 +66,12 @@ func NewYamlPkg(dir string) (*YamlPkg, error) {
 	return n, nil
 }
 
-func (n *YamlPkg) Pos() acl.Pos {
+func (n *YamlPkg) Pos() objn.Pos {
 	return n.pos
+}
+
+func (n *YamlPkg) Comment() string {
+	return n.comment
 }
 
 func (n *YamlPkg) Validate() error {
@@ -75,26 +86,17 @@ func (n *YamlPkg) Validate() error {
 	return nil
 }
 
-func (n *YamlPkg) Names() []acl.Lit {
-	tmp := make([]acl.Lit, 0, len(n.children))
+func (n *YamlPkg) Names() []string {
+	tmp := make([]string, 0, len(n.children))
 	for k := range n.children {
-		tmp = append(tmp, n.Name(k))
+		tmp = append(tmp, k)
 	}
 
-	sort.Slice(tmp, func(i, j int) bool {
-		return tmp[i].String() < tmp[j].String()
-	})
+	sort.Strings(tmp)
 
 	return tmp
 }
 
-func (n *YamlPkg) Name(key string) acl.Lit {
-	return YamlLit{
-		pos: acl.Pos{File: filepath.Join(n.pos.File, key)},
-		val: key,
-	}
-}
-
-func (n *YamlPkg) Get(key string) acl.Node {
+func (n *YamlPkg) Get(key string) objn.Node {
 	return n.children[key]
 }

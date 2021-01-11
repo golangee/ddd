@@ -1,4 +1,4 @@
-package acl
+package objn
 
 import "strconv"
 
@@ -76,10 +76,7 @@ type Pkg interface {
 	Node
 
 	// Names of the uniquely named nodes within this package.
-	Names() []Lit
-
-	// Name returns the according literal for the given Pkg or Doc.
-	Name(key string) Lit
+	Names() []string
 
 	// Get returns the Pkg or a Doc at the given index position. If idx is < 0 or >= Count a panic is raised.
 	Get(key string) Node

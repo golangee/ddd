@@ -1,0 +1,25 @@
+apply:
+  - arch/Struct@v0.0.1
+
+type:
+  # ... is a kind of literature with meta data to index and find.
+  Book:
+    # ... is the unique id of a book
+    ID:
+      type: uuid!
+      json: "id"
+
+    # ... is the title for the book.
+    Title:
+      type: string!
+
+    # ...is a test for importing a custom type.
+    Special:
+      Go: "github.com/google/uuid.UUID"
+      Java: "javax.com/uuid.UUID"
+
+    # ...shows how to describe a book.
+    Tags: "[]<string!>"
+
+    # ...is another more complex generics thing
+    AMap: "map<string!,map<int!,bool!>>"
