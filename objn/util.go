@@ -8,6 +8,17 @@ func Walk(root Node, f func(path []Node) error) error {
 	return walk([]Node{root}, f)
 }
 
+// DocFromPath returns the last Doc or nil.
+func DocFromPath(path []Node) Doc {
+	for i := len(path) - 1; i >= 0; i-- {
+		if d, ok := path[i].(Doc); ok {
+			return d
+		}
+	}
+
+	return nil
+}
+
 // Collect returns all those paths which matches the predicate.
 func Collect(root Node, predicate func(path []Node) (bool, error)) ([][]Node, error) {
 	var res [][]Node
@@ -80,8 +91,8 @@ func walk(path []Node, f func(path []Node) error) error {
 
 }
 
-func addPath(path []Node,leaf Node)[]Node{
-	t := append([]Node{},path...)
+func addPath(path []Node, leaf Node) []Node {
+	t := append([]Node{}, path...)
 	t = append(t, leaf)
 	return t
 }

@@ -46,6 +46,14 @@ func (n *YamlMap) Validate() error {
 	for _, s := range tmp {
 		if s == lastKey {
 			if s != "" {
+				// pick all duplicates
+				var details []objn.PosErrorDetail
+				names :=n.Names()
+				for _, lit := range names {
+					if lit.String() == s{
+						details = append(details, objn.NewPosErrorDetailFromDoc())
+					}
+				}
 				return fmt.Errorf(n.pos.String()+": contains duplicate key '%s'", s)
 			}
 		}

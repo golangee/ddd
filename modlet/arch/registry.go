@@ -6,6 +6,8 @@ import (
 	"github.com/golangee/architecture/modlet/arch/iface"
 	"github.com/golangee/architecture/objn"
 	objnyaml "github.com/golangee/architecture/objn-yaml"
+	"golang.org/x/mod/semver"
+	"strings"
 )
 
 type funcModlet func(prj modlet.Project, node objn.Node) error
@@ -33,7 +35,19 @@ func Apply(node objn.Node) error {
 		if n, ok := path[len(path)-1].(objn.Map); ok {
 			if n, ok := n.Get("apply").(objn.Seq); ok {
 				for i := 0; i < n.Count(); i++ {
-					fmt.Println("found => " + n.Get(i).(objn.Lit).String())
+					lit := n.Get(i).(objn.Lit)
+					plugin := lit.String()
+					idx := strings.LastIndex(plugin, "@")
+					version := "v0.0.0"
+					if idx > 0 {
+						version = plugin[idx+1:]
+					}
+
+					if !semver.IsValid(version) {
+						return false, objn.NewPosErrorMark(path, lit, "invalid version syntax", version)
+					}
+
+					fmt.Println("found => " + plugin)
 				}
 				return true, nil
 			}

@@ -20,6 +20,9 @@ func (p Pos) String() string {
 type Node interface {
 	// Pos returns the actual starting position of this Node.
 	Pos() Pos
+
+	// Parent returns the parent Node or nil if already root.
+	Parent() Node
 }
 
 // Map provides access to an Object or map-like data structure.
