@@ -1,4 +1,4 @@
-package ast
+package yast
 
 // A Seq represents a sequence of arbitrary nodes.
 type Seq struct {
@@ -23,4 +23,13 @@ func (s *Seq) Parent() Node {
 
 func (s *Seq) Stereotype() string {
 	return s.SeqStereotype
+}
+
+func (s *Seq) Children() []Node {
+	tmp := make([]Node, 0, len(s.Values))
+	for _, node := range tmp {
+		tmp = append(tmp, node)
+	}
+
+	return tmp
 }

@@ -1,10 +1,11 @@
-package ast
+package yast
 
 // An Attr is a tuple of a named key/value pair (Str -> Node).
 type Attr struct {
 	AttrStereotype string
 	AttrParent     Node
-	Key            Str
+	Space          string // optional name space identifier. Contains the canonical URL, not a short prefix.
+	Key            *Str
 	Value          Node
 }
 
@@ -24,13 +25,17 @@ func (a *Attr) Stereotype() string {
 	return a.AttrStereotype
 }
 
+func (a *Attr) Children() []Node {
+	return []Node{a.Key, a.Value}
+}
+
 // Obj is a Node which contains named attributes (see Attr).
 type Obj struct {
 	ObjPos        Pos
 	ObjEnd        Pos
 	ObjParent     Node
 	ObjStereotype string
-	Attrs         []Attr
+	Attrs         []*Attr
 }
 
 func (o *Obj) Pos() Pos {
@@ -70,3 +75,11 @@ func (o *Obj) Names() []string {
 	return tmp
 }
 
+func (o *Obj) Children() []Node {
+	tmp := make([]Node, 0, len(o.Attrs))
+	for _, node := range o.Attrs {
+		tmp = append(tmp, node)
+	}
+
+	return tmp
+}

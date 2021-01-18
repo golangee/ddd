@@ -1,4 +1,4 @@
-package ast
+package yast
 
 // A Str represents an already parsed string literal.
 type Str struct {
@@ -23,6 +23,10 @@ func (a *Str) Parent() Node {
 
 func (a *Str) Stereotype() string {
 	return a.ValueStereotype
+}
+
+func (a *Str) String() string {
+	return a.Value
 }
 
 // An Int represents an already parsed int64 literal.

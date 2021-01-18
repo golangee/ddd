@@ -11,8 +11,8 @@
     fields:
       - ID: string! # stdlib type
       - Authors: slice[shared/User] # list or array or slice of shared/User type
-      - OtherUser: ?User # pointer which may be nil
-      - AndEvenMore: !User # pointer which may NOT be nil
+      - OtherUser: User # pointer which may be nil
+      - AndEvenMore: User # pointer which may NOT be nil
 
 - User:
     - SpecialID: int32

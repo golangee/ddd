@@ -1,10 +1,20 @@
-package ast
+package yast
 
-// A Pos is an arbitrary position handle without any meaning.
-type Pos int
+import "strconv"
 
-// Position describes a resolved position within a file.
-type Position struct {
+// A Stereotype is used to declare a meta class for a node.
+type Stereotype = string
+
+const (
+	Document  Stereotype = "document"
+	Package              = "package"
+	File                 = "file"
+	Directory            = "directory"
+	Source               = "source"
+)
+
+// A Pos describes a resolved position within a file.
+type Pos struct {
 	// File contains the absolute file path.
 	File string
 	// Line denotes the one-based line number in the denoted File.
@@ -13,34 +23,10 @@ type Position struct {
 	Col int
 }
 
-// A PositionSet resolves a Pos to a Position.
-type PositionSet struct {
-	pos map[Pos]Position
+// String returns the content in the "file:line:col" format.
+func (p Pos) String() string {
+	return p.File + ":" + strconv.Itoa(p.Line) + ":" + strconv.Itoa(p.Col)
 }
-
-// Position returns the Position value for the given file position pos.
-func (p *PositionSet) Position(pos Pos) Position {
-	if p == nil || p.pos == nil {
-		return Position{}
-	}
-
-	return p.pos[pos]
-}
-
-// Add appends the given position and returns a new Pos handle.
-func (p *PositionSet) Add(pos Position) Pos {
-	if p.pos == nil {
-		p.pos = map[Pos]Position{}
-	}
-
-	next := Pos(len(p.pos) + 1)
-	p.pos[next] = pos
-
-	return next
-}
-
-// A Stereotype is used to declare a meta class for a node.
-type Stereotype string
 
 // A Node represents the common contract
 type Node interface {
@@ -58,4 +44,10 @@ type Node interface {
 
 	// Stereotype returns a declared meta class.
 	Stereotype() string
+}
+
+// A Parent is a Node and may contain other nodes as children. This is used to simplify algorithms based on Walk.
+type Parent interface {
+	Node
+	Children() []Node // Children returns a defensive copy of the underlying slice. However the Node references are shared.
 }
