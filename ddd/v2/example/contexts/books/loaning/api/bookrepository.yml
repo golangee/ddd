@@ -1,5 +1,5 @@
 apply:
-  - arch/Interface@v1.0.0
+  - arch/go/Interface@v1.0.0
 
 # @doc ...is a repository to handle books.
 # type BookRepository interface{
@@ -28,22 +28,34 @@ apply:
 #   </ReadAll>
 # </type>
 
-interface: {
-  BookRepository: {
+interface:
+  BookRepository:
+    //: ...is a repository to handle books.
 
+    ReadAll:
+      //: ...returns all books.
+      in:
+        ctx!:
+        offset: { type: int64!, //: ... is the offset to return the entries for paging. }
+        limit: { type: int64!, //: ...is the maximum amount of entries to return. }
+      out:
+        books: { type: slice!<Book>, //: ...is the list of books. }
+        err!:
 
-    ReadAll: {
-      description: {
-        .: ...is a repository to handle books.,
-        offset: ... is the offset to return the entries for paging.,
-        limit: ...is the maximum amount of entries to return.
-      },
+    Count:
+      //: ...enumerates all stored elements.
+      out:
+        n: { type: int64!, //: ...is the actual count. }
+        error!:
 
-      in: { ctx!: ctx!, offset: int64!, limit: int64! },
-      out: { books: slice!<Book>, err: error! }
-    }
-  }
-}
+    FindOne:
+      //: ...finds the first element by its id.
+      in:
+        id: { type: uuid!, //: ...the unique id. }
+      out:
+        obj: { type: Book, //: ...the found book, if any. }
+        err!:
+
 
 
 type:
