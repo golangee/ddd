@@ -1,0 +1,15 @@
+# the plugin is invoked with this "node" as root
+apply:
+  # there may be many generators, but we can ever use a single generator per file.
+  # If we need to generate stubs for different languages (like a REST-Api binding)
+  # we need to define it separately (hm, sounds verbose and repetitious?)
+  - arch/modlets/go/stdlib@0.0.0
+
+FileService:
+  doc: |
+    ... is a microservice which represents an entire bounded context around saving files.
+    A ticket may have a lot of potentionally huge files attached. So this service may need
+    to scale on multiple physical servers.
+
+  # introduce build-in variables (e.g. where is project.yml) to have a fixed anchor for (git submodules)
+  out: ${projectDir}/../impl/file-service

@@ -1,0 +1,55 @@
+# interface is the declaration keyword
+interface:
+  # the actual type identifier
+  BookRepository:
+    # doc: no doc here, because it has been already defined in glossary.yml
+
+    # usually an interface defines a homogeneous set of related methods and therefore shares also errors.
+    errors:
+      Other: ...is returned if the reason is undefined, like an I/O error.
+      NotFound: ...is returned if an entity was expected but not found.
+      AlreadyExists: ...is returned if an enity should not exist but was found.
+
+
+    # uppercase writing determines a public method identifier
+    ReadAll:
+      doc: ...returns all books.
+      # method input parameter
+      in:
+        ctx!:
+        offset: { type: int64!, doc: ... is the offset to return the entries for paging. }
+        limit: { type: int64!, doc: ...is the maximum amount of entries to return. }
+
+      # method output parameter
+      out:
+        books: { type: slice!<Book>, doc: ...is the list of books. }
+        error:
+          - Other
+
+    Count:
+      doc: ...enumerates all stored elements.
+      out:
+        n: { type: int64!, doc: ...is the actual count. }
+        error:
+          - Other
+
+    FindOne:
+      doc: ...finds the first element by its id.
+      in:
+        id: { type: uuid!, doc: ...the unique id. }
+      out:
+        obj: { type: Book, doc: ...is the found book, if any. }
+        error:
+          - Other
+          - NotFound
+
+    Insert:
+      doc: ...inserts a new unique book.
+      in:
+        obj: { type: Book, doc: ...is the book to save. }
+      out:
+        obj: { type: Book, doc: ...is the found book, if any. }
+        error:
+          - Other
+          - AlreadyExists
+

@@ -1,10 +1,10 @@
 package modlet
 
-import "github.com/golangee/architecture/objn"
+import "github.com/golangee/architecture/yast"
 
 type Project struct {
 }
 
 type Modlet interface {
-	Apply(prj Project, node objn.Node) error
+	Apply(prj Project, node yast.Node) error
 }
