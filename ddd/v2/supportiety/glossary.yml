@@ -14,6 +14,10 @@ glossary:
     name: SupportietyUser
     doc: ... describes an authenticated user of the supportiety software system.
 
+  role:
+    name: Role
+    doc: ... authorizes a supportiety user to perform specific operations.
+
   project manager:
     name: ProjectManager
     doc: ... describes a role of a supportiety user. A project manager is responsible for a monitored software.

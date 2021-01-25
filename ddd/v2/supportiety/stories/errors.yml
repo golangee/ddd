@@ -1,0 +1,19 @@
+As a: supportiety user # must be defined in glossary
+I want: to have a clear human readble description of common errors
+so that: it is clear to me what to do next.
+
+scenario:
+  other:
+    Given: I trigger an internal error like a dead database, full disk or an interrupted connection
+    when: working with the system
+    then: I get a message of an internal server error.
+
+  object not found:
+    Given: I open an URL with a resource id
+    when: I delete it and open that URL again
+    then: I get a message of an unknown object.
+
+  already exists:
+    Given: I'm can create resources with customized identifiers
+    when: I try to create a resource with an already used identifier
+    then: I get a a message of an already used identifier.
