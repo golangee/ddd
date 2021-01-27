@@ -3,6 +3,7 @@ package yastyaml
 import (
 	"fmt"
 	"github.com/golangee/architecture/yast"
+	"github.com/golangee/architecture/yast/validate"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"path/filepath"
@@ -17,7 +18,7 @@ func ParseDir(path string) (*yast.Obj, error) {
 		return nil, err
 	}
 
-	if err := yast.ValidateDuplicateKeys(obj); err != nil {
+	if err := validate.Recursive(validate.NoDuplicateKeys())(obj); err != nil {
 		return obj, err
 	}
 

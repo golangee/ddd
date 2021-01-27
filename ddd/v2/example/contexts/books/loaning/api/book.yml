@@ -13,6 +13,9 @@ type:
     Title:
       type: string!
 
+    Title:
+      type: blub
+
     # ...is a test for importing a custom type.
     Special:
       Go: "github.com/google/uuid.UUID"
@@ -23,3 +26,5 @@ type:
 
     # ...is another more complex generics thing
     AMap: "map<string!,map<int!,bool!>>"
+
+    Title: sdf
