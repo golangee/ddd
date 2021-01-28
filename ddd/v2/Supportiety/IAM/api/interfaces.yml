@@ -2,4 +2,5 @@ User:
   doc: ... is a technical concept to allow code reusage and is not introduced by a requirement.
   GetID:
     doc: ... returns the unique identifier or an empty default value.
-    type: UserId
+    out:
+      Id: { type: UserId , doc:...the actual entity id. }

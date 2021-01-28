@@ -4,6 +4,6 @@ so that: I can hand over the software to another team without problems.
 
 scenario:
   Identities:
-    given: I migrate or merge the underlying database or change the dbms
-    when: developing the in the future
+    given: I'm a developer and I migrate or merge the underlying database or change the dbms
+    when: developing in the future
     then: I expect that each logical primary key is a uuid and no dbms specific one like an autoincremented int.

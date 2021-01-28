@@ -5,7 +5,7 @@ AdminRepository:
     out:
       Users: { type: slice<SupportietyUser>, doc: ... contains all found users. }
       errors:
-        - Errors.Other
+        - Errors.Other # TODO this is an awkward and implicit type introduction based on an AC
 
   FindOne:
     doc: .. returns a single user by its Id.
