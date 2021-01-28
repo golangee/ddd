@@ -1,9 +1,0 @@
-As a: supportiety user
-I want: that the developer who have created this software have followed common best practices
-so that: I can sleep well.
-
-scenario:
-  identities:
-    Given: I migrate or merge the underlying database or change the dbms
-    when: "?"
-    then: I expect that each logical primary key is a uuid and no dbms specific one like an autoincremented int.

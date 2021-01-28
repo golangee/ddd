@@ -1,30 +1,30 @@
-As a: supportiety user # must be defined in glossary
-I want: to login into the system by using my email address and a password
+as a: SupportietyUser # must be defined in glossary
+i want: to login into the system by using my email address and a password
 so that: I can use supportiety.
 
 # == acceptance criteria
 scenario:
-  no anonymous access:
-    Given: I have all deep application URLs
+  NoAnonymousAccess:
+    given: I have all deep application URLs
     when: I open any URL directly in my browser
     then: the system tells me that I'm not logged in and invites me to enter my credentials.
 
-  supportiety user signs in with valid credentials:
-    Given: I have all deep application URLs and valid credentials
+  SupportietyUserSignsInWithValidCredentials:
+    given: I have all deep application URLs and valid credentials
     when: I open any URL directly in my browser
     then: the system tells me that I'm not logged in and after entering my credentials, I can see the protected content.
 
-  supportiety user signs in with invalid credentials:
-    Given: I have all deep application URLs and wrong credentials
+  SupportietyUserSignsInWithInvalidCredentials:
+    given: I have all deep application URLs and wrong credentials
     when: I open any URL directly in my browser
     then: the system keeps telling me after entering the credentials that they are wrong.
 
-  brute force protection:
-    Given: I have a script or bot
+  BruteForceProtection:
+    given: I have a script or bot
     when: I try to brute force credentials
     then: the system responds so slow that such an attack is infeasible.
 
-  password:
-    Given: I got a database dump
+  Password:
+    given: I got a database dump
     when: I try to read or reconstruct the stored passwords
-    then: I cannot do so, because the passwords are hashed using bcrypt.
+    then: I cannot do so, because the passwords are hashed using bcrypt or better.

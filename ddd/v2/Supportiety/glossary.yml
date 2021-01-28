@@ -1,61 +1,52 @@
 glossary:
-  # TODO: lower case notation breaks with our other conventions, but upper case for natural names seems awkward
 
-  monitored software:
-    name: MonitoredSoftware
+  MonitoredSoftware:
+    name: mOnItored SoftWAre # optional name, as written in text where applicable
     doc: ... indicates a piece of software which is monitored. There is an arbitrary amount of applications to be
       monitored.
 
-  customer:
-    name: Customer
+  Customer:
     doc: ... denotes a private person who is actually using the monitored software.
 
-  supportiety user:
-    name: SupportietyUser
+  SupportietyUser:
     doc: ... describes an authenticated user of the supportiety software system.
 
-  role:
-    name: Role
+  Role:
     doc: ... authorizes a supportiety user to perform specific operations.
 
-  project manager:
-    name: ProjectManager
+  ProjectManager:
     doc: ... describes a role of a supportiety user. A project manager is responsible for a monitored software.
       A customer service representative may contact him, to solve a problem for a
       customer.
 
-  developer:
-    name: Developer
+  Developer:
     doc: ... describes a role of a supportiety user. A Developer is responsible for inspecting and
       fixing a monitored software. A customer service representative may contact him, to solve a problem for a
       customer.
 
-  admin:
-    name: Admin
+  Admin:
     doc: ... describes a role of a supportiety user. He is responsible for manageing supportiety users. He can
       create and delete user accounts. He can also set a users password. He is also capable of deleting
       tickets.
 
-  customer service representative:
-    name: CustomerServiceRepresentative
+  CustomerServiceRepresentative:
     doc: ... is a role of a supportiety user and an employe of the company who is in charge of monitoring the
       customers software and is responsible
       for being in contact with the customer and also with the project manager and developer of the monitored software.
 
-  device:
-    name: Device
+  Device:
     doc: ... is a piece of hardware with an operating system like Android or iOS which runs the monitored software.
 
-  ticket:
-    name: Ticket
+  Ticket:
     doc: ... designates a help request from a customer. There are two kinds of it. A ticket may aggregates
       a bunch of meta data about the environment and arbitrary additional files.
 
-  crash:
-    name: Crash
+  Crash:
     doc: ... is one kind of a ticket and describes an unvoluntary crash of the monitored software while in use by a
       customer.
 
-  bug report:
-    name: BugReport
+  BugReport:
     doc: ... is another kind of a ticket and describes a voluntary request of a customer within the monitored software.
+
+  ContractingAuthority:
+    doc: ... describes the legal person who hired external specialists (us) to create this software (supportiety).

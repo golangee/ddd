@@ -1,9 +1,7 @@
-As an: admin # note the flexion "an"
-I want: to list, add, delete and edit all available user
+as a: Admin
+i want: to list, add, delete and edit all available user
 so that: I can ensure that only permitted users have access and also that their correct role, email and names apply.
 
-rules:
-# rules is a different acceptance criteria format
 rules:
   - empty names are not allowed and must show an according error message
   - passwords must have at least 8 chars and must contain at least one uppercase and lowercase and special char

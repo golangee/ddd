@@ -1,10 +1,10 @@
-As a: supportiety user # must be defined in glossary
-I want: to view my account details to check my first and second name and my email address
+as a: supportiety user # must be defined in glossary
+i want: to view my account details to check my first and second name and my email address
 so that: I can validate that my name and email address is correct.
 
 # == acceptance criteria
 scenarios:
-  supportiety user inspects his account details:
-    Given: I’m a logged-out system user
+  SupportietyUserInspectsHisAccountDetails:
+    given: I’m a logged-out system user
     when: I click the account icon in the applications bar and select the account entry
     then: the system shows me my firstname, lastname and email address.
