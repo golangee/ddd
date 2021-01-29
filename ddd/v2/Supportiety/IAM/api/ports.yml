@@ -1,7 +1,10 @@
-AdminRepository:
+UserRepository:
   FindAll:
     doc: ... returns all available users.
     reqt: [ IAM/Admin ]
+    in:
+      Limit: { type: int, doc: ...the maximum amount of returned entries }
+      Offset: { type: int, doc: ...the offset to return a result set from }
     out:
       Users: { type: slice<SupportietyUser>, doc: ... contains all found users. }
       errors:
