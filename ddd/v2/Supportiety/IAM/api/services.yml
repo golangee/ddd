@@ -10,3 +10,11 @@ AdminService:
         - Errors.NotFound
         - IAM/Admin.WeakPassword # TODO how to introduce that?
 
+EventService:
+  OnUserAdded:
+    in:
+      user: { type: UserAddedEvent, doc: ...the user event to process }
+    out:
+      errors:
+        - Errors.Other
+        - Errors.NotFound
