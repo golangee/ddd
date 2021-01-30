@@ -3,7 +3,7 @@
 # Neither publish nor subscribe adapter is specified here, so no kafka, rabbitmq, topic etc. wording here
 
 doc: ... denotes an event which comes from an external user management service.
-on: IAM/EventService.OnUserAdded
+on: IAM/service/EventService.OnUserAdded
 ID:
   doc: ... is the unique identifier.
   type: UserId
