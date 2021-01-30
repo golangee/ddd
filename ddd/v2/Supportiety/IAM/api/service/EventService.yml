@@ -1,0 +1,7 @@
+OnUserAdded:
+  in:
+    user: { type: UserAddedEvent, doc: ...the user event to process }
+  out:
+    errors:
+      - Errors.Other
+      - Errors.NotFound

@@ -1,3 +1,5 @@
+# TODO think about repeating Name in all type definitions
+# TODO contract is here to eventually also declare Pre- and PostVariants (respective bailing out on validation error)
 User:
   doc: ... is a technical concept to allow code reusage and is not introduced by a requirement.
   GetID:

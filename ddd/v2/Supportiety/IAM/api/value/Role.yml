@@ -1,0 +1,8 @@
+# doc and right to exist is declared in glossary.yml
+Role:
+  type: enum
+  values:
+    - Developer
+    - ProjectManager
+    - Admin
+    - CustomerServiceRepresentative
