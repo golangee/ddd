@@ -1,0 +1,11 @@
+# TODO this is solely implementation specific and no story itself
+FeatureFlags:
+  doc: ... enables or disables development features.
+
+  AlternateUserModel:
+    type: bool
+    reqt: [ "some story?" ]
+
+  DefaultAdminPassword:
+    type: string
+    reqt: [ bootstrap login at installation time story ]

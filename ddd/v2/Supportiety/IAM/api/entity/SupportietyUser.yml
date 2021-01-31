@@ -1,24 +1,25 @@
-ID:
-  doc: ... is the unique identifier.
-  type: UserId
-  reqt: [ BestPractices.Identities ]
+SupportietyUser:
+  ID:
+    doc: ... is the unique identifier.
+    type: UserId
+    reqt: [ BestPractices.Identities ]
 
-Firstname:
-  doc: ... is the users first name.
-  type: string
-  reqt: [ IAM/AccountDetails ]
+  Firstname:
+    doc: ... is the users first name.
+    type: string
+    reqt: [ IAM/AccountDetails ]
 
-Lastname:
-  doc: ... is the users last name.
-  type: string
-  reqt: [ IAM/AccountDetails ]
+  Lastname:
+    doc: ... is the users last name.
+    type: string
+    reqt: [ IAM/AccountDetails ]
 
-PwdHash:
-  doc: ... is a hashed password.
-  type: slice<byte>
-  reqt: [ IAM/SecurityLogin ]
+  PwdHash:
+    doc: ... is a hashed password.
+    type: slice<byte>
+    reqt: [ IAM/SecurityLogin ]
 
-Role:
-  doc: ... is the role of the actual user.
-  type: Role
-  requt: [ IAM ]
+  Role:
+    doc: ... is the role of the actual user.
+    type: Role
+    requt: [ IAM ]

@@ -1,7 +1,11 @@
-OnUserAdded:
-  in:
-    user: { type: UserAddedEvent, doc: ...the user event to process }
-  out:
-    errors:
-      - Errors.Other
-      - Errors.NotFound
+EventService:
+  inject:
+    - UserRepository
+    - FeatureFlags
+  OnUserAdded:
+    in:
+      user: { type: UserAddedEvent, doc: ...the user event to process }
+    out:
+      errors:
+        - Errors.Other
+        - Errors.NotFound

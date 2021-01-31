@@ -1,2 +1,8 @@
-doc: ... encapsules everything around identity and access management. Logically this is a supporting context
-  which lies upstream above all other contexts.
+IAM:
+  doc: ... encapsules everything around identity and access management. Logically this is a supporting context
+    which lies upstream above all other contexts.
+  generate:
+    lang: go
+    langMin: 1.15
+    framework: stdlib
+    frameworkMin: 1.15

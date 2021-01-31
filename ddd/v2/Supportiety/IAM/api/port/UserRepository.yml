@@ -1,50 +1,51 @@
-FindAll:
-  doc: ... returns all available users.
-  reqt: [ IAM/Admin ]
-  in:
-    Limit: { type: int, doc: ...the maximum amount of returned entries }
-    Offset: { type: int, doc: ...the offset to return a result set from }
-  out:
-    Users: { type: slice<SupportietyUser>, doc: ... contains all found users. }
-    errors:
-      - Errors.Other # TODO this is an awkward and implicit type introduction based on an AC
+UserRepository:
+  FindAll:
+    doc: ... returns all available users.
+    reqt: [ IAM/Admin ]
+    in:
+      Limit: { type: int, doc: ...the maximum amount of returned entries }
+      Offset: { type: int, doc: ...the offset to return a result set from }
+    out:
+      Users: { type: slice<SupportietyUser>, doc: ... contains all found users. }
+      errors:
+        - Errors.Other # TODO this is an awkward and implicit type introduction based on an AC
 
-FindOne:
-  doc: .. returns a single user by its Id.
-  reqt: [ IAM/Admin, IAM/SecurityLogin ]
-  in:
-    User: { type: SupportietyUser, doc: ... the user to update }
-  out:
-    User: { type: SupportietyUser, doc: ... the found user. }
-    errors:
-      - Errors.Other
-      - Errors.NotFound
+  FindOne:
+    doc: .. returns a single user by its Id.
+    reqt: [ IAM/Admin, IAM/SecurityLogin ]
+    in:
+      User: { type: SupportietyUser, doc: ... the user to update }
+    out:
+      User: { type: SupportietyUser, doc: ... the found user. }
+      errors:
+        - Errors.Other
+        - Errors.NotFound
 
-Delete:
-  doc: ... deletes a single user by id.
-  reqt: [ IAM/Admin ]
-  in:
-    Id: { type: uuid, doc: ... the unique id }
-  errors:
-    - Errors.Other
-    - Errors.NotFound
-
-Update:
-  doc: ... updates a single user by id and replace all fields.
-  reqt: [ IAM/Admin ]
-  in:
-    User: { type: SupportietyUser, doc: ... the user to update }
-  out:
+  Delete:
+    doc: ... deletes a single user by id.
+    reqt: [ IAM/Admin ]
+    in:
+      Id: { type: uuid, doc: ... the unique id }
     errors:
       - Errors.Other
       - Errors.NotFound
 
-Insert:
-  doc: ... inserts a single user with given id.
-  reqt: [ IAM/Admin ]
-  in:
-    User: { type: SupportietyUser, doc: ... the user to insert }
-  out:
-    errors:
-      - Errors.Other
-      - Errors.AlreadyExists
+  Update:
+    doc: ... updates a single user by id and replace all fields.
+    reqt: [ IAM/Admin ]
+    in:
+      User: { type: SupportietyUser, doc: ... the user to update }
+    out:
+      errors:
+        - Errors.Other
+        - Errors.NotFound
+
+  Insert:
+    doc: ... inserts a single user with given id.
+    reqt: [ IAM/Admin ]
+    in:
+      User: { type: SupportietyUser, doc: ... the user to insert }
+    out:
+      errors:
+        - Errors.Other
+        - Errors.AlreadyExists
