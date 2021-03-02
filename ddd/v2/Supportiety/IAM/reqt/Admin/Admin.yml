@@ -1,0 +1,26 @@
+as a: Admin # TODO flexion is grammatically broken
+i want: to list, add, delete and edit all available user
+so that: I can ensure that only permitted users have access and also that their correct role, email and names apply.
+
+scenario:
+  SetPassword:
+    given: I'm an Admin
+    when: a SupportietyUser has lost or compromised his password
+    then: I need to update his password and give him the new password on a piece of paper.
+
+  WeakPassword:
+    doc: ...describes a situation where a password is not safe to use. # TODO again type doc on AC
+    given: I'm an Admin
+    when: I set a password for a SupportietyUser
+    then: the password must have at least 8 chars and must contain at least one uppercase and lowercase and special char.
+    # TODO useful enough to be machine reabable? This is not a method, very implicit and in non-trivial cases not unit-test generatable anyway
+    rules:
+      fail: [ "", a, 1234, 12345678 ]
+      success: [ 123456Ab& ]
+
+# TODO if allowed, everyone will use this instead of real AC or scenarios
+rules:
+  - empty names are not allowed and must show an according error message
+  - passwords must have at least 8 chars and must contain at least one uppercase and lowercase and special char
+  - only users with the admin role can see the according option
+  - initially a default admin with the password admin is deployed

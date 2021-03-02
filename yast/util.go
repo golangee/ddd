@@ -1,5 +1,10 @@
 package yast
 
+import (
+	"reflect"
+	"strconv"
+)
+
 type Predicate = func(n Node) (bool, error)
 
 // Walk recursively walks over all nodes until everything has been
@@ -28,6 +33,17 @@ func Walk(root Node, f func(node Node) error) error {
 func ByStereotype(stereotype Stereotype) Predicate {
 	return func(n Node) (bool, error) {
 		return n.Stereotype() == stereotype, nil
+	}
+}
+
+func ByKey(key string) Predicate {
+	return func(n Node) (bool, error) {
+		if x, ok := n.(*Obj); ok {
+			if x.Get(key) != nil {
+				return true, nil
+			}
+		}
+		return false, nil
 	}
 }
 
@@ -89,4 +105,31 @@ func SelectParent(node Node, p Predicate) (Node, error) {
 	}
 
 	return SelectParent(node.Parent(), p)
+}
+
+// ParentName returns the name of the given node in the context of its parent. If the parent is a Seq the iota of
+// the index is returned. If there is no parent, the empty string is returned.
+func ParentName(node Node) (string, error) {
+	p := node.Parent()
+	if p == nil {
+		return "", NewPosError(node, "expected a parent, but is the root")
+	}
+	switch t := p.(type) {
+	case *Obj:
+		for _, attr := range t.Attrs {
+			if attr.Value == node {
+				return attr.Key.Value, nil
+			}
+		}
+	case *Seq:
+		for i, value := range t.Values {
+			if value == node {
+				return strconv.Itoa(i), nil
+			}
+		}
+	default:
+		return "", NewPosError(node, "undefined parent relation: "+reflect.TypeOf(t).String())
+	}
+
+	return "", NewPosError(node, "no parent-child match found")
 }

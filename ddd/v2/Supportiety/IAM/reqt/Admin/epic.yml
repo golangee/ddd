@@ -1,0 +1,6 @@
+Admin:
+  as a: Admin # TODO flexion is grammatically broken
+  i want: to do anything an Admin usually does
+  so that: I feel great.
+
+# no scenario, acceptance criteria. Its an epic containing more stories.

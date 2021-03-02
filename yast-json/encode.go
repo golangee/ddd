@@ -30,6 +30,10 @@ func Marshal(node yast.Node, opts Options) ([]byte, error) {
 func Convert(node yast.Node, opts Options) interface{} {
 	switch n := node.(type) {
 	case *yast.Obj:
+		if n == nil {
+			return nil
+		}
+
 		obj := map[string]interface{}{}
 		if opts.PosKey != "" {
 			obj[opts.PosKey] = newPosMap(n.Pos())
@@ -62,6 +66,10 @@ func Convert(node yast.Node, opts Options) interface{} {
 		return obj
 
 	case *yast.Seq:
+		if n == nil {
+			return nil
+		}
+
 		seq := make([]interface{}, 0, len(n.Values))
 		for _, value := range n.Values {
 			seq = append(seq, Convert(value, opts))
@@ -92,14 +100,34 @@ func Convert(node yast.Node, opts Options) interface{} {
 
 		return obj
 	case *yast.Str:
+		if n == nil {
+			return nil
+		}
+
 		return n.Value
 	case *yast.Null:
+		if n == nil {
+			return nil
+		}
+
 		return nil
 	case *yast.Int:
+		if n == nil {
+			return nil
+		}
+
 		return n.Value
 	case *yast.Bool:
+		if n == nil {
+			return nil
+		}
+
 		return n.Value
 	case *yast.Float:
+		if n == nil {
+			return nil
+		}
+
 		return n.Value
 	case nil:
 		return nil

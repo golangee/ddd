@@ -1,7 +1,8 @@
-FindAll:
-  query: SELECT id, firstname, lastname, phash, role FROM users LIMIT ? OFFSET ?
-  prepare: [ Limit, Offset ]
-  map: [ .ID, .Firstname, .Lastname, .PwdHash, .Role ] # TODO: pointer mapping (e.g. like optionals) not defined
+UserRepository:
+  FindAll:
+    query: SELECT id, firstname, lastname, phash, role FROM users LIMIT ? OFFSET ?
+    prepare: [ Limit, Offset ]
+    map: [ .ID, .Firstname, .Lastname, .PwdHash, .Role ] # TODO: pointer mapping (e.g. like optionals) not defined
 
 
   FindOne:

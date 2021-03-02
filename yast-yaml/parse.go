@@ -151,6 +151,8 @@ func yamlNode2yast(parent yast.Node, fname string, yn *yaml.Node) yast.Node {
 			return null2yast(parent, fname, yn)
 		case "!!int":
 			return int2yast(parent, fname, yn)
+		case "!!float":
+			return float2yast(parent, fname, yn)
 		default:
 			panic("scalar node Tag not implemented: " + yn.Tag)
 		}
@@ -240,6 +242,24 @@ func int2yast(parent yast.Node, fname string, yn *yaml.Node) *yast.Int {
 	}
 
 	str := &yast.Int{
+		ValuePos:    posFromNode(fname, yn),
+		ValueParent: parent,
+		Value:       num,
+	}
+
+	str.ValueEnd = str.ValuePos
+	str.ValueEnd.Col += len(strconv.Itoa(int(num)))
+
+	return str
+}
+
+func float2yast(parent yast.Node, fname string, yn *yaml.Node) *yast.Float {
+	num, err := strconv.ParseFloat(yn.Value, 64)
+	if err != nil {
+		panic(fmt.Errorf("illegal state: unparseable float in float-node: %w", err))
+	}
+
+	str := &yast.Float{
 		ValuePos:    posFromNode(fname, yn),
 		ValueParent: parent,
 		Value:       num,

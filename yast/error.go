@@ -30,6 +30,11 @@ func NewPosError(node Node, msg string, details ...ErrDetail) *PosError {
 	}
 }
 
+func (p *PosError) SetHint(str string) *PosError {
+	p.Hint = str
+	return p
+}
+
 func (p *PosError) Unwrap() error {
 	return p.Cause
 }
@@ -92,6 +97,11 @@ func (p PosError) Explain() string {
 		sb.WriteByte(' ')
 	}
 	sb.WriteString("--> ")
+	if p.Node == nil {
+		sb.WriteString("node is nil")
+		return sb.String()
+	}
+
 	sb.WriteString(p.Node.Pos().String())
 	sb.WriteString("\n")
 
@@ -136,7 +146,7 @@ func (p PosError) Explain() string {
 
 	if p.Hint != "" {
 		sb.WriteString(fmt.Sprintf("%"+strconv.Itoa(indent)+"s |\n", ""))
-		sb.WriteString(fmt.Sprintf("%"+strconv.Itoa(indent)+"s = hint: %s\n", "",p.Hint))
+		sb.WriteString(fmt.Sprintf("%"+strconv.Itoa(indent)+"s = hint: %s\n", "", p.Hint))
 	}
 
 	return sb.String()

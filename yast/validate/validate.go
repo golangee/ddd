@@ -1,6 +1,10 @@
 package validate
 
-import "github.com/golangee/architecture/yast"
+import (
+	"github.com/golangee/architecture/yast"
+	"reflect"
+	"strings"
+)
 
 // A Validator is just a predicate-like func which returns an error instead of a bool.
 type Validator func(node yast.Node) error
@@ -83,3 +87,58 @@ func NoDuplicateKeys() Validator {
 		return nil
 	}
 }
+
+// ExpectObj splits the given path by slashes (e.g. a/b/c) and checks that c is a yast.Node.
+func ExpectNode(dst *yast.Node, srcPath, expectedType string) Validator {
+	return func(src yast.Node) error {
+		names := strings.Split(srcPath, "/")
+		root := src
+		for _, name := range names {
+			if obj, ok := root.(*yast.Obj); ok {
+				val := obj.Get(name)
+				if val == nil {
+					posErr := yast.NewPosError(root, "expected element '"+name+"' but is missing")
+					posErr.Hint = "add an object identified by key '" + name + "'"
+					return posErr
+				}
+
+				root = val
+			} else {
+				posErr := yast.NewPosError(root, "expected element '"+name+"' to be a '"+expectedType+"' but found: "+reflect.TypeOf(root).String())
+				posErr.Hint = "change attribute '" + name + "' to refer to '" + expectedType + "'"
+				return posErr
+			}
+		}
+
+		*dst = root
+		return nil
+	}
+}
+
+
+// ExpectObj splits the given path by slashes (e.g. a/b/c) and checks that c is a yast.Obj.
+func ExpectObj(dst **yast.Obj, srcPath string) Validator {
+	return func(node yast.Node) error {
+		var tmp yast.Node
+		err := ExpectNode(&tmp, srcPath, "Object")(node)
+		if err == nil {
+			*dst = tmp.(*yast.Obj)
+		}
+
+		return err
+	}
+}
+
+// ExpectStr splits the given path by slashes (e.g. a/b/c) and checks that c is a yast.Str.
+func ExpectStr(dst **yast.Str, srcPath string) Validator {
+	return func(node yast.Node) error {
+		var tmp yast.Node
+		err := ExpectNode(&tmp, srcPath, "Str")(node)
+		if err == nil {
+			*dst = tmp.(*yast.Str)
+		}
+
+		return err
+	}
+}
+

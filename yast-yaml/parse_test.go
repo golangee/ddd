@@ -8,7 +8,7 @@ import (
 )
 
 func TestParseDir(t *testing.T) {
-	pkg, err := ParseDir("/Users/tschinke/git/github.com/golangee/architecture.git/ddd/v2/example")
+	pkg, err := ParseDir("/Users/tschinke/git/github.com/golangee/architecture.git/ddd/v2/Supportiety")
 	if err != nil {
 		fmt.Println(yast.Explain(err))
 		t.Fatal(err)

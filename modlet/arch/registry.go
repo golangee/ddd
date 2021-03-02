@@ -6,13 +6,15 @@ import (
 	"github.com/golangee/architecture/modlet/arch/iface"
 	"github.com/golangee/architecture/objn"
 	objnyaml "github.com/golangee/architecture/objn-yaml"
+	"github.com/golangee/architecture/yast"
+	yastyaml "github.com/golangee/architecture/yast-yaml"
 	"golang.org/x/mod/semver"
 	"strings"
 )
 
-type funcModlet func(prj modlet.Project, node objn.Node) error
+type funcModlet func(prj modlet.Project, node yast.Node) error
 
-func (f funcModlet) Apply(prj modlet.Project, node objn.Node) error {
+func (f funcModlet) Apply(prj modlet.Project, node yast.Node) error {
 	return f(prj, node)
 }
 
@@ -30,9 +32,9 @@ func init() {
 	}
 }
 
-func Apply(node objn.Node) error {
-	nodes, err := objn.Collect(node, func(path []objn.Node) (bool, error) {
-		if n, ok := path[len(path)-1].(objn.Map); ok {
+func Apply(node yast.Node) error {
+	nodes, err := yast.Filter(node, func(n yast.Node) (bool, error) {
+		if n, ok := path[len(path)-1].(yast.Map); ok {
 			if n, ok := n.Get("apply").(objn.Seq); ok {
 				for i := 0; i < n.Count(); i++ {
 					lit := n.Get(i).(objn.Lit)
@@ -64,7 +66,7 @@ func Apply(node objn.Node) error {
 }
 
 func Build(dir string) error {
-	pkg, err := objnyaml.NewYamlPkg(dir)
+	pkg, err := yastyaml.ParseDir(dir)
 	if err != nil {
 		return fmt.Errorf("unable to parse yaml dir: %w", err)
 	}
