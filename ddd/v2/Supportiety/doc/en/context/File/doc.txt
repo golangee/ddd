@@ -1,0 +1,4 @@
+{{.name}} represents an entire bounded context around saving files.
+A {{.ref "context/Ticket" }} may have a lot of potentially huge files attached.
+So this context may need to scale on multiple physical servers.
+This is an upstream context and does not depend on others.
