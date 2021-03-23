@@ -1,7 +1,6 @@
 package metamodel
 
 import (
-	"github.com/golangee/architecture/adl/saa/v1/spec"
 	"sort"
 	"time"
 )
@@ -17,7 +16,7 @@ const (
 // However due to SQL nature, many engines do not support that well with CREATE/DROP TABLE statements.
 type Migration struct {
 	ID         time.Time
-	Statements []model.StrLit
+	Statements []StrLit
 }
 
 // Migrations is a slice of Migration.

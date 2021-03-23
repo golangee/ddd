@@ -6,3 +6,4 @@ type StrLit struct {
 	Value string
 	Pos
 }
+
