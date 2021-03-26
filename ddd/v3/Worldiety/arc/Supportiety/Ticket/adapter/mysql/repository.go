@@ -25,3 +25,9 @@ type RepoImpl interface {
 	//@sql:query
 	FindAll(limit, offset int) ([]Ticket, error)
 }
+
+type TicketRepository interface{
+	// FindAll searches all entities.
+	// Introduced by doc/en/Ticket/#ManageTickets
+	FindAll(limit, offset int) ([]Ticket, error)
+}

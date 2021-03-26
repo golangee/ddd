@@ -11,6 +11,7 @@ import (
 	_ "github.com/pingcap/parser/test_driver"
 	"golang.org/x/crypto/sha3"
 	"strconv"
+	"strings"
 
 	"github.com/golangee/architecture/adl/saa/v1/astutil"
 	"github.com/golangee/architecture/adl/saa/v1/core"
@@ -22,7 +23,7 @@ const (
 	filenameMigrations = "migrations.gen.go"
 )
 
-func RenderMigrations(dst *ast.Prj, src []*sql.Migration) error {
+func RenderMigrations(dst *ast.Prj, dialect sql.Dialect, src []*sql.Migration) error {
 	if len(src) == 0 {
 		return nil
 	}
@@ -58,21 +59,19 @@ func RenderMigrations(dst *ast.Prj, src []*sql.Migration) error {
 	}
 
 	file.AddNodes(migrationConstBlock, migrationHashConstBlock)
-	opts, err := createMySQLOptions("defaultName")
+	_, err := createMySQLOptions(file, dialect, "defaultName")
 	if err != nil {
 		return fmt.Errorf("unable to create mysql options: %w", err)
 	}
 
-	file.AddNodes(opts)
-
 	return nil
 }
 
-func createMySQLOptions(defaultDBName string) (*ast.Struct, error) {
+func createMySQLOptions(file *ast.File, dialect sql.Dialect, defaultDBName string) (*ast.Struct, error) {
 	opt := ast.NewStruct("Options").
 		SetComment("...contains the connection options for a MySQL database.").
 		AddFields(
-			ast.NewField("Port", ast.NewSimpleTypeDecl(stdlib.Int32)).
+			ast.NewField("Port", ast.NewSimpleTypeDecl(stdlib.Int)).
 				SetComment("...is the database port to connect.").
 				SetDefault(ast.NewIntLit(3306)),
 			ast.NewField("User", ast.NewSimpleTypeDecl(stdlib.String)).
@@ -127,16 +126,27 @@ func createMySQLOptions(defaultDBName string) (*ast.Struct, error) {
 			ast.NewField("MaxIdleConns", ast.NewSimpleTypeDecl(stdlib.Int64)).
 				SetComment("...is the amount of how many open connections can be idle.").
 				SetDefault(ast.NewIntLit(25)),
+			ast.NewField("Test", ast.NewSimpleTypeDecl(stdlib.Bool)).SetDefault(ast.NewBoolLit(true)),
+			ast.NewField("Test2", ast.NewSimpleTypeDecl(stdlib.Float64)).SetDefault(ast.NewBasicLit(ast.TokenFloat, "3.41")),
 		)
 
+	file.AddNodes(opt) // add it early, functions may need contextual information like package path
+
+	opt.DefaultRecName = strings.ToLower(opt.TypeName[:1])
+
 	if _, err := corego.AddResetFunc(opt); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to add reset func: %w", err)
 	}
 
 	stereotype.Put(opt, stereotype.ConfigureStruct, stereotype.Database, stereotype.MySQL)
 
+	addDSNFunc(opt)
+
+	if _, err := corego.AddParseEnvFunc(string(dialect), opt); err != nil {
+		return nil, fmt.Errorf("unable to add parser func: %w", err)
+	}
 	/*
-	   
+
 
 		envPrefix := "MySQL." + bc.Name() + "."
 
@@ -151,58 +161,7 @@ func createMySQLOptions(defaultDBName string) (*ast.Struct, error) {
 		genOpt.AddMethodToJson("String", true, true, true)
 		genOpt.AddMethodFromJson("Parse")
 
-		dsn := src.NewFunc("DSN").SetPointerReceiver(true)
-		genOpt.AddMethods(dsn)
-		r := dsn.ReceiverName()
-		dsn.
-			SetDoc("...returns the options as a fully serialized datasource name.\n" +
-				"The returned string is of the form:\n" +
-				"  username:password@protocol(address)/dbname?param=value").
-			AddResults(src.NewParameter("", src.NewTypeDecl("string")))
 
-		body := src.NewBlock().
-			AddLine("sb := &", src.NewTypeDecl("strings.Builder{}")).
-			AddLine("sb.WriteString(", src.NewTypeDecl("net/url.PathEscape"), "(", r, ".User))").
-			AddLine("sb.WriteString(\":\")").
-			AddLine("sb.WriteString(", src.NewTypeDecl("net/url.PathEscape"), "(", r, ".Password))").
-			AddLine("sb.WriteString(\"@\")").
-			AddLine("sb.WriteString(", r, ".Protocol)").
-			AddLine("sb.WriteString(\"(\")").
-			AddLine("sb.WriteString(", r, ".Address)").
-			AddLine("sb.WriteString(\")\")").
-			AddLine("sb.WriteString(\"/\")").
-			AddLine("sb.WriteString(", r, ".Database)").
-			AddLine("sb.WriteString(\"?\")")
-
-		options := map[string]string{
-			"Charset":          "charset",
-			"Collation":        "collation",
-			"MaxAllowedPacket": "maxAllowedPacket",
-			"Tls":              "tls",
-			"Timeout":          "timeout",
-			"WriteTimeout":     "writeTimeout",
-			"SqlMode":          "sql_mode",
-		}
-
-		var sortedKeys []string
-		for k, _ := range options {
-			sortedKeys = append(sortedKeys, k)
-		}
-		sort.Strings(sortedKeys)
-
-		for _, k := range sortedKeys {
-			v := options[k]
-			body.Add("sb.WriteString(")
-			if genOpt.FieldByName(k).Type().Qualifier() == "string" {
-				body.Add(src.NewTypeDecl("fmt.Sprintf"), "(\"%s=%s&\",", `"`+v+`",`, src.NewTypeDecl("net/url.QueryEscape"), "(", r, "."+k, "))")
-			} else {
-				body.Add(src.NewTypeDecl("fmt.Sprintf"), "(\"%s=%v&\",", `"`+v+`",`, r, "."+k, ")")
-			}
-			body.AddLine(")")
-		}
-
-		body.AddLine("return sb.String()")
-		dsn.AddBody(body)
 
 		return genOpt
 

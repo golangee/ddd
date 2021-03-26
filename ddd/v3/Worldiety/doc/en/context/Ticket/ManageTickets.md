@@ -12,3 +12,8 @@ so that I can comply to the DSGVO/GDPR.
 Given I'm a SupportietyAdmin
 when I delete the same ticket twice
 then I want a message telling me that its not possible.
+
+## other user story
+
+## 3 story
+

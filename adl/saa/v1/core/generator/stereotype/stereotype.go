@@ -6,11 +6,28 @@ type valueKey string
 
 const key valueKey = "stereotype"
 
+type envKey string
+
+const ekey envKey = "envKeyName"
+
 const (
-	ConfigureStruct = "ConfigureStruct"
-	MySQL           = "MySQL"
-	Database        = "Database"
+	ConfigureStruct         = "ConfigureStruct"
+	MySQL                   = "MySQL"
+	Database                = "Database"
 )
+
+func SetEnvName(node ast.Node, name string) {
+	node.PutValue(ekey, name)
+}
+
+func GetEnvName(node ast.Node) string {
+	v := node.Value(ekey)
+	if s, ok := v.(string); ok {
+		return s
+	}
+
+	return ""
+}
 
 func Put(node ast.Node, stereotypes ...string) {
 	list := Get(node)

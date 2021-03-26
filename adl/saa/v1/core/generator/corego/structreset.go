@@ -14,7 +14,7 @@ import (
 func AddResetFunc(node *ast.Struct) (*ast.Func, error) {
 	fun := ast.NewFunc("Reset").
 		SetPtrReceiver(true).
-		SetRecName(strings.ToLower(node.TypeName[:1]))
+		SetRecName(node.DefaultRecName)
 
 	comment := "...restores this instance to the default state.\n"
 	node.AddMethods(fun)
@@ -30,6 +30,9 @@ func AddResetFunc(node *ast.Struct) (*ast.Func, error) {
 		switch t := field.FieldType.(type) {
 		case *ast.SimpleTypeDecl:
 			switch t.SimpleName {
+			case stdlib.Bool:
+				body.Add(ast.NewAssign(ast.Exprs(ast.NewSelExpr(ast.NewIdent(fun.RecName()), ast.NewIdent(field.FieldName))), ast.AssignSimple, ast.Exprs(ast.NewBasicLit(ast.TokenIdent, rawLiteral))))
+				body.Add(ast.NewSym(ast.SymNewline))
 			case stdlib.String:
 				if rawLiteral == "" {
 					rawLiteral = strconv.Quote("")
@@ -42,6 +45,10 @@ func AddResetFunc(node *ast.Struct) (*ast.Func, error) {
 			case stdlib.Int32:
 				fallthrough
 			case stdlib.Int16:
+				fallthrough
+			case stdlib.Float64:
+				fallthrough
+			case stdlib.Float32:
 				fallthrough
 			case stdlib.Int:
 				if rawLiteral == "" {
@@ -65,10 +72,12 @@ func AddResetFunc(node *ast.Struct) (*ast.Func, error) {
 				}
 
 				body.Add(ast.NewSym(ast.SymNewline))
+			default:
+				return fun, core.NewPosError(core.NewNodeFromAst(field), field.FieldName+" "+field.FieldType.String()+": unsupported field type for struct reset function")
 			}
 
 		default:
-			return fun, core.NewPosError(core.NewNodeFromAst(field), "unsupported field type for struct reset function")
+			return fun, core.NewPosError(core.NewNodeFromAst(field), field.FieldName+" "+field.FieldType.String()+": unsupported field type for struct reset function")
 		}
 
 		commentLit := rawLiteral

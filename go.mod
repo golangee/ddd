@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/golangee/plantuml v0.0.0-20200903155112-1a89681d02f7
 	github.com/golangee/reflectplus v0.0.0-20200828070359-e00d658fcc60
-	github.com/golangee/src v0.0.0-20210323175614-f41f9463e5e0
+	github.com/golangee/src v0.0.0-20210326162751-911e370ae8e4
 	github.com/pingcap/parser v0.0.0-20200623164729-3a18f1e5dceb // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/mod v0.3.0

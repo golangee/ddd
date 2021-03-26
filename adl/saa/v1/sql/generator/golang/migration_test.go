@@ -16,7 +16,7 @@ var fs embed.FS
 func TestRenderRepository(t *testing.T) {
 	prj := ast.NewPrj("test")
 	migrations := createMigrations(t)
-	if err := RenderMigrations(prj, migrations); err != nil {
+	if err := RenderMigrations(prj, sql.MySQL, migrations); err != nil {
 		t.Fatal(core.Explain(err))
 	}
 
