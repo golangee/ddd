@@ -15,8 +15,8 @@ var fs embed.FS
 
 func TestRenderRepository(t *testing.T) {
 	prj := ast.NewPrj("test")
-	migrations := createMigrations(t)
-	if err := RenderMigrations(prj, sql.MySQL, migrations); err != nil {
+	ctx := createCtx(t)
+	if err := RenderMigrations(prj, ctx); err != nil {
 		t.Fatal(core.Explain(err))
 	}
 
@@ -30,11 +30,22 @@ func TestRenderRepository(t *testing.T) {
 	fmt.Println(a)
 }
 
-func createMigrations(t *testing.T) []*sql.Migration {
+func createCtx(t *testing.T) *sql.Ctx {
 	t.Helper()
 
 	mod := core.NewModLit("github.com/worldiety/supportiety")
 	pkg := core.NewPkgLit("github.com/worldiety/supportiety/tickets/core")
+
+	return &sql.Ctx{
+		Dialect:    sql.MySQL,
+		Mod:        mod,
+		Pkg:        pkg,
+		Migrations: createMigrations(t),
+	}
+}
+
+func createMigrations(t *testing.T) []*sql.Migration {
+	t.Helper()
 
 	entries, err := fs.ReadDir(".")
 	if err != nil {
@@ -59,8 +70,6 @@ func createMigrations(t *testing.T) []*sql.Migration {
 		}
 
 		migrations = append(migrations, &sql.Migration{
-			Mod:        mod,
-			Pkg:        pkg,
 			ID:         ts,
 			Name:       core.NewStrLit(name),
 			Statements: stmts,

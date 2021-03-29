@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+// A Ctx describes the SQL specific environmental context.
+type Ctx struct {
+	Dialect Dialect
+	Mod     core.ModLit
+	Pkg     core.PkgLit
+	Migrations []*Migration
+}
+
 // A Migration represents a transactional group of sql migration statements. All of them should be applied or none.
 // However due to SQL nature, many engines do not support that well with CREATE/DROP TABLE statements.
 // We have no down/revert migrations, because in practice they don't make much sense and only work in few
@@ -19,8 +27,6 @@ import (
 //  * a failed migration cannot be safely undone using a down migration because many databases cannot alter tables
 //    within a transaction.
 type Migration struct {
-	Mod        core.ModLit
-	Pkg        core.PkgLit
 	ID         time.Time
 	Name       core.StrLit
 	Statements []core.StrLit
