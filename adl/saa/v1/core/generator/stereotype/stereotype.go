@@ -10,6 +10,8 @@ type envKey string
 
 const ekey envKey = "envKeyName"
 
+const flagKey envKey = "flagKeyName"
+
 const (
 	ConfigureStruct         = "ConfigureStruct"
 	MySQL                   = "MySQL"
@@ -22,6 +24,19 @@ func SetEnvName(node ast.Node, name string) {
 
 func GetEnvName(node ast.Node) string {
 	v := node.Value(ekey)
+	if s, ok := v.(string); ok {
+		return s
+	}
+
+	return ""
+}
+
+func SetFlagName(node ast.Node, name string) {
+	node.PutValue(flagKey, name)
+}
+
+func GetFlagName(node ast.Node) string {
+	v := node.Value(flagKey)
 	if s, ok := v.(string); ok {
 		return s
 	}

@@ -143,7 +143,11 @@ func createMySQLOptions(file *ast.File, dialect sql.Dialect, defaultDBName strin
 	addDSNFunc(opt)
 
 	if _, err := corego.AddParseEnvFunc(string(dialect), opt); err != nil {
-		return nil, fmt.Errorf("unable to add parser func: %w", err)
+		return nil, fmt.Errorf("unable to add env parser func: %w", err)
+	}
+
+	if _, err := corego.AddParseFlagFunc(string(dialect), opt); err != nil {
+		return nil, fmt.Errorf("unable to add flag parser func: %w", err)
 	}
 	/*
 
