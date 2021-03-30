@@ -509,7 +509,7 @@ func createSQLMigrationTooling(ctx *genctx, rslv *resolver, file *src.FileBuilde
 		src.NewStruct("migrationEntry").
 			SetDoc("...represents a row entry from the migration schema history table.").
 			AddFields(
-				src.NewField("Version", src.NewTypeDecl("int64")).SetDoc("...is the unix timestamp in seconds, at which this migration was defined."),
+				src.NewField("Version", src.NewTypeDecl("int64")).SetDoc("...represents a row entry from the migration schema history table."),
 				src.NewField("File", src.NewTypeDecl("string")).SetDoc("...is the file path indicating the origin of the statements."),
 				src.NewField("Line", src.NewTypeDecl("int32")).SetDoc("...is the line number indicating the origin of the statements."),
 				src.NewField("Checksum", src.NewTypeDecl("string")).SetDoc("...is the hex encoded first 16 byte sha3-256 checksum of all trimmed statements."),

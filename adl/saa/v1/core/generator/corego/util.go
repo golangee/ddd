@@ -36,7 +36,6 @@ func PkgName(n ast.Node) string {
 }
 
 // PkgRelativeName returns the relative path within the given module name.
-//
 func PkgRelativeName(n ast.Node) string {
 	modName := ModName(n)
 	pkgName := PkgName(n)

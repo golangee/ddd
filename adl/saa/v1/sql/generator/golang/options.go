@@ -81,10 +81,10 @@ func renderMySQLOptions(file *ast.File, dialect sql.Dialect, defaultDBName strin
 			ast.NewField("ConnMaxLifetime", ast.NewSimpleTypeDecl(stdlib.Duration)).
 				SetComment("...is the duration of how long pooled connections are kept alive.").
 				SetDefault(ast.NewIdentLit("3m")),
-			ast.NewField("MaxOpenConns", ast.NewSimpleTypeDecl(stdlib.Int64)).
+			ast.NewField("MaxOpenConns", ast.NewSimpleTypeDecl(stdlib.Int)).
 				SetComment("...is the amount of how many open connections can be kept in the pool.").
 				SetDefault(ast.NewIntLit(25)),
-			ast.NewField("MaxIdleConns", ast.NewSimpleTypeDecl(stdlib.Int64)).
+			ast.NewField("MaxIdleConns", ast.NewSimpleTypeDecl(stdlib.Int)).
 				SetComment("...is the amount of how many open connections can be idle.").
 				SetDefault(ast.NewIntLit(25)),
 			ast.NewField("Test", ast.NewSimpleTypeDecl(stdlib.Bool)).SetDefault(ast.NewBoolLit(true)),
