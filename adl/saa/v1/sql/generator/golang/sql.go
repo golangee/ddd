@@ -6,11 +6,10 @@ import (
 	_ "github.com/pingcap/parser/test_driver"
 )
 
-const (
-	filenameMigrations = "migrations.gen.go"
-)
-
-func RenderMigrations(dst *ast.Prj, src *sql.Ctx) error {
+// RenderSQL takes the sql context and emits the according
+// options.go (contains connection options), files.go (contains migration files) and migrations.go (contains
+// migration logic).
+func RenderSQL(dst *ast.Prj, src *sql.Ctx) error {
 	if len(src.Migrations) == 0 {
 		return nil
 	}
@@ -20,6 +19,14 @@ func RenderMigrations(dst *ast.Prj, src *sql.Ctx) error {
 	}
 
 	if err := RenderFiles(dst, src); err != nil {
+		return err
+	}
+
+	if err := RenderDBTX(dst, src); err != nil {
+		return err
+	}
+
+	if err := RenderMigrations(dst, src); err != nil {
 		return err
 	}
 

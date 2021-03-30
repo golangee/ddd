@@ -41,6 +41,12 @@ github.com/golangee/src v0.0.0-20210326162751-911e370ae8e4 h1:Cs7+OmJYY3D+iQ1XDe
 github.com/golangee/src v0.0.0-20210326162751-911e370ae8e4/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/golangee/src v0.0.0-20210329155804-b9f55f89f50d h1:8DwDTWB630Kz5KySRSZM2FJ18eiu6leGXQHy6XXvXgs=
 github.com/golangee/src v0.0.0-20210329155804-b9f55f89f50d/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210330093036-e5e46bccff3b h1:LtZrJbnFjwzLHFVKo2LFi6KpIhrE/Gw/vG2uRWE2cQo=
+github.com/golangee/src v0.0.0-20210330093036-e5e46bccff3b/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210330095707-421f5b510b00 h1:zab3/WfCIpIgOE/Dswkh5zz5k9LHkIebvb1Lu6dud/M=
+github.com/golangee/src v0.0.0-20210330095707-421f5b510b00/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210330100742-7c470ffef1f1 h1:ttxfdb1olxzokKtb2qo4mT8HCVePfwAuGl66VLM7Z0Q=
+github.com/golangee/src v0.0.0-20210330100742-7c470ffef1f1/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/juju/errors v0.0.0-20170703010042-c7d06af17c68/go.mod h1:W54LbzXuIE0boCoNJfwqpmkKJ1O4TCTZMetAt6jGk7Q=
 github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8/go.mod h1:vgyd7OREkbtVEN/8IXZe5Ooef3LQePvuBm9UWj6ZL8U=

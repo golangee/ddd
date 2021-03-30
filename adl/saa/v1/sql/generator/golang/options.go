@@ -27,6 +27,7 @@ func RenderOptions(dst *ast.Prj, modName, pkgName string, dialect sql.Dialect) e
 
 	return nil
 }
+
 func renderMySQLOptions(file *ast.File, dialect sql.Dialect, defaultDBName string) (*ast.Struct, error) {
 	opt := ast.NewStruct("Options").
 		SetComment("...contains the connection options for a MySQL database.").
