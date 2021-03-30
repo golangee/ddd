@@ -33,7 +33,7 @@ func AddParseFlagFunc(fieldPrefix string, node *ast.Struct) (*ast.Func, error) {
 		flagName := strings.ToLower(envNamePrefix + sep + field.FieldName)
 		comment += " * " + field.FieldName + " is parsed from flag '" + flagName + "' if it has been set.\n"
 
-		stereotype.SetFlagName(field, flagName)
+		stereotype.FieldFrom(field).SetProgramFlagVariable(flagName)
 
 		var parseBody ast.Node
 

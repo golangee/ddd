@@ -28,7 +28,7 @@ func AddParseEnvFunc(fieldPrefix string, node *ast.Struct) (*ast.Func, error) {
 		flagName := strings.ToLower(envNamePrefix + "_" + field.FieldName)
 		comment += " * " + field.FieldName + " is parsed from flag '" + flagName + "' if it has been set.\n"
 
-		stereotype.SetEnvName(field, flagName)
+		stereotype.FieldFrom(field).SetEnvironmentVariable(flagName)
 
 		var parseBody []ast.Node
 

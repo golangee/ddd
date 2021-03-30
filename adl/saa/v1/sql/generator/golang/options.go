@@ -99,7 +99,10 @@ func renderMySQLOptions(file *ast.File, dialect sql.Dialect, defaultDBName strin
 		return nil, fmt.Errorf("unable to add reset func: %w", err)
 	}
 
-	stereotype.Put(opt, stereotype.ConfigureStruct, stereotype.Database, stereotype.MySQL)
+	stereotype.StructFrom(opt).
+		SetIsConfiguration(true).
+		SetIsDatabaseConfiguration(true).
+		SetMySQLRelated(true)
 
 	addDSNFunc(opt)
 

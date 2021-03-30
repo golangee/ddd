@@ -3,6 +3,7 @@ package golang
 import (
 	"fmt"
 	"github.com/golangee/architecture/adl/saa/v1/core/generator/corego"
+	"github.com/golangee/architecture/adl/saa/v1/core/generator/stereotype"
 	"github.com/golangee/architecture/adl/saa/v1/sql"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib"
@@ -36,7 +37,7 @@ func RenderMigrations(dst *ast.Prj, src *sql.Ctx) error {
 		return fmt.Errorf("cannot render migration struct: %w", err)
 	}
 
-	findAllHistory, err := renderStaticFindAll(historyEntity, "DBTX", tableName)
+	findAllHistory, err := renderStaticFindAll(historyEntity, "DBTX")
 	if err != nil {
 		return fmt.Errorf("cannot render find all history entities: %w", err)
 	}
@@ -120,8 +121,10 @@ func renderMigrationEntity(dst *ast.File, src *sql.Ctx, tableName string) (*ast.
 			SetComment("...represents a row entry from the migration schema history table.").
 			SetDefaultRecName(recName).
 			AddFields(
-				ast.NewField("Version", ast.NewSimpleTypeDecl(stdlib.Int64)).
-					SetComment("...represents a row entry from the migration schema history table."),
+				stereotype.FieldFrom(
+					ast.NewField("Version", ast.NewSimpleTypeDecl(stdlib.Int64)).
+						SetComment("...represents a row entry from the migration schema history table."),
+				).SetSQLColumnName("version").Unwrap(),
 				ast.NewField("File", ast.NewSimpleTypeDecl(stdlib.String)).
 					SetComment("...is the file path indicating the origin of the statements."),
 				ast.NewField("Line", ast.NewSimpleTypeDecl(stdlib.Int32)).
@@ -180,6 +183,7 @@ func renderMigrationEntity(dst *ast.File, src *sql.Ctx, tableName string) (*ast.
 			)
 
 	dst.AddTypes(entity)
+	stereotype.StructFrom(entity).SetSQLTableName(tableName)
 
 	return entity, nil
 }
