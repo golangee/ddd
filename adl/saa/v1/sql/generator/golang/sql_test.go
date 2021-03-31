@@ -53,7 +53,7 @@ func createMigrations(t *testing.T) []*sql.Migration {
 	}
 
 	var migrations []*sql.Migration
-	for _, entry := range entries {
+	for i, entry := range entries {
 		ts, name, err := sql.ParseMigrationName(entry.Name())
 		if err != nil {
 			t.Fatal(err)
@@ -69,9 +69,13 @@ func createMigrations(t *testing.T) []*sql.Migration {
 			t.Fatal(err)
 		}
 
+		strName := core.NewStrLit(name)
+		strName.NodePos.File = "sql_test.go"
+		strName.NodePos.Line = i + 1
+
 		migrations = append(migrations, &sql.Migration{
 			ID:         ts,
-			Name:       core.NewStrLit(name),
+			Name:       strName,
 			Statements: stmts,
 		})
 	}

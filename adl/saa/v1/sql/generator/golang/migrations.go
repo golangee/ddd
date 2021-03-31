@@ -10,6 +10,7 @@ import (
 	"github.com/golangee/src/stdlib/lang"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -49,18 +50,48 @@ func RenderMigrations(dst *ast.Prj, src *sql.Ctx) error {
 	if err := renderMigrationsFunc(file, src); err != nil {
 		return fmt.Errorf("cannot render migrations: %w", err)
 	}
+
 	return nil
 }
 
 // renderMigrationsFunc creates the func which returns all embedded and hardcoded migrations.
 func renderMigrationsFunc(dst *ast.File, src *sql.Ctx) error {
+	sb := &strings.Builder{}
+	sb.WriteString("return []migration {\n")
+	lastId := time.Time{}
+	for _, migration := range src.Migrations {
+		if migration.ID.Unix() <= lastId.Unix() {
+			return fmt.Errorf("sql migrations are unordered or not monotonic")
+		}
+
+		lastId = migration.ID
+
+		sb.WriteString("{\n")
+		sb.WriteString(fmt.Sprintf("Version: %d, // %s\n", migration.ID.Unix(), migration.ID.String()))
+		sb.WriteString(fmt.Sprintf("Description: %s,\n", strconv.Quote(migration.Name.String())))
+		sb.WriteString(fmt.Sprintf("File: %s,\n", strconv.Quote(migration.Name.Pos().File)))
+		sb.WriteString(fmt.Sprintf("Line: %d,\n", migration.Name.Pos().Line))
+		sb.WriteString(fmt.Sprintf("Checksum: %s,\n", varMigrationHashName(migration.Name.String())))
+		sb.WriteString("Statements: []string{\n")
+		for i := range migration.Statements {
+			constName := varMigrationStatementName(migration.Name.String(), i)
+			sb.WriteString(constName)
+			sb.WriteString(",\n")
+		}
+		sb.WriteString("},\n")
+		sb.WriteString("},\n")
+	}
+
+	sb.WriteString("}\n")
+
 	dst.AddFuncs(
 		ast.NewFunc("migrations").
 			SetVisibility(ast.PackagePrivate).
 			SetComment("...returns all available migrations in sorted order from oldest to latest.").
 			AddResults(
 				ast.NewParam("", ast.NewSliceTypeDecl(ast.NewSimpleTypeDecl("migration"))),
-			),
+			).
+			SetBody(ast.NewBlock(ast.NewTpl(sb.String()))),
 
 	)
 

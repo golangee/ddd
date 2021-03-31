@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"bytes"
 	"encoding/hex"
 	"github.com/golangee/architecture/adl/saa/v1/core"
 	"github.com/golangee/architecture/adl/saa/v1/core/generator/corego"
@@ -22,9 +23,11 @@ func RenderFiles(dst *ast.Prj, src *sql.Ctx) error {
 	pkgName := src.Pkg.String()
 	file := corego.MkFile(dst, modName, pkgName, filenameFiles)
 
-	migrationConstBlock := ast.NewConstDecl()
-	migrationHashConstBlock := ast.NewConstDecl()
 	for _, migration := range src.Migrations {
+		migrationConstBlock := ast.NewConstDecl()
+		migrationHashConstBlock := ast.NewConstDecl()
+
+		hashBuf := &bytes.Buffer{}
 		for i, statement := range migration.Statements {
 			p := parser.New()
 			_, _, err := p.Parse(statement.String(), "UTF-8", "UTF-8")
@@ -32,22 +35,33 @@ func RenderFiles(dst *ast.Prj, src *sql.Ctx) error {
 				return core.NewPosError(statement, "cannot parse sql statement").SetCause(err)
 			}
 
-			migrationHash := sha3.Sum224([]byte(statement.String()))
-			migrationHashStr := hex.EncodeToString(migrationHash[:])
+			hashBuf.WriteString(statement.String())
 
-			constName := "migrate" + golang.MakeIdentifier(migration.Name.String()) + strconv.Itoa(i+1)
+			constName := varMigrationStatementName(migration.Name.String(), i)
 			migrationConstBlock.Add(
 				ast.NewSimpleAssign(ast.NewIdent(constName), ast.AssignSimple, ast.NewStrLit(statement.String())).
-					SetComment("...is defined in file " + statement.NodePos.File + "."),
+					SetComment("...is defined in file " + statement.NodePos.File + " line " + strconv.Itoa(statement.NodePos.Line) + "."),
 			)
 
-			migrationHashConstBlock.Add(
-				ast.NewSimpleAssign(ast.NewIdent(constName+"Hash"), ast.AssignSimple, ast.NewStrLit(migrationHashStr)),
-			)
 		}
+
+		migrationHash := sha3.Sum224(hashBuf.Bytes())
+		migrationHashStr := hex.EncodeToString(migrationHash[:])
+		migrationHashConstBlock.Add(
+			ast.NewSimpleAssign(ast.NewIdent(varMigrationHashName(migration.Name.String())), ast.AssignSimple, ast.NewStrLit(migrationHashStr)).
+				SetComment("...contains the sha3-224 hash of all related and normalized sql statements."),
+		)
+
+		file.AddNodes(migrationConstBlock, migrationHashConstBlock)
 	}
 
-	file.AddNodes(migrationConstBlock, migrationHashConstBlock)
-
 	return nil
+}
+
+func varMigrationStatementName(migrationName string, statementNo int) string {
+	return "migrate" + golang.MakeIdentifier(migrationName) + strconv.Itoa(statementNo+1)
+}
+
+func varMigrationHashName(migrationName string) string {
+	return "migrate" + golang.MakeIdentifier(migrationName) + "Hash"
 }
