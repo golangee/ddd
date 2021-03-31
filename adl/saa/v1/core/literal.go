@@ -36,3 +36,14 @@ func NewPkgLit(str string) PkgLit {
 func (s PkgLit) String() string {
 	return s.Value
 }
+
+// TypeLit is just like a StrLit but with a different semantic.
+type TypeLit StrLit
+
+func NewTypeLit(str string) TypeLit {
+	return TypeLit{Value: str}
+}
+
+func (s TypeLit) String() string {
+	return s.Value
+}

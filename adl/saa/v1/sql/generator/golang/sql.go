@@ -30,6 +30,10 @@ func RenderSQL(dst *ast.Prj, src *sql.Ctx) error {
 		return err
 	}
 
+	if err := renderRepositories(dst, src); err != nil {
+		return err
+	}
+
 	return nil
 }
 

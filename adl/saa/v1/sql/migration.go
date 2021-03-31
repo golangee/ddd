@@ -11,10 +11,19 @@ import (
 
 // A Ctx describes the SQL specific environmental context.
 type Ctx struct {
+	// Dialect determines the SQL dialect to generate the support for.
 	Dialect Dialect
-	Mod     core.ModLit
-	Pkg     core.PkgLit
+	// Mod is the target module.
+	Mod core.ModLit
+	// Pkg is the target package within the module.
+	Pkg core.PkgLit
+	// Migrations contains all user defined dialect specific raw migration statements.
 	Migrations []*Migration
+	// Repositories refers to all module-local interfaces which must be implemented.
+	// Note that not all methods have bindings and their implementations is either
+	// omitted, abstract or otherwise stubbed out. This is a full qualified name
+	// like my.company.MyType or my/company.MyType.
+	Repositories []core.TypeLit
 }
 
 // A Migration represents a transactional group of sql migration statements. All of them should be applied or none.

@@ -14,7 +14,8 @@ import (
 var fs embed.FS
 
 func TestRenderRepository(t *testing.T) {
-	prj := ast.NewPrj("test")
+	prj := createProject(t)
+
 	ctx := createCtx(t)
 	if err := RenderSQL(prj, ctx); err != nil {
 		t.Fatal(core.Explain(err))
@@ -41,7 +42,34 @@ func createCtx(t *testing.T) *sql.Ctx {
 		Mod:        mod,
 		Pkg:        pkg,
 		Migrations: createMigrations(t),
+		Repositories: []core.TypeLit{
+			core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketRepository"),
+			core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketFiles"),
+		},
 	}
+}
+
+func createProject(t *testing.T) *ast.Prj {
+	prj := ast.NewPrj("test")
+	prj.AddModules(
+		ast.NewMod("github.com/worldiety/supportiety").
+			AddPackages(
+				ast.NewPkg("github.com/worldiety/supportiety/tickets/core").
+					AddFiles(
+						ast.NewFile("repos.go").
+							AddNodes(
+								ast.NewStruct("Ticket").
+									SetComment("...represents a domain ticket entity"),
+								ast.NewInterface("TicketRepository").
+									SetComment("...provides CRUD access to Tickets."),
+								ast.NewInterface("TicketFiles").
+									SetComment("...connects files and tickets."),
+							),
+					),
+			),
+	)
+
+	return prj
 }
 
 func createMigrations(t *testing.T) []*sql.Migration {

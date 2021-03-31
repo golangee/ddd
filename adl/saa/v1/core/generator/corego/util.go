@@ -4,6 +4,7 @@ import (
 	"github.com/golangee/architecture/adl/saa/v1/astutil"
 	"github.com/golangee/src/ast"
 	"strings"
+	"unicode"
 )
 
 // ModName returns the modules name.
@@ -63,4 +64,20 @@ func MkFile(dst *ast.Prj, modName, pkgName, fname string) *ast.File {
 	file.SetPreamble(preamble)
 
 	return file
+}
+
+// MakePublic converts aBc to ABc.
+// Special cases:
+//  * id becomes ID
+func MakePublic(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+
+	switch str {
+	case "id":
+		return "ID"
+	default:
+		return string(unicode.ToUpper(rune(str[0]))) + str[1:]
+	}
 }

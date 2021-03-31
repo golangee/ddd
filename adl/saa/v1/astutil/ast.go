@@ -3,6 +3,7 @@ package astutil
 import (
 	"github.com/golangee/architecture/adl/saa/v1/core"
 	"github.com/golangee/src/ast"
+	"strings"
 )
 
 func FindMod(name core.StrLit, prj *ast.Prj) (*ast.Mod, error) {
@@ -55,4 +56,62 @@ func MkFile(pkg *ast.Pkg, name string) *ast.File {
 	pkg.AddFiles(f)
 
 	return f
+}
+
+// Resolve takes the name and walks until it finds whatever declares it. Returns nil
+// if not found.
+func Resolve(n ast.Node, name string) ast.Node {
+	lastDot := strings.LastIndex(name, ".")
+	lastSlash := strings.LastIndex(name, "/")
+
+	// try local package search
+	if lastDot < 0 && lastSlash < 0 {
+		for _, node := range Pkg(n).Children() {
+			if tname, ok := node.(ast.NamedType); ok {
+				if tname.Identifier() == name {
+					return tname
+				}
+			}
+		}
+	}
+
+	// resolve package and return type from that
+	if lastDot > lastSlash {
+		pkgName := name[:lastDot]
+		typeName := name[lastDot+1:]
+		for _, pkg := range Mod(n).Pkgs {
+			if pkg.Path == pkgName {
+				for _, file := range pkg.PkgFiles {
+					for _, node := range file.Children() {
+						if tname, ok := node.(ast.NamedType); ok {
+							if tname.Identifier() == typeName {
+								return tname
+							}
+						}
+					}
+				}
+
+			}
+		}
+	}
+
+	return nil
+}
+
+func Mod(n ast.Node) *ast.Mod {
+	mod := &ast.Mod{}
+	if ok := ast.ParentAs(n, &mod); ok {
+		return mod
+	}
+
+	return nil
+}
+
+func Pkg(n ast.Node) *ast.Pkg {
+	p := &ast.Pkg{}
+	if ok := ast.ParentAs(n, &p); ok {
+		return p
+	}
+
+	return nil
 }
