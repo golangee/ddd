@@ -8,6 +8,7 @@ import (
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib"
 	"github.com/golangee/src/stdlib/lang"
+	"strconv"
 	"strings"
 )
 
@@ -23,10 +24,6 @@ func RenderMigrations(dst *ast.Prj, src *sql.Ctx) error {
 
 	tableName := strings.ReplaceAll(corego.ShortModName(file)+"_"+corego.PkgRelativeName(file), "/", "_")
 	tableName += "_migration_schema_history"
-
-	if err := renderMigrationFunc(file, src, tableName); err != nil {
-		return fmt.Errorf("cannot render migration func: %w", err)
-	}
 
 	historyEntity, err := renderMigrationEntity(file, src, tableName)
 	if err != nil {
@@ -45,9 +42,32 @@ func RenderMigrations(dst *ast.Prj, src *sql.Ctx) error {
 	findAllHistory.FunName = "readMigrationHistoryTable"
 	file.AddFuncs(findAllHistory.SetVisibility(ast.PackagePrivate))
 
+	if err := renderMigrationFunc(file, src, tableName); err != nil {
+		return fmt.Errorf("cannot render migration func: %w", err)
+	}
+
+	if err := renderMigrationsFunc(file, src); err != nil {
+		return fmt.Errorf("cannot render migrations: %w", err)
+	}
 	return nil
 }
 
+// renderMigrationsFunc creates the func which returns all embedded and hardcoded migrations.
+func renderMigrationsFunc(dst *ast.File, src *sql.Ctx) error {
+	dst.AddFuncs(
+		ast.NewFunc("migrations").
+			SetVisibility(ast.PackagePrivate).
+			SetComment("...returns all available migrations in sorted order from oldest to latest.").
+			AddResults(
+				ast.NewParam("", ast.NewSliceTypeDecl(ast.NewSimpleTypeDecl("migration"))),
+			),
+
+	)
+
+	return nil
+}
+
+// renderMigrationFunc creates the func to perform the actual migration.
 func renderMigrationFunc(dst *ast.File, src *sql.Ctx, tableName string) error {
 	dst.AddFuncs(
 		ast.NewFunc("Migrate").
@@ -56,8 +76,112 @@ func renderMigrationFunc(dst *ast.File, src *sql.Ctx, tableName string) error {
 			AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
 			SetBody(
 				ast.NewBlock(
+					ast.NewTpl(`
+						// if we can start a transaction on our own, do so and invoke recursively
+						if db,ok := db.(*sql.DB);ok{
+							tx, err := db.BeginTx(context.Background(),nil)
+							if err != nil{
+								return {{.Use "fmt.Errorf"}}("cannot begin transaction: %w",err)
+							}
+							
+							if err := Migrate(tx);err!=nil{
+								if suppressedErr := tx.Rollback(); suppressedErr != nil {
+									fmt.Println(suppressedErr.Error())
+								}
+								return err
+							}
+					
+							if err := tx.Commit(); err != nil {
+								return err
+							}
+							
+							return nil
+						}
 
-					ast.NewReturnStmt(ast.NewIdentLit("nil")),
+						const q = {{.Get "createStatement"}}
+						if _, err := db.ExecContext({{.Use "context.Background"}}(), q); err!=nil{
+							return {{.Use "fmt.Errorf"}}("cannot create {{.Get "tableName"}}: %w", err)
+						}
+
+						history, err := readMigrationHistoryTable(db)
+						if err != nil {
+							return {{.Use "fmt.Errorf"}}("cannot read history: %w",err)
+						}
+
+						availMigrations := migrations()
+		
+						// check history validity:
+						// 1. is everything which has been applied still defined?
+						// 2. has any checksum changed?
+						// 3. do we have any unclean migration?
+						for _, entry := range history {
+							found := false
+							for _, m := range availMigrations {
+								if entry.Status != "success" {
+									return fmt.Errorf("found an incomplete migration. Your database is inconsistent and you have to solve this manually. Affected migration: %s", entry.String())
+								}
+		
+								if entry.Version == m.Version {
+									if entry.Checksum != m.Checksum {
+										return fmt.Errorf("already applied migration %s has been modified. Expected %s but found %s", entry.String(), entry.Checksum, m.Checksum)
+									}
+		
+									found = true
+									break
+								}
+			
+							}
+		
+							if !found {
+								return fmt.Errorf("already applied migration %s is undefined", entry.String())
+							}
+						}
+		
+						// pick migrations to apply
+						for _, m := range availMigrations {
+							alreadyApplied := false
+							for _, entry := range history {
+								if m.Version == entry.Version {
+									alreadyApplied = true
+									break
+								}
+							}
+		
+							if !alreadyApplied {
+								start := time.Now()
+		
+								entry := migrationEntry{
+									Version:           m.Version,
+									File:              m.File,
+									Line:              m.Line,
+									Checksum:          m.Checksum,
+									AppliedAt:         start.Unix(),
+									Description:       m.Description,
+									Status:			   "pending",
+								}
+								err = entry.insert(db)
+								if err != nil {
+									return fmt.Errorf("unable to insert migration state %s: %w", m.String(), err)
+								}
+		
+								err := m.Apply(db)
+								if err != nil {
+									return fmt.Errorf("unable to apply migration %s: %w", m.String(), err)
+								}
+		
+								entry.ExecutionDuration = time.Now().Sub(start).Nanoseconds()
+								entry.Status = "success"
+								err = entry.update(db)
+								if err != nil {
+									return fmt.Errorf("unable to update migration state %s: %w", m.String(), err)
+								}
+							}
+						}
+						
+						return nil
+
+					`).Put("createStatement", strconv.Quote(strings.Join(strings.Split(sqlCreateTableMigrationHistory(tableName, src.Dialect), "\n"), " "))).
+						Put("tableName", tableName),
 				),
 			),
 
@@ -125,20 +249,42 @@ func renderMigrationEntity(dst *ast.File, src *sql.Ctx, tableName string) (*ast.
 					ast.NewField("Version", ast.NewSimpleTypeDecl(stdlib.Int64)).
 						SetComment("...represents a row entry from the migration schema history table."),
 				).SetSQLColumnName("version").Unwrap(),
-				ast.NewField("File", ast.NewSimpleTypeDecl(stdlib.String)).
-					SetComment("...is the file path indicating the origin of the statements."),
-				ast.NewField("Line", ast.NewSimpleTypeDecl(stdlib.Int32)).
-					SetComment("...is the line number indicating the origin of the statements."),
-				ast.NewField("Checksum", ast.NewSimpleTypeDecl(stdlib.String)).
-					SetComment("...is the hex encoded 28 byte sha3-224 checksum of all trimmed statements."),
-				ast.NewField("AppliedAt", ast.NewSimpleTypeDecl(stdlib.Int64)).
-					SetComment("...is the unix timestamp in seconds when this migration has been applied."),
-				ast.NewField("ExecutionDuration", ast.NewSimpleTypeDecl(stdlib.Int64)).
-					SetComment("...is the amount of nanoseconds which were needed to apply this migration."),
-				ast.NewField("Description", ast.NewSimpleTypeDecl(stdlib.String)).
-					SetComment("...describes at least why the migration is needed."),
-				ast.NewField("Status", ast.NewSimpleTypeDecl(stdlib.String)).
-					SetComment("...is the status of the migration"),
+
+				stereotype.FieldFrom(
+					ast.NewField("File", ast.NewSimpleTypeDecl(stdlib.String)).
+						SetComment("...is the file path indicating the origin of the statements."),
+				).SetSQLColumnName("file").Unwrap(),
+
+				stereotype.FieldFrom(
+					ast.NewField("Line", ast.NewSimpleTypeDecl(stdlib.Int32)).
+						SetComment("...is the line number indicating the origin of the statements."),
+				).SetSQLColumnName("line").Unwrap(),
+
+				stereotype.FieldFrom(
+					ast.NewField("Checksum", ast.NewSimpleTypeDecl(stdlib.String)).
+						SetComment("...is the hex encoded 28 byte sha3-224 checksum of all trimmed statements."),
+				).SetSQLColumnName("checksum").Unwrap(),
+
+				stereotype.FieldFrom(
+					ast.NewField("AppliedAt", ast.NewSimpleTypeDecl(stdlib.Int64)).
+						SetComment("...is the unix timestamp in seconds when this migration has been applied."),
+				).SetSQLColumnName("applied_at").Unwrap(),
+
+				stereotype.FieldFrom(
+					ast.NewField("ExecutionDuration", ast.NewSimpleTypeDecl(stdlib.Int64)).
+						SetComment("...is the amount of nanoseconds which were needed to apply this migration."),
+				).SetSQLColumnName("execution_duration").Unwrap(),
+
+				stereotype.FieldFrom(
+					ast.NewField("Description", ast.NewSimpleTypeDecl(stdlib.String)).
+						SetComment("...describes at least why the migration is needed."),
+				).SetSQLColumnName("description").Unwrap(),
+
+				stereotype.FieldFrom(
+					ast.NewField("Status", ast.NewSimpleTypeDecl(stdlib.String)).
+						SetComment("...is the status of the migration"),
+				).SetSQLColumnName("status").Unwrap(),
+
 
 			).
 			AddMethods(
@@ -183,7 +329,9 @@ func renderMigrationEntity(dst *ast.File, src *sql.Ctx, tableName string) (*ast.
 			)
 
 	dst.AddTypes(entity)
-	stereotype.StructFrom(entity).SetSQLTableName(tableName)
+	stereotype.StructFrom(entity).
+		SetSQLTableName(tableName).
+		SetSQLDefaultOrder("ORDER BY version ASC")
 
 	return entity, nil
 }

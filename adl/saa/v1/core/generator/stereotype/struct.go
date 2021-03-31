@@ -73,3 +73,19 @@ func (s Struct) SQLTableName() (string, bool) {
 
 	return val.(string), true
 }
+
+// SetSQLDefaultOrder declares a default sort order. E.g. ORDER BY col1 ASC, col2 DESC
+func (s Struct) SetSQLDefaultOrder(orderBy string) Struct {
+	s.obj.PutValue(kSQLDefaultOrder, orderBy)
+	return s
+}
+
+// SQLDefaultOrder extracts the sql entity default order.
+func (s Struct) SQLDefaultOrder() (string, bool) {
+	val := s.obj.Value(kSQLDefaultOrder)
+	if val == nil {
+		return "", false
+	}
+
+	return val.(string), true
+}

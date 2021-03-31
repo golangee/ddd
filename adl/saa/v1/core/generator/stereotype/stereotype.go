@@ -23,4 +23,7 @@ const (
 
 	// denotes a mysql column name
 	kSQLColumnName secretKey = "kSQLColumnName"
+
+	// declares the default sort order
+	kSQLDefaultOrder secretKey  = "kSQLDefaultOrder"
 )
