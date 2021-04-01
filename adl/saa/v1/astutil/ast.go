@@ -58,40 +58,48 @@ func MkFile(pkg *ast.Pkg, name string) *ast.File {
 	return f
 }
 
-// Resolve takes the name and walks until it finds whatever declares it. Returns nil
-// if not found.
-func Resolve(n ast.Node, name string) ast.Node {
+func ResolveLocal(ctx ast.Node, name string) ast.Node {
 	lastDot := strings.LastIndex(name, ".")
-	lastSlash := strings.LastIndex(name, "/")
-
-	// try local package search
-	if lastDot < 0 && lastSlash < 0 {
-		for _, node := range Pkg(n).Children() {
-			if tname, ok := node.(ast.NamedType); ok {
-				if tname.Identifier() == name {
-					return tname
+	if lastDot < 0 {
+		for _, file := range Pkg(ctx).PkgFiles {
+			for _, node := range file.Nodes {
+				if tname, ok := node.(ast.NamedType); ok {
+					if tname.Identifier() == name {
+						return tname
+					}
 				}
 			}
 		}
 	}
 
+	return nil
+}
+
+// Resolve takes the name and walks until it finds whatever declares it. Returns nil
+// if not found.
+func Resolve(ctx ast.Node, name string) ast.Node {
+	lastDot := strings.LastIndex(name, ".")
+
+	// try local package search
+	if lastDot < 0 {
+		return ResolveLocal(ctx, name)
+	}
+
 	// resolve package and return type from that
-	if lastDot > lastSlash {
-		pkgName := name[:lastDot]
-		typeName := name[lastDot+1:]
-		for _, pkg := range Mod(n).Pkgs {
-			if pkg.Path == pkgName {
-				for _, file := range pkg.PkgFiles {
-					for _, node := range file.Children() {
-						if tname, ok := node.(ast.NamedType); ok {
-							if tname.Identifier() == typeName {
-								return tname
-							}
+	pkgName := name[:lastDot]
+	typeName := name[lastDot+1:]
+	for _, pkg := range Mod(ctx).Pkgs {
+		if pkg.Path == pkgName {
+			for _, file := range pkg.PkgFiles {
+				for _, node := range file.Children() {
+					if tname, ok := node.(ast.NamedType); ok {
+						if tname.Identifier() == typeName {
+							return tname
 						}
 					}
 				}
-
 			}
+
 		}
 	}
 
@@ -114,4 +122,29 @@ func Pkg(n ast.Node) *ast.Pkg {
 	}
 
 	return nil
+}
+
+// UseTypeDeclIn does a quite complex job. It looks up the different parts
+// of 'what' and creates a new TypeDecl to be used in another package ('where').
+// In languages with cycles, import definitions (and qualified names) may
+// even interchange - per generic declaration!
+func UseTypeDeclIn(what ast.TypeDecl, where *ast.Pkg) ast.TypeDecl {
+	newTypeDecl := what.Clone()
+	err := ast.ForEach(newTypeDecl, func(n ast.Node) error {
+		switch t := n.(type) {
+		case *ast.SimpleTypeDecl:
+			// only rewrite local simple names
+			if foundType := ResolveLocal(what, string(t.SimpleName)); foundType != nil {
+				foundPkg := Pkg(foundType)
+				t.SimpleName = ast.Name(foundPkg.Path) + "." + t.SimpleName
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		panic(err) // cannot happen
+	}
+
+	return newTypeDecl
 }

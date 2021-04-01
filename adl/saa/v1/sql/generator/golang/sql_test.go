@@ -7,6 +7,7 @@ import (
 	"github.com/golangee/architecture/adl/saa/v1/sql"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/golang"
+	"github.com/golangee/src/stdlib"
 	"testing"
 )
 
@@ -61,9 +62,33 @@ func createProject(t *testing.T) *ast.Prj {
 								ast.NewStruct("Ticket").
 									SetComment("...represents a domain ticket entity"),
 								ast.NewInterface("TicketRepository").
-									SetComment("...provides CRUD access to Tickets."),
+									SetComment("...provides CRUD access to Tickets.").
+									AddMethods(
+										ast.NewFunc("CreateTicket").
+											SetComment("...creates a Ticket.").
+											AddParams(
+												ast.NewParam("id", ast.NewSimpleTypeDecl(stdlib.UUID)),
+											).
+											AddResults(
+												ast.NewParam("", ast.NewSimpleTypeDecl("Ticket")),
+												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+											),
+									),
 								ast.NewInterface("TicketFiles").
-									SetComment("...connects files and tickets."),
+									SetComment("...connects files and tickets.").
+									AddMethods(
+										ast.NewFunc("AttachFile").
+											SetComment("...connects a file and a ticket.").
+											SetComment("...creates a Ticket.").
+											AddParams(
+												ast.NewParam("ticketId", ast.NewSimpleTypeDecl(stdlib.UUID)),
+												ast.NewParam("fileId", ast.NewSimpleTypeDecl(stdlib.UUID)),
+											).
+											AddResults(
+												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+											),
+
+									),
 							),
 					),
 			),

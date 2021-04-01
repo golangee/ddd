@@ -81,3 +81,19 @@ func MakePublic(str string) string {
 		return string(unicode.ToUpper(rune(str[0]))) + str[1:]
 	}
 }
+
+// MakePrivate converts ABc to aBc.
+// Special cases:
+//  * ID becomes id
+func MakePrivate(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+
+	switch str {
+	case "ID":
+		return "id"
+	default:
+		return string(unicode.ToLower(rune(str[0]))) + str[1:]
+	}
+}
