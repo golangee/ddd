@@ -19,11 +19,11 @@ type Ctx struct {
 	Pkg core.PkgLit
 	// Migrations contains all user defined dialect specific raw migration statements.
 	Migrations []*Migration
-	// Repositories refers to all module-local interfaces which must be implemented.
+	// Repositories refers to all module-local interfaces which must be implemented (each as their own repository).
 	// Note that not all methods have bindings and their implementations is either
 	// omitted, abstract or otherwise stubbed out. This is a full qualified name
 	// like my.company.MyType or my/company.MyType.
-	Repositories []core.TypeLit
+	Repositories []Repository
 }
 
 // A Migration represents a transactional group of sql migration statements. All of them should be applied or none.

@@ -67,6 +67,10 @@ github.com/golangee/src v0.0.0-20210401090110-3da111b06c98 h1:pFbGntUNGX2wwY2Kzd
 github.com/golangee/src v0.0.0-20210401090110-3da111b06c98/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/golangee/src v0.0.0-20210401092046-83f06c3ecffd h1:b7IkacA7AaP3KPOJUAGJyL8thJVabHE5FFWJF2mV09A=
 github.com/golangee/src v0.0.0-20210401092046-83f06c3ecffd/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210401124635-c89eb4bd0c03 h1:khoRuGbk18gVqzfzhRpVBO5Zy2C9n33HMayw8CA+stI=
+github.com/golangee/src v0.0.0-20210401124635-c89eb4bd0c03/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210401144516-230d4569aefd h1:3+Xl2lfcK/GlirSkKJemyedNUr23TOmm7ZIziom9674=
+github.com/golangee/src v0.0.0-20210401144516-230d4569aefd/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/juju/errors v0.0.0-20170703010042-c7d06af17c68/go.mod h1:W54LbzXuIE0boCoNJfwqpmkKJ1O4TCTZMetAt6jGk7Q=
 github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8/go.mod h1:vgyd7OREkbtVEN/8IXZe5Ooef3LQePvuBm9UWj6ZL8U=

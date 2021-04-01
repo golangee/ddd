@@ -43,9 +43,74 @@ func createCtx(t *testing.T) *sql.Ctx {
 		Mod:        mod,
 		Pkg:        pkg,
 		Migrations: createMigrations(t),
-		Repositories: []core.TypeLit{
-			core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketRepository"),
-			core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketFiles"),
+		Repositories: []sql.Repository{
+			{
+				Implements: core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketRepository"),
+				Methods: []sql.Method{
+					{
+						Name:  core.NewStrLit("CreateTicket"),
+						Query: core.NewStrLit("INSERT INTO tickets VALUES (?)"),
+						Prepare: []sql.Mapping{
+							sql.MapSelOne{Sel: core.NewStrLit("id")},
+						},
+					},
+
+					{
+						Name:  core.NewStrLit("CreateManyTickets"),
+						Query: core.NewStrLit("INSERT INTO tickets VALUES (?)"),
+						Prepare: []sql.Mapping{
+							sql.MapSelMany{Sel: []core.StrLit{core.NewStrLit(".")}},
+						},
+					},
+
+					{
+						Name:  core.NewStrLit("FindAll"),
+						Query: core.NewStrLit("SELECT * FROM tickets"),
+						Result: []sql.Mapping{
+
+							sql.MapSelMany{Sel: []core.StrLit{
+								core.NewStrLit(".ID"),
+								core.NewStrLit(".Name"),
+								core.NewStrLit(".Desc"),
+							}},
+						},
+					},
+
+					{
+						Name:  core.NewStrLit("Count"),
+						Query: core.NewStrLit("SELECT COUNT(*) FROM tickets"),
+						Result: []sql.Mapping{
+							sql.MapSelOne{Sel: core.NewStrLit(".")},
+						},
+					},
+
+					{
+						Name:  core.NewStrLit("DeleteTicket"),
+						Query: core.NewStrLit("DELETE FROM tickets where id=?"),
+						Prepare: []sql.Mapping{
+							sql.MapSelOne{Sel: core.NewStrLit("id")},
+						},
+					},
+
+					{
+						Name:  core.NewStrLit("FindTicket"),
+						Query: core.NewStrLit("SELECT * FROM tickets where id=?"),
+						Prepare: []sql.Mapping{
+							sql.MapSelOne{Sel: core.NewStrLit("id")},
+						},
+						Result: []sql.Mapping{
+							sql.MapSelOne{Sel: core.NewStrLit(".ID")},
+							sql.MapSelOne{Sel: core.NewStrLit(".Name")},
+						},
+					},
+				},
+			},
+			{
+				Implements: core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketFiles"),
+				Methods: []sql.Method{
+
+				},
+			},
 		},
 	}
 }
@@ -70,10 +135,59 @@ func createProject(t *testing.T) *ast.Prj {
 												ast.NewParam("id", ast.NewSimpleTypeDecl(stdlib.UUID)),
 											).
 											AddResults(
+												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+											),
+
+										ast.NewFunc("CreateManyTickets").
+											SetComment("...creates a Ticket.").
+											AddParams(
+												ast.NewParam("id", ast.NewSliceTypeDecl(ast.NewSimpleTypeDecl(stdlib.UUID))),
+											).
+											AddResults(
+												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+											),
+
+										ast.NewFunc("FindTicket").
+											SetComment("...find a Ticket.").
+											AddParams(
+												ast.NewParam("id", ast.NewSimpleTypeDecl(stdlib.UUID)),
+											).
+											AddResults(
 												ast.NewParam("", ast.NewSimpleTypeDecl("Ticket")),
 												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
 											),
+
+										ast.NewFunc("DeleteTicket").
+											SetComment("...deletes a Ticket.").
+											AddParams(
+												ast.NewParam("id", ast.NewSimpleTypeDecl(stdlib.UUID)),
+											).
+											AddResults(
+												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+											),
+
+										ast.NewFunc("FindAll").
+											SetComment("...find all Tickets.").
+											AddParams(
+												ast.NewParam("id", ast.NewSimpleTypeDecl(stdlib.UUID)),
+											).
+											AddResults(
+												ast.NewParam("", ast.NewSliceTypeDecl(ast.NewSimpleTypeDecl("Ticket"))),
+												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+											),
+
+										ast.NewFunc("Count").
+											SetComment("...counts all Tickets.").
+											AddParams(
+												ast.NewParam("id", ast.NewSimpleTypeDecl(stdlib.UUID)),
+											).
+											AddResults(
+												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Int64)),
+												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+											),
 									),
+
+
 								ast.NewInterface("TicketFiles").
 									SetComment("...connects files and tickets.").
 									AddMethods(

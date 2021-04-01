@@ -37,11 +37,3 @@ func RenderSQL(dst *ast.Prj, src *sql.Ctx) error {
 	return nil
 }
 
-func RenderRepository(dst *ast.Prj, src *sql.RepoImplSpec) error {
-	//mod := astutil.MkMod(dst, src.Parent.Parent.Name.String())
-	//pkg := astutil.MkPkg(mod, src.Parent.Path.String())
-
-	//	_ = pkg
-
-	return nil
-}
