@@ -32,6 +32,14 @@ func TestRenderRepository(t *testing.T) {
 	fmt.Println(a)
 }
 
+func lits(lit ...string) []core.StrLit {
+	var r []core.StrLit
+	for _, s := range lit {
+		r = append(r, core.NewStrLit(s))
+	}
+	return r
+}
+
 func createCtx(t *testing.T) *sql.Ctx {
 	t.Helper()
 
@@ -48,59 +56,50 @@ func createCtx(t *testing.T) *sql.Ctx {
 				Implements: core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketRepository"),
 				Methods: []sql.Method{
 					{
-						Name:  core.NewStrLit("CreateTicket"),
-						Query: core.NewStrLit("INSERT INTO tickets VALUES (?)"),
-						Prepare: []sql.Mapping{
-							sql.MapSelOne{Sel: core.NewStrLit("id")},
-						},
+						Name:    core.NewStrLit("CreateTicket"),
+						Query:   core.NewStrLit("INSERT INTO tickets VALUES (?)"),
+						Mapping: sql.ExecOne{In: lits("id")},
 					},
 
 					{
 						Name:  core.NewStrLit("CreateManyTickets"),
 						Query: core.NewStrLit("INSERT INTO tickets VALUES (?)"),
-						Prepare: []sql.Mapping{
-							sql.MapSelMany{Sel: []core.StrLit{core.NewStrLit(".")}},
+						Mapping: sql.ExecMany{
+							Slice: core.NewStrLit("ids"),
+							In:    lits("ids[i]"),
 						},
 					},
 
 					{
 						Name:  core.NewStrLit("FindAll"),
 						Query: core.NewStrLit("SELECT * FROM tickets"),
-						Result: []sql.Mapping{
-
-							sql.MapSelMany{Sel: []core.StrLit{
-								core.NewStrLit(".ID"),
-								core.NewStrLit(".Name"),
-								core.NewStrLit(".Desc"),
-							}},
+						Mapping: sql.QueryMany{
+							In:  nil,
+							Out: lits(".ID", ".Name", ".Desc"),
 						},
 					},
 
 					{
 						Name:  core.NewStrLit("Count"),
 						Query: core.NewStrLit("SELECT COUNT(*) FROM tickets"),
-						Result: []sql.Mapping{
-							sql.MapSelOne{Sel: core.NewStrLit(".")},
+						Mapping: sql.QueryOne{
+							In:  nil,
+							Out: lits("."),
 						},
 					},
 
 					{
-						Name:  core.NewStrLit("DeleteTicket"),
-						Query: core.NewStrLit("DELETE FROM tickets where id=?"),
-						Prepare: []sql.Mapping{
-							sql.MapSelOne{Sel: core.NewStrLit("id")},
-						},
+						Name:    core.NewStrLit("DeleteTicket"),
+						Query:   core.NewStrLit("DELETE FROM tickets where id=?"),
+						Mapping: sql.ExecOne{In: lits("id")},
 					},
 
 					{
 						Name:  core.NewStrLit("FindTicket"),
 						Query: core.NewStrLit("SELECT * FROM tickets where id=?"),
-						Prepare: []sql.Mapping{
-							sql.MapSelOne{Sel: core.NewStrLit("id")},
-						},
-						Result: []sql.Mapping{
-							sql.MapSelOne{Sel: core.NewStrLit(".ID")},
-							sql.MapSelOne{Sel: core.NewStrLit(".Name")},
+						Mapping: sql.QueryOne{
+							In:  lits("id"),
+							Out: lits(".ID", ".Name"),
 						},
 					},
 				},
@@ -141,7 +140,7 @@ func createProject(t *testing.T) *ast.Prj {
 										ast.NewFunc("CreateManyTickets").
 											SetComment("...creates a Ticket.").
 											AddParams(
-												ast.NewParam("id", ast.NewSliceTypeDecl(ast.NewSimpleTypeDecl(stdlib.UUID))),
+												ast.NewParam("ids", ast.NewSliceTypeDecl(ast.NewSimpleTypeDecl(stdlib.UUID))),
 											).
 											AddResults(
 												ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
