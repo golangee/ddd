@@ -1,5 +1,8 @@
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/alecthomas/participle/v2 v2.0.0-alpha4 h1:/mx1xDva4aUDplaYOydXT7dKf1MPmkwy/igdhPCCDyw=
+github.com/alecthomas/participle/v2 v2.0.0-alpha4/go.mod h1:Z1zPLDbcGsVsBYsThKXY00i84575bN/nMczzIrU4rWU=
+github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1/go.mod h1:xTS7Pm1pD1mvyM075QCDSRqH6qRLXylzS24ZTpRiSzQ=
 github.com/antlr/antlr4 v0.0.0-20210404160547-4dfacf63e228 h1:p/DqTaXlmr4c4Q7KyTeAx/wYnBLmaE0YdHzBbMS+D1I=
 github.com/antlr/antlr4 v0.0.0-20210404160547-4dfacf63e228/go.mod h1:T7PbCXFs94rrTttyxjbyT5+/1V8T2TYDejxUfHJjw1Y=
 github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba h1:hBK2BWzm0OzYZrZy9yzvZZw59C5Do4/miZ8FhEwd5P8=

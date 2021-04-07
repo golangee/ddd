@@ -1,1 +1,0 @@
-antlr -visitor -Werror -Dlanguage=Go ADL.g4

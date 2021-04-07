@@ -1,33 +1,70 @@
 package parser
 
-import "testing"
+import (
+	"encoding/json"
+	"fmt"
+	"testing"
+)
 
-func TestParseText(t *testing.T) {
-	tests := []struct {
-		name    string
-		adl     string
-		wantErr bool
-	}{
-		{
-			name:    "hello",
-			adl:     `package mypkg
+func TestParse(t *testing.T) {
+	mustParse := []string{
+		`
+module github.com/worldiety/supportiety {
 
+	package what/an/evil/import.de/rust/::ticket {
+	
+		claim worldiety.com/supportiety/ManageTickets
+		struct blub {
+			msg other::stlib.com/evil/string
+			upsilag bool
+		}
+	
+		interface abc {
+			doJob
+		}
 
-
-type XY interface{}
-
-type Hello struct{
-	World int
+	}
 }
 
+requirements worldiety.com/supportiety
+
+epic ManageTickets
+"As a SupportietyAdmin or Application 
+I want to manage tickets
+so that I can submit or delete new incidents."
+
+story AdminDeletesTicket
+"As a SupportietyAdmin 
+I want to delete tickets from a user identified by his SecId, 
+so that I can comply to the DSGVO/GDPR."
+
+story AdminCreatesTicket
+"As a SupportietyAdmin 
+I want to create tickets in case a user cannot transmit his data automatically."
+
+epic AdminDeletesTicket 
+"As a SupportietyAdmin 
+I want to delete tickets from a user identified by his SecId, 
+so that I can comply to the DSGVO/GDPR"
+
+
 `,
-		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := ParseText(tt.adl); (err != nil) != tt.wantErr {
-				t.Errorf("ParseText() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+
+	for _, s := range mustParse {
+		ast, err := Parse(s)
+		fmt.Println(toString(ast))
+
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
+}
+
+func toString(i interface{}) string {
+	buf, err := json.MarshalIndent(i, " ", " ")
+	if err != nil {
+		panic(err)
+	}
+	return string(buf)
 }

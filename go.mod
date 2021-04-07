@@ -3,6 +3,7 @@ module github.com/golangee/architecture
 go 1.16
 
 require (
+	github.com/alecthomas/participle/v2 v2.0.0-alpha4 // indirect
 	github.com/antlr/antlr4 v0.0.0-20210404160547-4dfacf63e228 // indirect
 	github.com/golangee/plantuml v0.0.0-20200903155112-1a89681d02f7
 	github.com/golangee/reflectplus v0.0.0-20200828070359-e00d658fcc60
