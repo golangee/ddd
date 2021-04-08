@@ -13,18 +13,28 @@ module github.com/worldiety/supportiety {
 
 	package what/an/evil/import.de/rust/::ticket {
 	
+
 		claim worldiety.com/supportiety/ManageTickets
-		struct blub {
+		... "shows how to declare a struct data type"	
+		struct structname {
+				
+			... "is another message"	
 			msg other::stlib.com/evil/string
-			upsilag bool
+			
+			... "is a flag"
+			upsiflag bool
 		}
 	
+		... "is an abc interface"
 		interface abc {
-			doJob
+			... "does the job."
+			doJob(x string, y string)
 		}
 
 	}
 }
+
+
 
 requirements worldiety.com/supportiety
 
@@ -38,15 +48,37 @@ story AdminDeletesTicket
 I want to delete tickets from a user identified by his SecId, 
 so that I can comply to the DSGVO/GDPR."
 
-story AdminCreatesTicket
-"As a SupportietyAdmin 
-I want to create tickets in case a user cannot transmit his data automatically."
+scenario DoubleDelete
+"Given I'm a SupportietyAdmin
+when I delete the same ticket twice
+then I want a message telling me that its not possible."
 
-epic AdminDeletesTicket 
-"As a SupportietyAdmin 
-I want to delete tickets from a user identified by his SecId, 
-so that I can comply to the DSGVO/GDPR"
+epic AnotherEpic 
+"blablabla"
 
+story EpicStory1
+"blablub"
+
+story EpicStory2
+"## Should markdown be allowed?
+What about 
+ * pointless
+ * points
+
+And tables
+
+| value | size |
+|-------|------|
+| c     | d    |
+|       |      |
+|       |      |
+
+"
+scenario OfEpic2-Scenario1
+"scenario 1 of epic 2 "
+
+scenario OfEpic2-Scenario2
+"scenario 2 of epic 2 "
 
 `,
 	}

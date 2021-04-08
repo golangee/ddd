@@ -12,11 +12,12 @@ type Qualifier string
 
 type Identifier string
 
-func (id Identifier) Capture(values []string) error {
+func (id *Identifier) Capture(values []string) error {
 	if unqualifiedIdentifier.FindString(values[0]) != values[0] {
 		return fmt.Errorf("identifier '" + values[0] + "' must be unqualified")
 	}
 
+	*id = Identifier(values[0])
 	return nil
 }
 
@@ -29,6 +30,10 @@ type File struct {
 type Module struct {
 	Name     Qualifier  `"module" @Ident`
 	Packages []*Package `"{" @@ "}"`
+}
+
+type ModuleParts struct{
+
 }
 
 type Package struct {
@@ -44,31 +49,48 @@ type TypeDef struct {
 }
 
 type Struct struct {
-	Pos      lexer.Position
-	Claim *Annotation `("claim" @@)?`
-	Name     Identifier  `"struct" @Ident`
-	Fields   []*Field    `"{" @@* "}"`
+	Pos    lexer.Position
+	Claim  *Claim     `("claim" @@)?`
+	Doc    *Doc       `"..." @@`
+	Name   Identifier `"struct" @Ident`
+	Fields []*Field   `"{" @@* "}"`
 }
 
-type Annotation struct {
-	Name string `@Ident`
+type Claim struct {
+	Pos   lexer.Position
+	Ident string `@Ident`
+}
+
+type Doc struct {
+	Pos   lexer.Position
+	Value string `@String`
 }
 
 type Interface struct {
 	Pos     lexer.Position
+	Claim   *Claim     `("claim" @@)?`
+	Doc     *Doc       `"..." @@`
 	Name    Identifier `"interface" @Ident`
 	Methods []*Method  `"{" @@* "}"`
 }
 
 type Method struct {
-	Pos  lexer.Position
+	Pos    lexer.Position
+	Doc    *Doc       `"..." @@`
+	Name   Identifier `@Ident`
+	Params []*Param   `"(" @@* ("," @@)*  ")"`
+}
+
+type Param struct {
 	Name Identifier `@Ident`
+	Type Qualifier  `@Ident`
 }
 
 type Field struct {
 	Pos  lexer.Position
+	Doc  *Doc       `"..." @@`
 	Name Identifier `@Ident`
-	Type string     `@Ident`
+	Type Qualifier  `@Ident`
 }
 
 type Requirement struct {
@@ -78,13 +100,18 @@ type Requirement struct {
 }
 
 type Epic struct {
-	Name        Identifier `"epic" @Ident`
-	Description string     `@String`
-	Stories []*Story   `@@*`
+	Name        Qualifier `"epic" @Ident`
+	Description string    `@String`
+	Stories     []*Story  `@@*`
 }
 
-
 type Story struct {
-	Name        Identifier `"story" @Ident`
-	Description string     `@String`
+	Name        Qualifier   `"story" @Ident`
+	Description string      `@String`
+	Scenarios   []*Scenario `@@*`
+}
+
+type Scenario struct {
+	Name        Qualifier `"scenario" @Ident`
+	Description string    `@String`
 }

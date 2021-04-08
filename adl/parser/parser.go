@@ -8,14 +8,14 @@ import (
 
 func Parse(src string) (*File, error) {
 	lexer := stateful.MustSimple([]stateful.Rule{
-		{"Keyword", "claim", nil},
-		{"Ident", `[a-zA-Z](\w|\.|/|:)*`, nil},
+		{"Keyword", "claim|\\.\\.\\.", nil},
+		{"Ident", `[a-zA-Z](\w|\.|/|:|-)*`, nil},
 	//	{"Ident", `[a-zA-Z]\w*`, nil},
 		{"String",`"(\\"|[^"])*"`,nil},
 		//{"String2","`(\\`|[^`])*`",nil},
 		//{"MultilineString",`[.]{4}([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*[.]{4}`,nil},
 		//{"StopML", `[.]{4}\n`, nil},
-		{"Term", `[{}@]`, nil},
+		{"Term", `[,(){}@]`, nil},
 		{"whitespace", `\s+`, nil},
 	})
 	_ = lexer
@@ -23,8 +23,10 @@ func Parse(src string) (*File, error) {
 	parser := participle.MustBuild(&File{},
 		participle.Lexer(lexer),
 			participle.Unquote("String"),
-		//	participle.UseLookahead(2),
+			participle.UseLookahead(2),
 	)
+
+	//fmt.Println(parser.String())
 
 	ast := &File{}
 	buf := bytes.NewReader([]byte(src))
