@@ -56,7 +56,7 @@ func (_ ExecMany) mappingType() {
 // ExecOne maps 0, 1 or many input parameters defined as selectors into a prepared sql statement.
 //
 // The result is either a single struct or a single primitive. The type is determined from the ast.Func.
-type QueryOne struct {
+type 	QueryOne struct {
 	In  []core.StrLit // may contain dots to select a parameter or a parameter field, so either "myParam" or "myParam.Field"
 	Out []core.StrLit // may contain dots to select a field or . for the primitive itself
 }
