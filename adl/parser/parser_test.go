@@ -1,6 +1,7 @@
 package parser
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -8,125 +9,22 @@ import (
 	"testing"
 )
 
+//go:embed test.tadl
+var tadl string
+
 func TestParse(t *testing.T) {
 	mustParse := []string{
-		`
-module github.com/worldiety/supportiety {
-	context tickets {
-		domain {
-			core {
-			
-				:claim requirements/tickets/ManageTickets
-				"... represents a data entity."
-				struct Ticket {
-					ID uuid!
-					Title string!
-				}
-
-				:claim requirements/tickets/ManageTickets
-				"... provides an entity storage."
-				interface TicketRepository {
-
-					"... searches all the things."
-					fn FindAll() -> ([]Ticket, error<NotFound|Other>)
-
-					"... returns the first result with id."
-					fn FindOne(id uuid!) -> ([]Ticket, error<NotFound|Other>)
-
-					
-					:claim requirements/tickets/AdminDeletesTicket
-					"... deletes a single ticket."
-					DeleteOne(id uuid!) (error<NotFound|Other>)
-				}
-			}
-
-			usecase {
-				struct TicketTitle {
-					TitleID uuid!
-					TicketID uuid!
-				}
-
-				:claim requirements/tickets/AnotherStory
-				"... deletes some random use case specific tickets."
-				fn DeleteWithSpecificTitle(title string!) (TicketTitle, error<NotAllowed|Other>) 
-			}
-
-			"... is like a domain but allows to organize yourself into a hierarchy of stuff. These are tasks."
-			subdomain tasks {
-				core {
-					struct Task {
-					}
-			
-					interface TaskRepository{
-					}
-				}
-				
-				usecase {
-				}
-			}
-
-		}
-
-		infrastructure {
-			mysql {
-				database = "supportiety"
-				
-				impl tasks.Repository{
-				}
-
-				impl TicketRepository {
-					FindAll "SELECT * FROM tickets" => (.ID, .Desc, .Name)
-
-					FindOne "SELECT * FROM tickets where id=?" (.id) => (.ID, .Name)
-
-					Insert "INSERT INTO tickets VALUES (?, ?)" (.id, .id)
-
-					InsertAll "INSERT INTO tickets VALUES (?)" (.id[i])
-
-					Count "SELECT COUNT(*) FROM tickets" => (.)
-						
-				}
-
-			}
-		}
-
-		presentation {
-			rest {
-				version v1 {
-					prefix = "api/v1/"
-
-					GET /tickets/{:id}  {
-						DeleteWithSpecificTitle (HEADER["some-header-val"]) =>
-						(.TitleID -> "title-json-key"
-						(error<Other> -> 403)
-					}
-
-					GET /tasks/{:id} (tasks.SomeStuff)
-				}
-			}
-		}
-	}
-
-	context IAM {
-
-	}
-
-}
-
-module b {
-
-}
-	
-`,
+		tadl,
 	}
 
 	for _, s := range mustParse {
-		ast, err := Parse(s)
-		fmt.Println(toString(ast))
-
+		ast, err := Parse("test.tadl", s)
 		if err != nil {
+			fmt.Println(err)
 			t.Fatal(err)
 		}
+
+		fmt.Println(toString(ast))
 	}
 }
 
@@ -150,7 +48,7 @@ func TestLexerRegex(t *testing.T) {
 		{
 			name:  "local selector",
 			regex: sLocalSelector,
-			ok:    []string{".field", ".a.b", ".a.b.c"},
+			ok:    []string{".field", ".a.b", ".a.b.c", ".ID"},
 			fail:  []string{"field", "ident.", "a.b"}, // requires unsupported lookahead ".a."
 		},
 		{

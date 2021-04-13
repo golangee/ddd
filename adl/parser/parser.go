@@ -2,14 +2,13 @@ package parser
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer/stateful"
 )
 
 const (
 	// sLocalSelector selects something from an unknown local variable like .name or .Field.Other.Member.
-	sLocalSelector = `\.(\w|.)+`
+	sLocalSelector = `\.(\w|\.)+`
 
 	// sQualifier selects things like "identifier", "github.com/so_me-thing.else" or "rust::like.qualifier".
 	sQualifier = `[a-zA-Z](\w|\.|/|:|-)*`
@@ -25,12 +24,20 @@ const (
 	sIdentifier = `[a-zA-Z]\w*`
 )
 
-func Parse(src string) (*File, error) {
+func Parse(fname, src string) (*File, error) {
 	lexer := stateful.MustSimple([]stateful.Rule{
-		{"Keyword", "claim|<-|->", nil},
-		{"LocalSelector", sLocalSelector, nil},
-		{"Qualifier", sQualifier, nil},
-		{"LocalSlice", sLocalSlice, nil},
+		{"comment", `//.*|/\*.*?\*/`, nil},
+		// dots is ambiguous in Go and weired in Java, so using rusts :: seems like a good idea
+		{"PkgSep", "::", nil},
+		{"Sel",`\.`,nil},
+		{"Keyword", ":claim|=>", nil},
+		{"TypeParam",`<|>`,nil},
+		{"Pointer",`\*`,nil},
+		//{"LocalSelector", sLocalSelector, nil},
+		//{"Qualifier", sQualifier, nil},
+		{"Ident",`([a-zA-Z_][a-zA-Z0-9_]*)`,nil},
+		{"SliceLooper", sLocalSlice, nil},
+		//{"SliceType", `\[\]`, nil},
 		{"String", sString, nil},
 
 		{"Term", `[=,(){}@]`, nil},
@@ -41,12 +48,12 @@ func Parse(src string) (*File, error) {
 	parser := participle.MustBuild(&File{},
 		participle.Lexer(lexer),
 		participle.Unquote("String"),
-		participle.UseLookahead(2),
+		participle.UseLookahead(3),
 	)
 
-	fmt.Println(parser.String())
+	//fmt.Println(parser.String())
 
 	ast := &File{}
 	buf := bytes.NewReader([]byte(src))
-	return ast, parser.Parse("test", buf, ast)
+	return ast, parser.Parse(fname, buf, ast)
 }

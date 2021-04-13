@@ -1,0 +1,89 @@
+"...describes a microservice."
+module service {
+	generate {
+		go {
+			module = "github.com/worldiety/supportiety"
+			output = "../supportiety/service"
+		}
+	}
+
+	:claim requirements::tickets::ManageTickets
+	:claim glossary::Ticket
+	"...handles just everything about tickets."
+	context tickets {
+		domain {
+			core {
+
+			    "...represents a data entity."
+			    struct Ticket {
+
+                    :claim requirements::tickets::ManageTickets
+                    :claim glossary::Ticket
+			        "... is the entities unique identifier."
+                    ID string
+
+                    "... is a duplicate."
+                    ID string
+
+                    "...shows how to use a sub domain type as a pointer."
+                    Tasks1 *tickets::domain::tasks::core::Task
+
+                    "... shows a slice example."
+                    Tasks2 slice<string>
+
+                    "...shows a nested slice example."
+                    KeyVal map<int,slice<tickets::domain::tasks::core::Task>>
+
+                }
+			}
+
+			usecase {
+
+			}
+
+			:claim glossary::Task
+			"... is all about tasks in the ticket domain."
+			subdomain tasks {
+				core {
+				    "...declares a job."
+				    struct Task {
+				    }
+				}
+
+				usecase {
+
+				}
+			}
+		}
+
+		infrastructure {
+			mysql {
+				database = "supportiety"
+
+				impl Repository{
+				}
+
+				impl TicketRepository {
+		            FindAll "SELECT * FROM tickets" => (.ID, .Desc, .Name)
+
+					FindOne "SELECT * FROM tickets where id=?" (id) => (.ID, .Name)
+
+					Insert "INSERT INTO tickets VALUES (?, ?)" (id, id)
+
+					InsertAll "INSERT INTO tickets VALUES (?)" (id[i])
+
+					InsertAll2 "INSERT INTO tickets VALUES (?)" (tickets[i].ID, tickets[i].Name.First)
+
+					Count "SELECT COUNT(*) FROM tickets" => (.)
+				}
+			}
+		}
+
+	}
+}
+
+"... is another module in the same file."
+module b {
+	generate {
+	}
+}
