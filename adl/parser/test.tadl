@@ -35,6 +35,16 @@ module service {
                     KeyVal map<int,slice<tickets::domain::tasks::core::Task>>
 
                 }
+
+                "...declares a repository interface."
+                repository Tickets {
+                    "... searches all the things."
+                     FindAll(x str, b str) -> (Task)
+
+                      "... searches all the things."
+                      FindAll2(x str, b str) -> (Task, error<NotFound|Other>)
+                }
+
 			}
 
 			usecase {
@@ -63,7 +73,7 @@ module service {
 				impl Repository{
 				}
 
-				impl TicketRepository {
+				impl tickets::domain::core::Tickets {
 		            FindAll "SELECT * FROM tickets" => (.ID, .Desc, .Name)
 
 					FindOne "SELECT * FROM tickets where id=?" (id) => (.ID, .Name)

@@ -41,7 +41,7 @@ func (d *Doc) Capture(values []string) error {
 
 type Path struct {
 	//Local bool `@PkgSep?`
-	Elements []Ident `( @@ ("::" @@)* )?`
+	Elements []Ident ` @@ ("::" @@)* `
 }
 
 type Type struct {
@@ -192,12 +192,12 @@ type SQLImplementation struct {
 type SQLFunc struct {
 	Name Ident           `@@`
 	SQL  String          `@@`
-	In   []SQLFuncInVar  `( "(" @@* ("," @@)* ")" )?`
-	Out  []SQLFuncOutVar `( "=>" "(" @@* ("," @@)* ")" )?`
+	In   []SQLFuncInVar  `( "(" @@ ("," @@)* ")" )?`
+	Out  []SQLFuncOutVar `( "=>" "(" @@ ("," @@)* ")" )?`
 }
 
 type SQLFuncInVar struct {
-	Selector    []LooperIdent `( @@* ("." @@)* )?`
+	Selector    []LooperIdent `( @@ ("." @@)* )?`
 	IsLooper bool  `(@SliceLooper)?`
 }
 
@@ -213,27 +213,46 @@ type SQLFuncOutVar struct {
 type TypeDef struct {
 	Pos       lexer.Position
 	Struct    *Struct    ` @@`
+	Repository *Repository `| @@`
 	Interface *Interface `| @@`
 }
 
 type Interface struct {
 	Pos     lexer.Position
-	Claim   *Claim    `(":claim" @@)?`
+	// Claims to requirements of the subdomain.
+	Claims []*Claim `(":claim" @@)*`
 	Doc     String    `@@`
 	Name    Ident     `"interface" @@`
 	Methods []*Method `"{" @@* "}"`
 }
 
+type Repository struct {
+	Pos     lexer.Position
+	// Claims to requirements.
+	Claims []*Claim `(":claim" @@)*`
+	Doc     Doc    `@@`
+	Name    Ident     `"repository" @@`
+	Methods []*Method `"{" @@* "}"`
+}
+
 type Method struct {
 	Pos    lexer.Position
-	Doc    *Doc     `"..." @@`
+	// Claims to requirements.
+	Claims []*Claim `(":claim" @@)*`
+	Doc    Doc     `@@`
 	Name   Ident    `@@`
-	Params []*Param `"(" @@* ("," @@)*  ")"`
+	Params []*Param `"(" @@? | ("," @@)* ")"`
+	Return *Type `"->" "(" @@? `
+	Error *Error ` ("," @@)?  ")"`
+}
+
+type Error struct{
+	Kinds []Ident `"error" "<" @@ ("|" @@)* ">"`
 }
 
 type Param struct {
 	Name Ident `@@`
-	Type Path  `@@`
+	Type Type  `@@`
 }
 
 type Struct struct {
