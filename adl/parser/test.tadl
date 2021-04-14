@@ -1,4 +1,4 @@
-"...describes a microservice."
+# ...describes a microservice.
 module service {
 	generate {
 		go {
@@ -7,42 +7,60 @@ module service {
 		}
 	}
 
-	:claim requirements::tickets::ManageTickets
-	:claim glossary::Ticket
-	"...handles just everything about tickets."
+    # ...handles just everything about tickets.
+	# see requirements::tickets::ManageTickets
+	# see glossary::Ticket
 	context tickets {
 		domain {
 			core {
 
-			    "...represents a data entity."
+			    # ...represents a data entity and sentence this must be in ellipsis summary form.
+			    # = A Title is actually parsed as AST DocTitle and optional.
+			    # Another arbitrary " \n text
+			    #
+			    # if something starts with '# see' the following tokens are parsed as a Path
+			    # see requirements::tickets::ManageTickets
+			    # see glossary::Ticket
 			    struct Ticket {
 
-                    :claim requirements::tickets::ManageTickets
-                    :claim glossary::Ticket
-			        "... is the entities unique identifier."
+                    # ...is the entities unique identifier.
+                    # see requirements::tickets::ManageTickets
+                    # see glossary::Ticket
                     ID string
 
-                    "... is a duplicate."
+                    # ...is a duplicate and will fail later.
                     ID string
 
-                    "...shows how to use a sub domain type as a pointer."
+                    # ...shows how to use a sub domain type as a pointer.
                     Tasks1 *tickets::domain::tasks::core::Task
 
-                    "... shows a slice example."
+                    # ...shows a slice example, using [] would require sonderlocke.
                     Tasks2 slice<string>
 
-                    "...shows a nested slice example."
+                    # ...shows a nested slice example.
                     KeyVal map<int,slice<tickets::domain::tasks::core::Task>>
 
                 }
 
-                "...declares a repository interface."
+                # ...declares a repository interface.
                 repository Tickets {
-                    "... searches all the things."
-                     FindAll(x str, b str) -> (Task)
+                    # ...searches all the things.
+                    # == Parameters
+                    # * x ...is a secret.
+                    # * b ...is another secret.
+                    # * sadly I could lie about everything, must validate later.
+                    FindAll(x str, b str) -> (Task)
 
-                      "... searches all the things."
-                      FindAll2(x str, b str) -> (Task, error<NotFound|Other>)
+                    # ...searches all the things.
+                    # == Returns
+                    # A new Task which represents stuff to do.
+                    #
+                    # == Errors
+                    # * NotFound ...is returned if that guy has not been found.
+                    # * Other ...is returned if anything else went wrong.
+                    #   Totally unspecified.
+                    # * RuntimeException ...is not validated either.
+                    FindAll2(x str, b str) -> (Task, error<NotFound|Other>)
                 }
 
 			}
@@ -55,7 +73,7 @@ module service {
 			"... is all about tasks in the ticket domain."
 			subdomain tasks {
 				core {
-				    "...declares a job."
+				    # ...declares a job.
 				    struct Task {
 				    }
 				}
@@ -92,7 +110,7 @@ module service {
 	}
 }
 
-"... is another module in the same file."
+# ...is another module in the same file.
 module b {
 	generate {
 	}

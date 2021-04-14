@@ -27,6 +27,19 @@ const (
 func Parse(fname, src string) (*File, error) {
 	lexer := stateful.MustSimple([]stateful.Rule{
 		{"comment", `//.*|/\*.*?\*/`, nil},
+
+		// parseable documentation style
+		{"DocTitle",`^[[:blank:]]*# =[^=].*`,nil},
+		{"DocSubTitleParameters",`^[[:blank:]]*# == Parameters`,nil},
+		{"DocSubTitleReturns",`^[[:blank:]]*# == Returns`,nil},
+		{"DocSubTitleErrors",`^[[:blank:]]*# == Errors`,nil},
+		{"DocSection",`^[[:blank:]]*# ==.*`,nil},
+		{"DocSeePrefix",`^[[:blank:]]*# see\s`,nil},
+		{"DocSummary",`^[[:blank:]]*# \.\.\.[a-zA-Z]+.*\.`,nil},
+		{"DocListLevel0",`^[[:blank:]]*# \* [a-zA-Z].*`,nil},
+		{"DocIndentLevel0",`^[[:blank:]]*#\s{3}[a-zA-Z].*`,nil},
+		{"DocText",`^[[:blank:]]*#.*`,nil},
+
 		// dots is ambiguous in Go and weired in Java, so using rusts :: seems like a good idea
 		{"PkgSep", "::", nil},
 		{"Sel", `\.`, nil},

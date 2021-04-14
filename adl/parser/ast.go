@@ -21,6 +21,12 @@ type Doc struct {
 	Value string `@String`
 }
 
+// DocText is just anything preceeded by #.
+type DocText struct {
+	//Pos   lexer.Position
+	Value string `@DocText`
+}
+
 func (d *Doc) Capture(values []string) error {
 	d.Value = values[0]
 
@@ -90,10 +96,8 @@ type File struct {
 // service like a Go microservice but there may be also library modules which may
 // get emitted into different targets.
 type Module struct {
-	// Claims to requirements this element.
-	Claims []*Claim `(":claim" @@)*`
-	// Doc of the module.
-	Doc Doc `@@`
+	// Doc contains a summary, arbitrary text lines, captions, sections and more.
+	Doc DocTypeBlock `parser:"@@"`
 	// Name of the module.
 	Name     Ident      `"module" @@ "{" `
 	Generate *Generate  `"generate" "{" @@ "}" `
@@ -125,10 +129,8 @@ type Claim struct {
 // A Context describes the top-level grouping structure in DDD.
 type Context struct {
 	Pos lexer.Position
-	// Claims to requirements of the context.
-	Claims []*Claim `(":claim" @@)*`
-	// Documentation of the context (usually a package comment).
-	Doc Doc `@@`
+	// Doc contains a summary, arbitrary text lines, captions, sections and more.
+	Doc DocTypeBlock `parser:"@@"`
 	// Name of the context package
 	Name Ident `"context" @@ "{" `
 	// Domain with core and application layer
@@ -197,12 +199,12 @@ type SQLFunc struct {
 }
 
 type SQLFuncInVar struct {
-	Selector    []LooperIdent `( @@ ("." @@)* )?`
-	IsLooper bool  `(@SliceLooper)?`
+	Selector []LooperIdent `( @@ ("." @@)* )?`
+	IsLooper bool          `(@SliceLooper)?`
 }
 
-type LooperIdent struct{
-	Ident Ident `@@`
+type LooperIdent struct {
+	Ident    Ident `@@`
 	IsLooper bool  `(@SliceLooper)?`
 }
 
@@ -211,64 +213,62 @@ type SQLFuncOutVar struct {
 }
 
 type TypeDef struct {
-	Pos       lexer.Position
-	Struct    *Struct    ` @@`
+	Pos        lexer.Position
+	Struct     *Struct     ` @@`
 	Repository *Repository `| @@`
-	Interface *Interface `| @@`
+	Interface  *Interface  `| @@`
 }
 
 type Interface struct {
-	Pos     lexer.Position
+	Pos lexer.Position
 	// Claims to requirements of the subdomain.
-	Claims []*Claim `(":claim" @@)*`
+	Claims  []*Claim  `(":claim" @@)*`
 	Doc     String    `@@`
 	Name    Ident     `"interface" @@`
 	Methods []*Method `"{" @@* "}"`
 }
 
 type Repository struct {
-	Pos     lexer.Position
-	// Claims to requirements.
-	Claims []*Claim `(":claim" @@)*`
-	Doc     Doc    `@@`
+	Pos lexer.Position
+	// Doc contains a summary, arbitrary text lines, captions, sections and more.
+	Doc DocTypeBlock `parser:"@@"`
 	Name    Ident     `"repository" @@`
 	Methods []*Method `"{" @@* "}"`
 }
 
 type Method struct {
-	Pos    lexer.Position
-	// Claims to requirements.
-	Claims []*Claim `(":claim" @@)*`
-	Doc    Doc     `@@`
+	Pos lexer.Position
+	// Doc contains a summary, arbitrary text lines, captions, sections and more.
+	Doc DocMethodBlock `parser:"@@"`
 	Name   Ident    `@@`
 	Params []*Param `"(" @@? | ("," @@)* ")"`
-	Return *Type `"->" "(" @@? `
-	Error *Error ` ("," @@)?  ")"`
+	Return *Type    `"->" "(" @@? `
+	Error  *Error   ` ("," @@)?  ")"`
 }
 
-type Error struct{
+type Error struct {
 	Kinds []Ident `"error" "<" @@ ("|" @@)* ">"`
 }
 
 type Param struct {
+	// Doc of the Parameter.
+	//Doc Doc `@@`
 	Name Ident `@@`
 	Type Type  `@@`
 }
 
 type Struct struct {
 	Pos lexer.Position
-	// Claims points to requirements of this element.
-	Claims []*Claim `(":claim" @@)*`
-	Doc    Doc      `@@`
-	Name   Ident    `"struct" @@`
-	Fields []*Field `"{" @@* "}"`
+	// Doc contains a summary, arbitrary text lines, captions, sections and more.
+	Doc DocTypeBlock `parser:"@@"`
+	Name   Ident        `"struct" @@`
+	Fields []*Field     `"{" @@* "}"`
 }
 
 type Field struct {
 	Pos lexer.Position
-	// Claims points to requirements of this element.
-	Claims []*Claim `(":claim" @@)*`
-	Doc    Doc      `@@`
+	// Doc contains a summary, arbitrary text lines, captions, sections and more.
+	Doc DocTypeBlock `parser:"@@"`
 	Name   Ident    `@@`
 	Type   Type     `@@`
 }
