@@ -42,6 +42,7 @@ func Parse(fname, src string) (*File, error) {
 
 		// dots is ambiguous in Go and weired in Java, so using rusts :: seems like a good idea
 		{"PkgSep", "::", nil},
+		{"MacroSep", "!", nil},
 		{"Sel", `\.`, nil},
 		{"Keyword", ":claim|=>|->", nil},
 		{"SumType", `\|`, nil},

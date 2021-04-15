@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"github.com/alecthomas/participle/v2/lexer"
+	"golang.org/x/mod/semver"
 	"regexp"
 	"strings"
 )
@@ -13,6 +14,19 @@ var rIdentifier = regexp.MustCompile(sIdentifier)
 type String struct {
 	//Pos   lexer.Position
 	Value string `@String`
+}
+
+type SemVer struct {
+	Value string `@Ident`
+}
+
+func (d *SemVer) Capture(values []string) error {
+	d.Value = values[0]
+	if !semver.IsValid(d.Value) {
+		return fmt.Errorf("invalid semantic version number")
+	}
+
+	return nil
 }
 
 // Doc is just anything like sString accepts.
@@ -51,8 +65,11 @@ type Path struct {
 }
 
 type Type struct {
-	Pointer   bool   `(@Pointer)?`
-	Qualifier Path   `@@`
+	Pointer   bool `(@Pointer)?`
+	Qualifier Path `@@`
+	// Transpile flag indicates that the given name should be transformed by the rules of the architecture
+	// standard library. E.g. a string! becomes a java.lang.String in Java but just a string in Go.
+	Transpile bool   `parser:"@MacroSep?" json:",omitempty"`
 	Params    []Type `("<" @@ ("," @@)* ">")?`
 }
 
@@ -106,19 +123,6 @@ type Module struct {
 	//Parts *ModuleParts `"{" @@ "}"`
 }
 
-// Generate describes multiple emitter configurations.
-type Generate struct {
-	Go *GeneratorGo `("go" "{" @@ "}")?`
-}
-
-// GeneratorGo describes all go specific generator settings.
-type GeneratorGo struct {
-	// Module is the go.mod name and prefix for all packages.
-	Module String `("module" "=" @@)`
-	// Output is either an absolute or relative local path to emit the source.
-	Output String `("output" "=" @@)`
-}
-
 // Claim is a reference to a requirement like an epic, a story, a scenario, a glossary entry or
 // just a requirement id.
 type Claim struct {
@@ -135,8 +139,8 @@ type Context struct {
 	Name Ident `"context" @@ "{" `
 	// Domain with core and application layer
 	Domain         *Domain         `"domain" "{" @@ "}" `
-	Infrastructure *Infrastructure `"infrastructure" "{" @@ "}" "}"`
-	//Presentation   *Presentation   `"presentation" "{" @@ "}" "}"`
+	Infrastructure *Infrastructure `"infrastructure" "{" @@ "}" `
+	Presentation   *Presentation   `"presentation" "{" @@ "}" "}"`
 }
 
 // Domain contains the application (use case) and the core layer (packages).
@@ -164,10 +168,8 @@ type Usecase struct {
 // Subdomain contains the application (use case) and the core layer (packages).
 type Subdomain struct {
 	Pos lexer.Position
-	// Claims to requirements of the subdomain.
-	Claims []*Claim `(":claim" @@)*`
-	// Documentation of the subdomain (usually a package comment).
-	Doc *String `@@`
+	// Doc contains a summary, arbitrary text lines, captions, sections and more.
+	Doc DocTypeBlock `parser:"@@"`
 
 	Name    Ident    `"subdomain" @@ "{"`
 	Core    *Core    `"core" "{" @@ "}"`
@@ -231,19 +233,19 @@ type Interface struct {
 type Repository struct {
 	Pos lexer.Position
 	// Doc contains a summary, arbitrary text lines, captions, sections and more.
-	Doc DocTypeBlock `parser:"@@"`
-	Name    Ident     `"repository" @@`
-	Methods []*Method `"{" @@* "}"`
+	Doc     DocTypeBlock `parser:"@@"`
+	Name    Ident        `"repository" @@`
+	Methods []*Method    `"{" @@* "}"`
 }
 
 type Method struct {
 	Pos lexer.Position
 	// Doc contains a summary, arbitrary text lines, captions, sections and more.
-	Doc DocMethodBlock `parser:"@@"`
-	Name   Ident    `@@`
-	Params []*Param `"(" @@? | ("," @@)* ")"`
-	Return *Type    `"->" "(" @@? `
-	Error  *Error   ` ("," @@)?  ")"`
+	Doc    DocMethodBlock `parser:"@@"`
+	Name   Ident          `@@`
+	Params []*Param       `"(" @@? | ("," @@)* ")"`
+	Return *Type          `"->" "(" @@? `
+	Error  *Error         ` ("," @@)?  ")"`
 }
 
 type Error struct {
@@ -260,7 +262,7 @@ type Param struct {
 type Struct struct {
 	Pos lexer.Position
 	// Doc contains a summary, arbitrary text lines, captions, sections and more.
-	Doc DocTypeBlock `parser:"@@"`
+	Doc    DocTypeBlock `parser:"@@"`
 	Name   Ident        `"struct" @@`
 	Fields []*Field     `"{" @@* "}"`
 }
@@ -268,9 +270,9 @@ type Struct struct {
 type Field struct {
 	Pos lexer.Position
 	// Doc contains a summary, arbitrary text lines, captions, sections and more.
-	Doc DocTypeBlock `parser:"@@"`
-	Name   Ident    `@@`
-	Type   Type     `@@`
+	Doc  DocTypeBlock `parser:"@@"`
+	Name Ident        `@@`
+	Type Type         `@@`
 }
 
 type ModuleParts struct {
@@ -294,10 +296,6 @@ type Subdomain struct {
 }*/
 
 type UseCase struct {
-	Types []*TypeDef ` @@*`
-}
-
-type Presentation struct {
 	Types []*TypeDef ` @@*`
 }
 

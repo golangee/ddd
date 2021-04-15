@@ -4,6 +4,13 @@ module service {
 		go {
 			module = "github.com/worldiety/supportiety"
 			output = "../supportiety/service"
+			require {
+			    # ...provides CLDR stuff which is not present in the standard library.
+			    "golang.org/x/text" @ "v0.3.0" import {
+			            mytext "golang.org/x/text"
+			            otherpkg "golang.org/x/text/subpackage"
+			    }
+			}
 		}
 	}
 
@@ -29,16 +36,16 @@ module service {
                     ID string
 
                     # ...is a duplicate and will fail later.
-                    ID string
+                    ID mytext::ExternalString
 
                     # ...shows how to use a sub domain type as a pointer.
                     Tasks1 *tickets::domain::tasks::core::Task
 
                     # ...shows a slice example, using [] would require sonderlocke.
-                    Tasks2 slice<string>
+                    Tasks2 slice<string!>
 
                     # ...shows a nested slice example.
-                    KeyVal map<int,slice<tickets::domain::tasks::core::Task>>
+                    KeyVal map<int,slice!<tickets::domain::tasks::core::Task>>
 
                 }
 
@@ -69,8 +76,8 @@ module service {
 
 			}
 
-			:claim glossary::Task
-			"... is all about tasks in the ticket domain."
+			# ...is all about tasks in the ticket domain.
+			# see glossary::Task
 			subdomain tasks {
 				core {
 				    # ...declares a job.
@@ -107,6 +114,11 @@ module service {
 			}
 		}
 
+		presentation {
+		    rest {
+                         
+           		    }
+		}
 	}
 }
 

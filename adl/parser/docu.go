@@ -2,7 +2,7 @@ package parser
 
 type DocTypeBlock struct {
 	Summary string        `@DocSummary`
-	Elems   []DocTypeElem `@@*`
+	Elems   []DocTypeElem `parser:"@@*" json:",omitempty"`
 }
 
 type DocTypeElem struct {
