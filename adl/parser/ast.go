@@ -16,6 +16,12 @@ type String struct {
 	Value string `@String`
 }
 
+// Int is just anything an int may be
+type Int struct {
+	//Pos   lexer.Position
+	Value int64 `@IntLiteral`
+}
+
 type SemVer struct {
 	Value string `@Ident`
 }
@@ -64,12 +70,24 @@ type Path struct {
 	Elements []Ident ` @@ ("::" @@)* `
 }
 
+type PathWithMemberAndParam struct {
+	Path   `@@`
+	Member *Ident `("." @@)?`
+	Param  *Ident `("$" @@)?`
+}
+
+type TypeWithField struct {
+	Type  Type  `@@`
+	Field Ident `"." @@`
+}
+
 type Type struct {
 	Pointer   bool `(@Pointer)?`
 	Qualifier Path `@@`
 	// Transpile flag indicates that the given name should be transformed by the rules of the architecture
 	// standard library. E.g. a string! becomes a java.lang.String in Java but just a string in Go.
 	Transpile bool   `parser:"@MacroSep?" json:",omitempty"`
+	Optional  bool   `parser:"@Optional?" json:",omitempty"`
 	Params    []Type `("<" @@ ("," @@)* ">")?`
 }
 

@@ -35,7 +35,7 @@ type DocTitle struct {
 type DocSee struct {
 	//Pos   lexer.Position
 	Value string `@DocSeePrefix`
-	Path  Path   `@@`
+	Path  PathWithMemberAndParam   `@@`
 }
 
 type DocParameters struct {
