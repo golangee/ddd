@@ -5,6 +5,7 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 	"golang.org/x/mod/semver"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -20,6 +21,22 @@ type String struct {
 type Int struct {
 	//Pos   lexer.Position
 	Value int64 `@IntLiteral`
+}
+
+// Bool is either true|false
+type Bool struct {
+	//Pos   lexer.Position
+	Value bool `@BoolLit`
+}
+
+func (d *Bool) Capture(values []string) error {
+	v, err := strconv.ParseBool(values[0])
+	if err != nil {
+		return fmt.Errorf("unable to parse bool literal: %w", err)
+	}
+
+	d.Value = v
+	return nil
 }
 
 type SemVer struct {
@@ -196,44 +213,6 @@ type Subdomain struct {
 // Infrastructure helps with additional hints to generate stuff like SQL or Event adapter.
 type Infrastructure struct {
 	MySQL *SQL `("mysql" "{" @@ "}")?`
-	//MySQL *SQL `"mysql" "{" @@ "}"`
-}
-
-// SQL contains sql independent declaration, but the generators are dialect specific.
-type SQL struct {
-	Database   String               `"database" "=" @@`
-	Implements []*SQLImplementation `@@+`
-}
-
-type SQLImplementation struct {
-	Type Path `"impl" @@ "{"`
-
-	Configure []*Field `("configure" "{" @@* "}")?`
-	Inject    []*Field `("inject" "{" @@* "}")?`
-	Private   []*Field `("private" "{" @@* "}")?`
-
-	SQLFunc []*SQLFunc ` @@* "}"`
-}
-
-type SQLFunc struct {
-	Name Ident           `@@`
-	SQL  String          `@@`
-	In   []SQLFuncInVar  `( "(" @@ ("," @@)* ")" )?`
-	Out  []SQLFuncOutVar `( "=>" "(" @@ ("," @@)* ")" )?`
-}
-
-type SQLFuncInVar struct {
-	Selector []LooperIdent `( @@ ("." @@)* )?`
-	IsLooper bool          `(@SliceLooper)?`
-}
-
-type LooperIdent struct {
-	Ident    Ident `@@`
-	IsLooper bool  `(@SliceLooper)?`
-}
-
-type SQLFuncOutVar struct {
-	Ident Ident `"." @@?`
 }
 
 type TypeDef struct {
@@ -298,6 +277,12 @@ type Field struct {
 	Type Type         `@@`
 }
 
+type FieldWithDefault struct {
+	Field   Field   `@@ "="`
+	StrLit  *String `(@@`
+	IntLit  *Int    `|@@`
+	BoolLit *Bool   `|@@)`
+}
 type ModuleParts struct {
 	Context  []*Context `@@*`
 	Packages []*Package `@@*`

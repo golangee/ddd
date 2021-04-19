@@ -40,6 +40,8 @@ func Parse(fname, src string) (*File, error) {
 		{"DocIndentLevel0", `^[[:blank:]]*#\s{3}[a-zA-Z].*`, nil},
 		{"DocText", `^[[:blank:]]*#.*`, nil},
 
+		{"BoolLit","true|false",nil},
+
 		// dots is ambiguous in Go and weired in Java, so using rusts :: seems like a good idea
 		{"PkgSep", "::", nil},
 		{"UrlSep", "/", nil},
