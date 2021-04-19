@@ -178,9 +178,8 @@ type Core struct {
 }
 
 type Usecase struct {
-	Pos lexer.Position
-	//Types []*TypeDef ` "{" "}"`
-	Bla []*String `@@*`
+	Pos   lexer.Position
+	Types []*TypeDef `@@*`
 }
 
 // Subdomain contains the application (use case) and the core layer (packages).
@@ -207,8 +206,13 @@ type SQL struct {
 }
 
 type SQLImplementation struct {
-	Type    Path       `"impl" @@`
-	SQLFunc []*SQLFunc `"{" @@* "}"`
+	Type Path `"impl" @@ "{"`
+
+	Configure []*Field `("configure" "{" @@* "}")?`
+	Inject    []*Field `("inject" "{" @@* "}")?`
+	Private   []*Field `("private" "{" @@* "}")?`
+
+	SQLFunc []*SQLFunc ` @@* "}"`
 }
 
 type SQLFunc struct {
@@ -237,6 +241,7 @@ type TypeDef struct {
 	Struct     *Struct     ` @@`
 	Repository *Repository `| @@`
 	Interface  *Interface  `| @@`
+	Services   []Service   `| @@`
 }
 
 type Interface struct {
@@ -312,10 +317,6 @@ type Subdomain struct {
 	UseCase *UseCase   `"usecase" "{" @@ "}"`
 	Types   []*TypeDef ` @@* "}"`
 }*/
-
-type UseCase struct {
-	Types []*TypeDef ` @@*`
-}
 
 type Property struct {
 	Name  Identifier `@Ident "="`

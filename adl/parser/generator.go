@@ -12,6 +12,8 @@ type GoGenerate struct {
 	// Output is either an absolute or relative local path to emit the source.
 	Output String `("output" "=" @@)`
 
+	Imports *GoStandardImport `("import" "{" @@)? "}"`
+
 	Require *GoRequire `("require" "{" @@)? "}"`
 }
 
@@ -38,3 +40,10 @@ type GoGlobalImport struct{
 	Path String `@@`
 }
 
+
+type GoStandardImport struct{
+	// Doc contains a summary, arbitrary text lines, captions, sections and more.
+	Doc DocTypeBlock `parser:"@@"`
+	Ident Ident `@@`
+	Path String `@@`
+}
