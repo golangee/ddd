@@ -1,3 +1,0 @@
-Ticket:
-  # TODO doc: {{.copyDoc "doc/en/context/Ticket"}}
-  doc: ... represents a bounded context which just contains everything around handling with tickets.

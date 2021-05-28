@@ -1,9 +1,0 @@
-as a: Contracting authority
-i want: that the developer who has created this software also has followed common best practices
-so that: I can hand over the software to another team without problems.
-
-scenario:
-  Identities:
-    given: I'm a developer and I migrate or merge the underlying database or change the dbms
-    when: developing in the future
-    then: I expect that each logical primary key is a uuid and no dbms specific one like an autoincremented int.

@@ -1,4 +1,0 @@
-UserId:
-  doc: ... is a unique identifier based on a UUID.
-  type: uuid
-  reqt: [ BestPractices.Identities ]

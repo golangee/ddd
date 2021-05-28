@@ -1,2 +1,0 @@
-An {{.ref "AppUser"}} or a {{.ref "SupportietyUser"}} uploads
-a file.

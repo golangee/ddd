@@ -1,7 +1,0 @@
-Supportiety:
-  go:
-    type: service
-    version: 1.16
-    framework: stdlib
-    module: github.com/worldiety/supportiety
-    out: {{.DomainDir}}/../github.com/worldiety/supportiety # only works if both are checkout in correct fanout dirs

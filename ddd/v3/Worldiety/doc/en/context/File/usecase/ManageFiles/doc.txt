@@ -1,1 +1,0 @@
-{{.name}} is a use case which describes the saving of a file.

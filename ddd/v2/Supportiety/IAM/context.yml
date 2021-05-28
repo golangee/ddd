@@ -1,7 +1,0 @@
-IAM:
-  doc: ... encapsules everything around identity and access management. Logically this is a supporting context
-    which lies upstream above all other contexts.
-  apply:
-    - golang:
-        - port:
-            version: v0.0.1

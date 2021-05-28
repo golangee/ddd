@@ -1,3 +1,0 @@
-# TODO here we need to connect presentation requirements and domain (api) things
-# e.g. a jwt comes in, needs to extract role and invokes multiple (ugly ddd?) domain services
-empty:

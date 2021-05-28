@@ -1,8 +1,0 @@
-# doc and right to exist is declared in glossary.yml so no reqt required
-Role:
-  type: enum
-  values:
-    - Developer
-    - ProjectManager
-    - Admin
-    - CustomerServiceRepresentative
