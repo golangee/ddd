@@ -3,6 +3,7 @@ package sql
 import (
 	"fmt"
 	"github.com/golangee/architecture/arc"
+	"github.com/golangee/architecture/arc/token"
 	"io"
 	"io/fs"
 	"strings"
@@ -14,9 +15,9 @@ type Ctx struct {
 	// Dialect determines the SQL dialect to generate the support for.
 	Dialect Dialect
 	// Mod is the target module.
-	Mod arc.String
+	Mod token.String
 	// Pkg is the target package within the module.
-	Pkg arc.String
+	Pkg token.String
 	// Migrations contains all user defined dialect specific raw migration statements.
 	Migrations []*Migration
 	// Repositories refers to all module-local interfaces which must be implemented (each as their own repository).
@@ -37,8 +38,8 @@ type Ctx struct {
 //    within a transaction.
 type Migration struct {
 	ID         time.Time
-	Name       arc.String
-	Statements []arc.String
+	Name       token.String
+	Statements []token.String
 }
 
 // ParseMigrationName takes a name like 202009161147_the_initial_schema.sql and returns
@@ -65,7 +66,7 @@ func ParseMigrationName(name string) (time.Time, string, error) {
 
 // ParseStatements takes a byte sequence and splits it by ;\n to identify single statements. Every newline and
 // whitespace padding per line is normalized to a single space. Statement semicolons are removed.
-func ParseStatements(r io.Reader) ([]arc.String, error) {
+func ParseStatements(r io.Reader) ([]token.String, error) {
 	buf, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read statements: %w", err)
@@ -78,7 +79,7 @@ func ParseStatements(r io.Reader) ([]arc.String, error) {
 		}
 	}
 
-	var res []arc.String
+	var res []token.String
 	tmp := &strings.Builder{}
 	strBuf := string(buf)
 	posLineBegin := 0

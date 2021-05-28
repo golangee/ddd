@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"strings"
+	"unicode/utf8"
 )
 
 // A String holds a positional value.
@@ -17,8 +19,8 @@ func NewString(val string) String {
 	return String{Val: val}
 }
 
-// Lines parses the given bytes, optionally trims each line and creates the according strings for each line.
-func Lines(filename string, r io.ByteReader, trim bool) ([]String, error) {
+// Lines parses the given bytes and returns the correct located string for each line.
+func Lines(filename string, r io.ByteReader) ([]String, error) {
 	var tmp bytes.Buffer
 	beginPos := Pos{
 		File:   filename,
@@ -102,4 +104,34 @@ func (s String) String() string {
 // GoString returns a positional information with the string.
 func (s String) GoString() string {
 	return s.BeginPos.String() + ":" + s.Value()
+}
+
+// Locate creates a new string with the applied position, assuming this string is ever in a single line.
+func (s String) Locate(filename string, offset, line, col int) String {
+	s.BeginPos.File = filename
+	s.BeginPos.Line = line
+	s.BeginPos.Col = col
+	s.BeginPos.Offset = offset
+
+	s.EndPos.File = filename
+	s.EndPos.Line = line
+	s.EndPos.Col = s.BeginPos.Col + utf8.RuneCountInString(s.Val)
+	s.EndPos.Offset = s.BeginPos.Offset + len(s.Val)
+
+	return s
+}
+
+// TrimSpace returns a new string with the retro-fitted positions.
+func (s String) TrimSpace() String {
+	v := strings.TrimSpace(s.Val)
+	idx := strings.Index(s.Val, v)
+	str := s
+	str.Val = v
+	str.BeginPos.Col += utf8.RuneCountInString(s.Val[:idx])
+	str.BeginPos.Offset += idx
+
+	str.EndPos.Col = str.BeginPos.Col + utf8.RuneCountInString(v)
+	str.EndPos.Offset = str.BeginPos.Offset + len(v)
+
+	return str
 }
