@@ -1,7 +1,7 @@
 package sql
 
 import (
-	"github.com/golangee/architecture/adl/saa/v1/core"
+	"github.com/golangee/architecture/arc/token"
 	"io"
 	"reflect"
 	"testing"
@@ -49,7 +49,7 @@ func TestParseStatements(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []core.StrLit
+		want    []token.String
 		wantErr bool
 	}{
 		// TODO: Add test cases.

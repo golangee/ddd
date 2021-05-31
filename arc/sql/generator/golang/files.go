@@ -2,14 +2,14 @@ package golang
 
 import (
 	"bytes"
+	"crypto/sha512"
 	"encoding/hex"
-	"github.com/golangee/architecture/adl/saa/v1/core"
-	"github.com/golangee/architecture/adl/saa/v1/core/generator/corego"
-	"github.com/golangee/architecture/adl/saa/v1/sql"
+	"github.com/golangee/architecture/arc/generator/golang"
+	"github.com/golangee/architecture/arc/sql"
+	"github.com/golangee/architecture/arc/token"
+	"github.com/golangee/sql/dialect/mysql"
 	"github.com/golangee/src/ast"
-	"github.com/golangee/src/golang"
-	"github.com/pingcap/parser"
-	"golang.org/x/crypto/sha3"
+	golang2 "github.com/golangee/src/golang"
 	"strconv"
 )
 
@@ -21,7 +21,7 @@ const (
 func RenderFiles(dst *ast.Prj, src *sql.Ctx) error {
 	modName := src.Mod.String()
 	pkgName := src.Pkg.String()
-	file := corego.MkFile(dst, modName, pkgName, filenameFiles)
+	file := golang.MkFile(dst, modName, pkgName, filenameFiles)
 
 	for _, migration := range src.Migrations {
 		migrationConstBlock := ast.NewConstDecl()
@@ -29,10 +29,9 @@ func RenderFiles(dst *ast.Prj, src *sql.Ctx) error {
 
 		hashBuf := &bytes.Buffer{}
 		for i, statement := range migration.Statements {
-			p := parser.New()
-			_, _, err := p.Parse(statement.String(), "UTF-8", "UTF-8")
+			_, err := mysql.Parse(statement.String())
 			if err != nil {
-				return core.NewPosError(statement, "cannot parse sql statement").SetCause(err)
+				return token.NewPosError(statement, "cannot parse sql statement").SetCause(err)
 			}
 
 			hashBuf.WriteString(statement.String())
@@ -40,12 +39,12 @@ func RenderFiles(dst *ast.Prj, src *sql.Ctx) error {
 			constName := varMigrationStatementName(migration.Name.String(), i)
 			migrationConstBlock.Add(
 				ast.NewSimpleAssign(ast.NewIdent(constName), ast.AssignSimple, ast.NewStrLit(statement.String())).
-					SetComment("...is defined in file " + statement.NodePos.File + " line " + strconv.Itoa(statement.NodePos.Line) + "."),
+					SetComment("...is defined in file " + statement.BeginPos.File + " line " + strconv.Itoa(statement.BeginPos.Line) + "."),
 			)
 
 		}
 
-		migrationHash := sha3.Sum224(hashBuf.Bytes())
+		migrationHash := sha512.Sum512_224(hashBuf.Bytes())
 		migrationHashStr := hex.EncodeToString(migrationHash[:])
 		migrationHashConstBlock.Add(
 			ast.NewSimpleAssign(ast.NewIdent(varMigrationHashName(migration.Name.String())), ast.AssignSimple, ast.NewStrLit(migrationHashStr)).
@@ -59,9 +58,9 @@ func RenderFiles(dst *ast.Prj, src *sql.Ctx) error {
 }
 
 func varMigrationStatementName(migrationName string, statementNo int) string {
-	return "migrate" + golang.MakeIdentifier(migrationName) + strconv.Itoa(statementNo+1)
+	return "migrate" + golang2.MakeIdentifier(migrationName) + strconv.Itoa(statementNo+1)
 }
 
 func varMigrationHashName(migrationName string) string {
-	return "migrate" + golang.MakeIdentifier(migrationName) + "Hash"
+	return "migrate" + golang2.MakeIdentifier(migrationName) + "Hash"
 }

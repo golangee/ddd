@@ -2,9 +2,9 @@ package golang
 
 import (
 	"fmt"
-	"github.com/golangee/architecture/adl/saa/v1/core/generator/corego"
-	"github.com/golangee/architecture/adl/saa/v1/core/generator/stereotype"
-	"github.com/golangee/architecture/adl/saa/v1/sql"
+	"github.com/golangee/architecture/arc/generator/golang"
+	"github.com/golangee/architecture/arc/generator/stereotype"
+	"github.com/golangee/architecture/arc/sql"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib"
 	"github.com/golangee/src/stdlib/lang"
@@ -22,9 +22,9 @@ const (
 func RenderMigrations(dst *ast.Prj, src *sql.Ctx) error {
 	modName := src.Mod.String()
 	pkgName := src.Pkg.String()
-	file := corego.MkFile(dst, modName, pkgName, filenameMigrations)
+	file := golang.MkFile(dst, modName, pkgName, filenameMigrations)
 
-	tableName := strings.ReplaceAll(corego.ShortModName(file)+"_"+corego.PkgRelativeName(file), "/", "_")
+	tableName := strings.ReplaceAll(golang.ShortModName(file)+"_"+golang.PkgRelativeName(file), "/", "_")
 	tableName += "_migration_schema_history"
 
 	historyEntity, err := renderMigrationEntity(file, src, tableName)
@@ -70,8 +70,8 @@ func renderMigrationsFunc(dst *ast.File, src *sql.Ctx) error {
 		sb.WriteString("{\n")
 		sb.WriteString(fmt.Sprintf("Version: %d, // %s\n", migration.ID.Unix(), migration.ID.String()))
 		sb.WriteString(fmt.Sprintf("Description: %s,\n", strconv.Quote(migration.Name.String())))
-		sb.WriteString(fmt.Sprintf("File: %s,\n", strconv.Quote(migration.Name.Pos().File)))
-		sb.WriteString(fmt.Sprintf("Line: %d,\n", migration.Name.Pos().Line))
+		sb.WriteString(fmt.Sprintf("File: %s,\n", strconv.Quote(migration.Name.Begin().File)))
+		sb.WriteString(fmt.Sprintf("Line: %d,\n", migration.Name.Begin().Line))
 		sb.WriteString(fmt.Sprintf("Checksum: %s,\n", varMigrationHashName(migration.Name.String())))
 		sb.WriteString("Statements: []string{\n")
 		for i := range migration.Statements {

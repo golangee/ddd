@@ -1,8 +1,8 @@
 package golang
 
 import (
-	"github.com/golangee/architecture/adl/saa/v1/core/generator/corego"
-	"github.com/golangee/architecture/adl/saa/v1/sql"
+	"github.com/golangee/architecture/arc/generator/golang"
+	"github.com/golangee/architecture/arc/sql"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib"
 	"github.com/golangee/src/stdlib/lang"
@@ -16,7 +16,7 @@ const (
 func RenderDBTX(dst *ast.Prj, src *sql.Ctx) error {
 	modName := src.Mod.String()
 	pkgName := src.Pkg.String()
-	file := corego.MkFile(dst, modName, pkgName, filenameDBTX)
+	file := golang.MkFile(dst, modName, pkgName, filenameDBTX)
 
 	file.AddTypes(
 		ast.NewInterface("DBTX").

@@ -14,8 +14,6 @@ CREATE TABLE book3
     id JSON
 );
 
-SELECT blub
-from BLA;
 
 INSERT INTO book3
 VALUES (1, 2);

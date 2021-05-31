@@ -1,14 +1,15 @@
 package golang
 
 import (
-	"github.com/golangee/architecture/adl/saa/v1/core"
-	"github.com/golangee/architecture/adl/saa/v1/sql"
+	"github.com/golangee/architecture/arc/generator/astutil"
+	"github.com/golangee/architecture/arc/sql"
+	"github.com/golangee/architecture/arc/token"
 	"github.com/golangee/src/ast"
 	"strconv"
 	"strings"
 )
 
-func implementExecOne(fun *ast.Func, sql core.StrLit, mapping sql.ExecOne) error {
+func implementExecOne(fun *ast.Func, sql token.String, mapping sql.ExecOne) error {
 	in, err := assemblePreparedStatementPlaceholders(mapping.In)
 	if err != nil {
 		return err
@@ -31,7 +32,7 @@ func implementExecOne(fun *ast.Func, sql core.StrLit, mapping sql.ExecOne) error
 	return nil
 }
 
-func implementExecMany(fun *ast.Func, sql core.StrLit, mapping sql.ExecMany) error {
+func implementExecMany(fun *ast.Func, sql token.String, mapping sql.ExecMany) error {
 	in, err := assemblePreparedStatementPlaceholders(mapping.In)
 	if err != nil {
 		return err
@@ -77,7 +78,7 @@ func implementExecMany(fun *ast.Func, sql core.StrLit, mapping sql.ExecMany) err
 
 // this thing can only generate properly for a single primitive or a single struct for multiple return.
 // Multiple primitives are not supported. Also the return must not be a generic in any way.
-func implementFindOne(fun *ast.Func, sql core.StrLit, mapping sql.QueryOne) error {
+func implementFindOne(fun *ast.Func, sql token.String, mapping sql.QueryOne) error {
 	in, err := assemblePreparedStatementPlaceholders(mapping.In)
 	if err != nil {
 		return err
@@ -123,7 +124,7 @@ func implementFindOne(fun *ast.Func, sql core.StrLit, mapping sql.QueryOne) erro
 	return nil
 }
 
-func implementFindMany(fun *ast.Func, sql core.StrLit, mapping sql.QueryMany) error {
+func implementFindMany(fun *ast.Func, sql token.String, mapping sql.QueryMany) error {
 	in, err := assemblePreparedStatementPlaceholders(mapping.In)
 	if err != nil {
 		return err
@@ -137,7 +138,7 @@ func implementFindMany(fun *ast.Func, sql core.StrLit, mapping sql.QueryMany) er
 	// this another hard assumption
 	slice, ok := fun.FunResults[0].ParamTypeDecl.(*ast.SliceTypeDecl)
 	if !ok {
-		return core.NewPosError(core.NewNodeFromAst(fun.FunResults[0]), fun.FunName+" result is a '"+fun.FunResults[0].String()+"' but expected a slice")
+		return token.NewPosError(astutil.WrapNode(fun.FunResults[0]), fun.FunName+" result is a '"+fun.FunResults[0].String()+"' but expected a slice")
 	}
 
 	simpleDecl := slice.TypeDecl.(*ast.SimpleTypeDecl)
@@ -178,11 +179,11 @@ func implementFindMany(fun *ast.Func, sql core.StrLit, mapping sql.QueryMany) er
 }
 
 // assemblePreparedStatementPlaceholders expects lits to be either things like "myparam" or "myparam.field".
-func assemblePreparedStatementPlaceholders(lits []core.StrLit) (string, error) {
+func assemblePreparedStatementPlaceholders(lits []token.String) (string, error) {
 	placeholderList := ""
 	for i, lit := range lits {
 		if lit.String() == "." || lit.String() == "" {
-			return "", core.NewPosError(lit, "invalid notation for in-parameter")
+			return "", token.NewPosError(lit, "invalid notation for in-parameter")
 		}
 
 		placeholderList += lit.String()
@@ -198,7 +199,7 @@ func assemblePreparedStatementPlaceholders(lits []core.StrLit) (string, error) {
 //  * a primitive: So only a single lit is valid and it must be "."
 //  * a struct: so only ".field" declarations are valid.
 // prefix is used to concat the variable name before.
-func assembleScan(lits []core.StrLit, prefix string) (string, error) {
+func assembleScan(lits []token.String, prefix string) (string, error) {
 	if len(lits) == 1 && lits[0].String() == "." {
 		return prefix, nil
 	}
@@ -206,11 +207,11 @@ func assembleScan(lits []core.StrLit, prefix string) (string, error) {
 	placeholderList := ""
 	for i, lit := range lits {
 		if (lit.String() == "." && len(lits) > 1) || lit.String() == "" {
-			return "", core.NewPosError(lit, "invalid notation for scan-parameter. Only a single '.' is allowed.")
+			return "", token.NewPosError(lit, "invalid notation for scan-parameter. Only a single '.' is allowed.")
 		}
 
 		if !strings.HasPrefix(lit.String(), ".") {
-			return "", core.NewPosError(lit, "invalid notation for scan-parameter. Every field must start with a '.'")
+			return "", token.NewPosError(lit, "invalid notation for scan-parameter. Every field must start with a '.'")
 		}
 
 		placeholderList += prefix + lit.String()

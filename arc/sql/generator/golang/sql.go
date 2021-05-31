@@ -1,9 +1,8 @@
 package golang
 
 import (
-	"github.com/golangee/architecture/adl/saa/v1/sql"
+	"github.com/golangee/architecture/arc/sql"
 	"github.com/golangee/src/ast"
-	_ "github.com/pingcap/parser/test_driver"
 )
 
 // RenderSQL takes the sql context and emits the according

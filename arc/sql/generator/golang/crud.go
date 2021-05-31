@@ -1,7 +1,7 @@
 package golang
 
 import (
-	"github.com/golangee/architecture/adl/saa/v1/core/generator/stereotype"
+	"github.com/golangee/architecture/arc/generator/stereotype"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib"
 	"github.com/golangee/src/stdlib/lang"

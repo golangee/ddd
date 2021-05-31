@@ -2,9 +2,9 @@ package golang
 
 import (
 	"fmt"
-	"github.com/golangee/architecture/adl/saa/v1/core/generator/corego"
-	"github.com/golangee/architecture/adl/saa/v1/core/generator/stereotype"
-	"github.com/golangee/architecture/adl/saa/v1/sql"
+	"github.com/golangee/architecture/arc/generator/golang"
+	"github.com/golangee/architecture/arc/generator/stereotype"
+	"github.com/golangee/architecture/arc/sql"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib"
 	"github.com/golangee/src/stdlib/lang"
@@ -18,7 +18,7 @@ const (
 
 // RenderOptions renders sql specific connection options.
 func RenderOptions(dst *ast.Prj, modName, pkgName string, dialect sql.Dialect) error {
-	file := corego.MkFile(dst, modName, pkgName, filenameOptions)
+	file := golang.MkFile(dst, modName, pkgName, filenameOptions)
 
 	_, err := renderMySQLOptions(file, dialect, "defaultName")
 	if err != nil {
@@ -95,7 +95,7 @@ func renderMySQLOptions(file *ast.File, dialect sql.Dialect, defaultDBName strin
 
 	opt.DefaultRecName = strings.ToLower(opt.TypeName[:1])
 
-	if _, err := corego.AddResetFunc(opt); err != nil {
+	if _, err := golang.AddResetFunc(opt); err != nil {
 		return nil, fmt.Errorf("unable to add reset func: %w", err)
 	}
 
@@ -106,11 +106,11 @@ func renderMySQLOptions(file *ast.File, dialect sql.Dialect, defaultDBName strin
 
 	addDSNFunc(opt)
 
-	if _, err := corego.AddParseEnvFunc(string(dialect), opt); err != nil {
+	if _, err := golang.AddParseEnvFunc(string(dialect), opt); err != nil {
 		return nil, fmt.Errorf("unable to add env parser func: %w", err)
 	}
 
-	if _, err := corego.AddParseFlagFunc(string(dialect), opt); err != nil {
+	if _, err := golang.AddParseFlagFunc(string(dialect), opt); err != nil {
 		return nil, fmt.Errorf("unable to add flag parser func: %w", err)
 	}
 

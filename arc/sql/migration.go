@@ -2,7 +2,6 @@ package sql
 
 import (
 	"fmt"
-	"github.com/golangee/architecture/arc"
 	"github.com/golangee/architecture/arc/token"
 	"io"
 	"io/fs"
@@ -67,6 +66,7 @@ func ParseMigrationName(name string) (time.Time, string, error) {
 // ParseStatements takes a byte sequence and splits it by ;\n to identify single statements. Every newline and
 // whitespace padding per line is normalized to a single space. Statement semicolons are removed.
 func ParseStatements(r io.Reader) ([]token.String, error) {
+
 	buf, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read statements: %w", err)
@@ -105,16 +105,15 @@ func ParseStatements(r io.Reader) ([]token.String, error) {
 
 			str = str[:len(str)-1] // remove ; suffix
 
-			lit:=arc.NewString(str)
-			lit.NodePos.Line = posLineBegin + 1
-			lit.NodePos.Col = 1
-			lit.NodePos.File = fname
-			lit.NodeSrc = strBuf
+			lit:=token.NewString(str)
+			lit.BeginPos.Line = posLineBegin + 1
+			lit.BeginPos.Col = 1
+			lit.BeginPos.File = fname
 
-			lit.NodeEnd.Line = i + 1
-			lit.NodeEnd.Col = len(line)
-			lit.NodeEnd.File = fname
-			lit.NodeSrc = strBuf
+			lit.EndPos.Line = i + 1
+			lit.EndPos.Col = len(line)
+			lit.EndPos.File = fname
+			lit.Val = strBuf
 
 			posLineBegin = i
 			res = append(res, lit)
@@ -133,16 +132,15 @@ func ParseStatements(r io.Reader) ([]token.String, error) {
 			str = str[:len(str)-1] // remove ; suffix
 		}
 
-		lit := core.NewStrLit(str)
-		lit.NodePos.Line = posLineBegin + 1
-		lit.NodePos.Col = 1
-		lit.NodePos.File = fname
-		lit.NodeSrc = strBuf
+		lit := token.NewString(str)
+		lit.BeginPos.Line = posLineBegin + 1
+		lit.BeginPos.Col = 1
+		lit.BeginPos.File = fname
 
-		lit.NodeEnd.Line = len(lines)
-		lit.NodeEnd.Col = len(lines[len(lines)-1])
-		lit.NodeEnd.File = fname
-		lit.NodeSrc = strBuf
+		lit.EndPos.Line = len(lines)
+		lit.EndPos.Col = len(lines[len(lines)-1])
+		lit.EndPos.File = fname
+		lit.Val = strBuf
 
 		res = append(res, lit)
 	}

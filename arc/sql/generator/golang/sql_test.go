@@ -3,8 +3,8 @@ package golang
 import (
 	"embed"
 	"fmt"
-	"github.com/golangee/architecture/adl/saa/v1/core"
-	"github.com/golangee/architecture/adl/saa/v1/sql"
+	"github.com/golangee/architecture/arc/sql"
+	"github.com/golangee/architecture/arc/token"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/golang"
 	"github.com/golangee/src/stdlib"
@@ -19,7 +19,7 @@ func TestRenderRepository(t *testing.T) {
 
 	ctx := createCtx(t)
 	if err := RenderSQL(prj, ctx); err != nil {
-		t.Fatal(core.Explain(err))
+		t.Fatal(token.Explain(err))
 	}
 
 	renderer := golang.NewRenderer(golang.Options{})
@@ -32,10 +32,10 @@ func TestRenderRepository(t *testing.T) {
 	fmt.Println(a)
 }
 
-func lits(lit ...string) []core.StrLit {
-	var r []core.StrLit
+func lits(lit ...string) []token.String {
+	var r []token.String
 	for _, s := range lit {
-		r = append(r, core.NewStrLit(s))
+		r = append(r, token.NewString(s))
 	}
 	return r
 }
@@ -43,8 +43,8 @@ func lits(lit ...string) []core.StrLit {
 func createCtx(t *testing.T) *sql.Ctx {
 	t.Helper()
 
-	mod := core.NewModLit("github.com/worldiety/supportiety")
-	pkg := core.NewPkgLit("github.com/worldiety/supportiety/tickets/core")
+	mod := token.NewString("github.com/worldiety/supportiety")
+	pkg := token.NewString("github.com/worldiety/supportiety/tickets/core")
 
 	return &sql.Ctx{
 		Dialect:    sql.MySQL,
@@ -53,26 +53,26 @@ func createCtx(t *testing.T) *sql.Ctx {
 		Migrations: createMigrations(t),
 		Repositories: []sql.Repository{
 			{
-				Implements: core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketRepository"),
+				Implements: token.NewString("github.com/worldiety/supportiety/tickets/core.TicketRepository"),
 				Methods: []sql.Method{
 					{
-						Name:    core.NewStrLit("CreateTicket"),
-						Query:   core.NewStrLit("INSERT INTO tickets VALUES (?)"),
+						Name:    token.NewString("CreateTicket"),
+						Query:   token.NewString("INSERT INTO tickets VALUES (?)"),
 						Mapping: sql.ExecOne{In: lits("id")},
 					},
 
 					{
-						Name:  core.NewStrLit("CreateManyTickets"),
-						Query: core.NewStrLit("INSERT INTO tickets VALUES (?)"),
+						Name:  token.NewString("CreateManyTickets"),
+						Query: token.NewString("INSERT INTO tickets VALUES (?)"),
 						Mapping: sql.ExecMany{
-							Slice: core.NewStrLit("ids"),
+							Slice: token.NewString("ids"),
 							In:    lits("ids[i]"),
 						},
 					},
 
 					{
-						Name:  core.NewStrLit("FindAll"),
-						Query: core.NewStrLit("SELECT * FROM tickets"),
+						Name:  token.NewString("FindAll"),
+						Query: token.NewString("SELECT * FROM tickets"),
 						Mapping: sql.QueryMany{
 							In:  nil,
 							Out: lits(".ID", ".Name", ".Desc"),
@@ -80,8 +80,8 @@ func createCtx(t *testing.T) *sql.Ctx {
 					},
 
 					{
-						Name:  core.NewStrLit("Count"),
-						Query: core.NewStrLit("SELECT COUNT(*) FROM tickets"),
+						Name:  token.NewString("Count"),
+						Query: token.NewString("SELECT COUNT(*) FROM tickets"),
 						Mapping: sql.QueryOne{
 							In:  nil,
 							Out: lits("."),
@@ -89,14 +89,14 @@ func createCtx(t *testing.T) *sql.Ctx {
 					},
 
 					{
-						Name:    core.NewStrLit("DeleteTicket"),
-						Query:   core.NewStrLit("DELETE FROM tickets where id=?"),
+						Name:    token.NewString("DeleteTicket"),
+						Query:   token.NewString("DELETE FROM tickets where id=?"),
 						Mapping: sql.ExecOne{In: lits("id")},
 					},
 
 					{
-						Name:  core.NewStrLit("FindTicket"),
-						Query: core.NewStrLit("SELECT * FROM tickets where id=?"),
+						Name:  token.NewString("FindTicket"),
+						Query: token.NewString("SELECT * FROM tickets where id=?"),
 						Mapping: sql.QueryOne{
 							In:  lits("id"),
 							Out: lits(".ID", ".Name"),
@@ -105,7 +105,7 @@ func createCtx(t *testing.T) *sql.Ctx {
 				},
 			},
 			{
-				Implements: core.NewTypeLit("github.com/worldiety/supportiety/tickets/core.TicketFiles"),
+				Implements: token.NewString("github.com/worldiety/supportiety/tickets/core.TicketFiles"),
 				Methods: []sql.Method{
 
 				},
@@ -235,9 +235,9 @@ func createMigrations(t *testing.T) []*sql.Migration {
 			t.Fatal(err)
 		}
 
-		strName := core.NewStrLit(name)
-		strName.NodePos.File = "sql_test.go"
-		strName.NodePos.Line = i + 1
+		strName := token.NewString(name)
+		strName.BeginPos.File = "sql_test.go"
+		strName.BeginPos.Line = i + 1
 
 		migrations = append(migrations, &sql.Migration{
 			ID:         ts,

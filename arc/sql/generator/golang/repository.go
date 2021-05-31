@@ -2,10 +2,10 @@ package golang
 
 import (
 	"fmt"
-	"github.com/golangee/architecture/adl/saa/v1/astutil"
-	"github.com/golangee/architecture/adl/saa/v1/core"
-	"github.com/golangee/architecture/adl/saa/v1/core/generator/corego"
-	"github.com/golangee/architecture/adl/saa/v1/sql"
+	"github.com/golangee/architecture/arc/generator/astutil"
+	"github.com/golangee/architecture/arc/generator/golang"
+	"github.com/golangee/architecture/arc/sql"
+	"github.com/golangee/architecture/arc/token"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib/lang"
 	"reflect"
@@ -18,7 +18,7 @@ func renderRepositories(dst *ast.Prj, src *sql.Ctx) error {
 
 	for _, repository := range src.Repositories {
 		repoTypeName := repository.Implements
-		file := corego.MkFile(dst, modName, pkgName, "tmp.go")
+		file := golang.MkFile(dst, modName, pkgName, "tmp.go")
 		rNode := astutil.Resolve(file, repoTypeName.String())
 		repo, ok := rNode.(*ast.Interface)
 		if !ok {
@@ -27,9 +27,9 @@ func renderRepositories(dst *ast.Prj, src *sql.Ctx) error {
 
 		file.Name = simpleLowerCaseName(repo.TypeName) + ".go"
 
-		implTypeName := corego.MakePublic(string(src.Dialect) + repo.TypeName + "Impl")
+		implTypeName := golang.MakePublic(string(src.Dialect) + repo.TypeName + "Impl")
 
-		stub := ast.NewStruct(corego.MakePrivate("Abstract" + repo.TypeName)).
+		stub := ast.NewStruct(golang.MakePrivate("Abstract" + repo.TypeName)).
 			SetVisibility(ast.PackagePrivate).
 			SetComment("...provides function stubs for the interface\n" + repoTypeName.String() + ".")
 
@@ -46,7 +46,7 @@ func renderRepositories(dst *ast.Prj, src *sql.Ctx) error {
 					"This is a compromise to actually customize timeouts a bit, but yes, this could be better.").
 				SetBody(ast.NewBlock(ast.NewTpl(`return {{.Use "context.Background"}}()`))),
 		)
-		corego.ImplementFunctions(repo, stub)
+		golang.ImplementFunctions(repo, stub)
 
 		for _, f := range stub.Methods() {
 			f.SetComment(f.CommentText() + "\nOverride this method in the embedding type in another file.")
@@ -62,7 +62,7 @@ func renderRepositories(dst *ast.Prj, src *sql.Ctx) error {
 			}
 
 			if method == nil {
-				return core.NewPosError(m.Name, "refers to a non existing interface method")
+				return token.NewPosError(m.Name, "refers to a non existing interface method")
 			}
 
 			method.SetRecName("r")
