@@ -21,8 +21,8 @@ func Render(prj *adl.Project) (render.Artifact, error) {
 		noGenSettings := true
 		if module.Generator.Go != nil {
 			noGenSettings = false
-			if err := golang.RenderModule(astPrj, module); err != nil {
-				return nil, token.NewPosError(module.Name, "unable to render module")
+			if err := golang.RenderModule(astPrj, prj, module); err != nil {
+				return nil, token.NewPosError(module.Name, "unable to render module").SetCause(err)
 			}
 		}
 
@@ -34,7 +34,7 @@ func Render(prj *adl.Project) (render.Artifact, error) {
 	renderer := golang2.NewRenderer(golang2.Options{})
 	a, err := renderer.Render(astPrj)
 	if err != nil {
-		return a, fmt.Errorf("unable to render prj %v", astPrj.Name)
+		return a, fmt.Errorf("unable to render prj %v: %w", astPrj.Name, err)
 	}
 
 	return a, nil

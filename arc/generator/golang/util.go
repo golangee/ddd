@@ -3,7 +3,6 @@ package golang
 import (
 	"github.com/golangee/architecture/arc/generator/astutil"
 	"github.com/golangee/src/ast"
-	"github.com/golangee/src/golang"
 	"strings"
 	"unicode"
 )
@@ -11,18 +10,26 @@ import (
 // MakePkgPath takes arbitrary fragments and creates a more or less idiomatic path of it.
 func MakePkgPath(frags ...string) string {
 	tmp := strings.Builder{}
-	for i, frag := range frags {
-		if strings.HasPrefix(frag, "/") {
-			frag = frag[1:]
+	for i, f := range frags {
+		subFrags := strings.Split(f, "/")
+		for k, frag := range subFrags {
+			if strings.HasPrefix(frag, "/") {
+				frag = frag[1:]
+			}
+
+			if strings.HasSuffix(frag, "/") {
+				frag = frag[:len(frag)-1]
+			}
+
+			frag = strings.ToLower(frag)
+			frag = strings.ReplaceAll(frag, " ", "_")
+
+			tmp.WriteString(strings.ToLower(frag))
+
+			if k < len(subFrags)-1 {
+				tmp.WriteString("/")
+			}
 		}
-
-		if strings.HasSuffix(frag, "/") {
-			frag = frag[:len(frag)-1]
-		}
-
-		frag = golang.MakeIdentifier(frag)
-
-		tmp.WriteString(strings.ToLower(frag))
 
 		if i < len(frags)-1 {
 			tmp.WriteString("/")

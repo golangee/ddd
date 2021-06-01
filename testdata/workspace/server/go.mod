@@ -1,3 +1,3 @@
-module github.com/golangee/architecture/testdata
+module github.com/golangee/architecture/testdata/workspace/server
 
 go 1.16

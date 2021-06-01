@@ -4,10 +4,14 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/emicklei/dot v0.15.0/go.mod h1:DeV7GvQtIw4h2u73RKBkkFdvVAz0D9fzeJrgPW6gy/s=
 github.com/golangee/sql v0.0.0-20210531101020-33021aed64c2 h1:0WXftZclnimUkAiCojvV5BF/AZPRVmBXpu6z87A4wlE=
 github.com/golangee/sql v0.0.0-20210531101020-33021aed64c2/go.mod h1:yA+VdgLd11hHJ69hQi6+dC++cyZ1Eb1BZON52Q54gR4=
-github.com/golangee/src v0.0.0-20210401144516-230d4569aefd h1:3+Xl2lfcK/GlirSkKJemyedNUr23TOmm7ZIziom9674=
-github.com/golangee/src v0.0.0-20210401144516-230d4569aefd/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/golangee/src v0.0.0-20210601081443-28c7bac7ca7f h1:dSVAG6ntMyefULdo5z/pQsaRzWBIgYRPTHVdCINeZbg=
 github.com/golangee/src v0.0.0-20210601081443-28c7bac7ca7f/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210601124311-d78fbbf1629a h1:oV2RyrRnvrIkhAwi0TfdCkfFuhYdgaAlreREMqnb9FU=
+github.com/golangee/src v0.0.0-20210601124311-d78fbbf1629a/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210601131357-8d5baefdec5a h1:LTKuGF94LssnbeJc3iQdH6eXToqQTl/83fJWXLZck38=
+github.com/golangee/src v0.0.0-20210601131357-8d5baefdec5a/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210601142639-029c4888653f h1:m1nGugCqEQJ5grusm4oXLr6DGVO7fn+1dtDnx088UZY=
+github.com/golangee/src v0.0.0-20210601142639-029c4888653f/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/r3labs/diff v1.1.0 h1:V53xhrbTHrWFWq3gI4b94AjgEJOerO1+1l0xyHOBi8M=
 github.com/r3labs/diff v1.1.0/go.mod h1:7WjXasNzi0vJetRcB/RqNl5dlIsmXcTTLmF5IoH6Xig=
