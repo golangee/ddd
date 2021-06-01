@@ -25,6 +25,10 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 		SetLangVersion(ast.LangVersionGo16).
 		SetOutputDirectory(src.Generator.OutDir.String())
 
+	for _, require := range src.Generator.Go.Requires {
+		mod.Require(require.String())
+	}
+
 	// domain package
 	domainTerm := prj.Glossary.Terms[src.Domain.Name.String()]
 	domainPkg := golang.MakePkgPath(src.Generator.Go.Module.String(), src.Domain.Name.String())
@@ -66,13 +70,70 @@ func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) erro
 		pkg.SetComment(src.Comment.String())
 	}
 
-	for _, repository := range src.Repositories {
-		file := ast.NewFile(strings.ToLower(golang2.MakeIdentifier(repository.Name.String())) + ".go")
+	// repos
+	if len(src.Repositories) > 0 {
+		file := ast.NewFile(strings.ToLower("repositories.go"))
 		file.SetPreamble(makePreamble(srcMod.Preamble))
+		for _, repository := range src.Repositories {
+			iface, err := buildInterface(file, srcMod, src, repository)
+			if err != nil {
+				return err
+			}
+
+			_ = iface
+		}
+		pkg.AddFiles(file)
+	}
+
+	// dtos
+	if len(src.DTOs) > 0 {
+		file := ast.NewFile(strings.ToLower("dtos.go"))
+		file.SetPreamble(makePreamble(srcMod.Preamble))
+		for _, dto := range src.DTOs {
+			typ, err := buildStruct(file, srcMod, src, dto)
+			if err != nil {
+				return err
+			}
+
+			_ = typ
+		}
 		pkg.AddFiles(file)
 	}
 
 	return nil
+}
+
+func buildInterface(parent *ast.File, srcMod *adl.Module, src *adl.Package, iface *adl.Interface) (*ast.Interface, error) {
+	aType := ast.NewInterface(iface.Name.String()).SetComment(iface.Comment.String())
+	parent.AddTypes(aType)
+
+	for _, method := range iface.Methods {
+		aMethod := ast.NewFunc(method.Name.String()).SetComment(method.Comment.String())
+		for _, param := range method.In {
+			// TODO how to model complex types? TADL AST tree nodes?
+			aMethod.AddParams(ast.NewParam(param.Name.String(), ast.NewSimpleTypeDecl(ast.Name(param.TypeName.String()))).SetComment(param.Comment.String()))
+		}
+
+		for _, param := range method.Out {
+			// TODO how to model complex types? TADL AST tree nodes?
+			aMethod.AddResults(ast.NewParam(param.Name.String(), ast.NewSimpleTypeDecl(ast.Name(param.TypeName.String()))).SetComment(param.Comment.String()))
+		}
+
+		aType.AddMethods(aMethod)
+	}
+
+	return aType, nil
+}
+
+func buildStruct(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *adl.DTO) (*ast.Struct, error) {
+	aType := ast.NewStruct(typ.Name.String()).SetComment(typ.Comment.String())
+	parent.AddTypes(aType)
+
+	for _, field := range typ.Fields {
+		// TODO how to model complex types? TADL AST tree nodes?
+		aType.AddFields(ast.NewField(field.Name.String(), ast.NewSimpleTypeDecl(ast.Name(field.TypeName.String()))).SetComment(field.Comment.String()))
+	}
+	return aType, nil
 }
 
 func makePreamble(p adl.Preamble) string {

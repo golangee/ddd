@@ -15,3 +15,7 @@
 // limitations under the License.
 
 package chat
+
+// Chats provides CRUD access to Chats.
+type Chats interface {
+}

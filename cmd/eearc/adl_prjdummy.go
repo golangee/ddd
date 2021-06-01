@@ -3,6 +3,7 @@ package eearc
 import (
 	"encoding/json"
 	. "github.com/golangee/architecture/arc/adl"
+	"github.com/golangee/src/stdlib"
 )
 
 const licenseExample = `Copyright 2021 Torben Schinke
@@ -28,19 +29,29 @@ func createWorkspace() *Project {
 				SetGenerator(
 					NewGenerator().
 						SetOutDir("../../testdata/workspace/server").
-						SetGo(NewGolang().SetModName("github.com/golangee/architecture/testdata/workspace/server")),
+						SetGo(NewGolang().
+							SetModName("github.com/golangee/architecture/testdata/workspace/server").
+							Require("github.com/golangee/uuid latest"),
+						),
 				).
 				SetDomain(
 					NewDomain("supportiety/tickets").
 						AddCore(
-							NewPackage("", "").AddRepositories(
-								NewInterface("Tickets", "...provides CRUD access to Tickets.").
-									AddMethods(
-										NewMethod("CreateTicket", "...creates a Ticket.").
-											AddIn("id", "...the unique ticket id", "uuid!").
-											AddOut("", "...if anything goes wrong", "error!"),
-									),
-							),
+							NewPackage("", "").
+								AddDataTransferObjects(
+									NewDTO("Ticket", "...represents a Ticket about a crash incident or other support requests.").
+										AddField("ID", "...is the globally unique identifier.", stdlib.UUID).
+										AddField("When", "...is date time.", stdlib.Time),
+								).
+								AddRepositories(
+									NewInterface("Tickets", "...provides CRUD access to Tickets.").
+										AddMethods(
+											NewMethod("CreateTicket", "...creates a Ticket.").
+												AddIn("id", "...is the unique ticket id.", "uuid!").
+												AddOut("", "...the empty but created ticket.", "Ticket").
+												AddOut("", "...if anything goes wrong.", "error!"),
+										),
+								),
 
 							NewPackage("chat", "...is a supporting subdomain about ticket chats.").AddRepositories(
 								NewInterface("Chats", "...provides CRUD access to Chats."),

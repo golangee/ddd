@@ -90,7 +90,8 @@ func (g *Generator) SetOutDir(dir string) *Generator {
 
 // Golang describes how a Go project (or module) must be created or updated.
 type Golang struct {
-	Module token.String // the name of the go module, e.g. github.com/worldiety/supportiety
+	Module   token.String   // the name of the go module, e.g. github.com/worldiety/supportiety
+	Requires []token.String // require directives
 }
 
 func NewGolang() *Golang {
@@ -99,6 +100,11 @@ func NewGolang() *Golang {
 
 func (g *Golang) SetModName(name string) *Golang {
 	g.Module = traceStr(name)
+	return g
+}
+
+func (g *Golang) Require(dep string) *Golang {
+	g.Requires = append(g.Requires, traceStr(dep))
 	return g
 }
 
@@ -134,6 +140,7 @@ type Package struct {
 	Comment      token.String
 	Name         token.String
 	Repositories []*Interface
+	DTOs         []*DTO
 }
 
 func NewPackage(name, comment string) *Package {
@@ -142,6 +149,11 @@ func NewPackage(name, comment string) *Package {
 
 func (p *Package) AddRepositories(r ...*Interface) *Package {
 	p.Repositories = append(p.Repositories, r...)
+	return p
+}
+
+func (p *Package) AddDataTransferObjects(d ...*DTO) *Package {
+	p.DTOs = append(p.DTOs, d...)
 	return p
 }
 
@@ -164,11 +176,32 @@ func (i *Interface) AddMethods(m ...*Method) *Interface {
 }
 
 type DTO struct {
-	Fields []Field
+	Comment token.String
+	Name    token.String
+	Fields  []*Field
+}
+
+func NewDTO(name, comment string) *DTO {
+	return &DTO{
+		Comment: traceStr(comment),
+		Name:    traceStr(name),
+	}
+}
+
+func (d *DTO) AddField(name, comment, typeName string) *DTO {
+	d.Fields = append(d.Fields, &Field{
+		Comment:  traceStr(comment),
+		Name:     traceStr(name),
+		TypeName: traceStr(typeName),
+	})
+
+	return d
 }
 
 type Field struct {
-	Name token.String
+	Comment  token.String
+	Name     token.String
+	TypeName token.String // TODO fix me
 }
 
 type Method struct {
@@ -213,7 +246,7 @@ func (m *Method) OutParams(p ...*Param) *Method {
 type Param struct {
 	Comment  token.String
 	Name     token.String
-	TypeName token.String
+	TypeName token.String // TODO fix me
 }
 
 func traceStr(v string) token.String {

@@ -15,3 +15,17 @@
 // limitations under the License.
 
 package core
+
+import (
+	uuid "github.com/golangee/uuid"
+	time "time"
+)
+
+// Ticket represents a Ticket about a crash incident or other support requests.
+type Ticket struct {
+	// ID is the globally unique identifier.
+	ID uuid.UUID
+
+	// When is date time.
+	When time.Time
+}

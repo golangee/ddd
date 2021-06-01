@@ -50,11 +50,22 @@ func TestDummyProject(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// directly test our generated stuff
-	cmd := exec.Command("go", "test", "-cover", "./...")
+	// let the sum files be updated
+	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Dir = filepath.Clean(dstDir)
 	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
+	t.Log(string(out))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+
+	// directly test our generated stuff
+	cmd = exec.Command("go", "test", "-cover", "./...")
+	cmd.Dir = filepath.Clean(dstDir)
+	cmd.Env = os.Environ()
+	out, err = cmd.CombinedOutput()
 	t.Log(string(out))
 	if err != nil {
 		t.Fatal(err)
