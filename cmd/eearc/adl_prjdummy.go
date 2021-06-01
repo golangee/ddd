@@ -15,7 +15,7 @@ func createWorkspace() *Project {
 						SetGo(NewGolang().SetModName("github.com/golangee/architecture/testdata/workspace/server")),
 				).
 				SetDomain(
-					NewDomain("github.com/golangee/architecture/testdata/workspace/server/tickets").
+					NewDomain("supportiety/tickets").
 						SetCore(
 							NewPackage().AddRepositories(
 								NewInterface("Tickets", "...provides CRUD access to Tickets.").

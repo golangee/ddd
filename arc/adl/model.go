@@ -86,14 +86,14 @@ type BoundedContext struct {
 }
 
 type Domain struct {
-	PackageName token.String
+	Name token.String
 	Core        *Package
 	Usecase     *Package
 }
 
-func NewDomain(packageName string) *Domain {
+func NewDomain(name string) *Domain {
 	return &Domain{
-		PackageName: traceStr(packageName),
+		Name: traceStr(name),
 	}
 }
 

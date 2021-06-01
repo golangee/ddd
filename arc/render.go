@@ -31,20 +31,11 @@ func Render(prj *adl.Project) (render.Artifact, error) {
 		}
 	}
 
-	var renderedWorkspace render.Dir
-	for _, mod := range astPrj.Mods {
-		if mod.Target.Lang != ast.LangGo {
-			return nil, fmt.Errorf("module '%v': language unsupported: '%v'", mod.Name, mod.Target.Lang)
-		}
-
-		renderer := golang2.NewRenderer(golang2.Options{})
-		a, err := renderer.Render(mod)
-		if err != nil {
-			return a, fmt.Errorf("unable to render module %v", mod.Name)
-		}
-
-		renderedWorkspace.Dirs = append(renderedWorkspace.Dirs, a.(*render.Dir))
+	renderer := golang2.NewRenderer(golang2.Options{})
+	a, err := renderer.Render(astPrj)
+	if err != nil {
+		return a, fmt.Errorf("unable to render prj %v", astPrj.Name)
 	}
 
-	return &renderedWorkspace, nil
+	return a, nil
 }
