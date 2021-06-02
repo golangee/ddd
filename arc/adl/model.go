@@ -140,6 +140,7 @@ type Package struct {
 	Comment      token.String
 	Name         token.String
 	Repositories []*Interface
+	Services     []*Service
 	DTOs         []*DTO
 }
 
@@ -154,6 +155,11 @@ func (p *Package) AddRepositories(r ...*Interface) *Package {
 
 func (p *Package) AddDataTransferObjects(d ...*DTO) *Package {
 	p.DTOs = append(p.DTOs, d...)
+	return p
+}
+
+func (p *Package) AddServices(s ...*Service) *Package {
+	p.Services = append(p.Services, s...)
 	return p
 }
 
@@ -173,6 +179,20 @@ func NewInterface(name, comment string) *Interface {
 func (i *Interface) AddMethods(m ...*Method) *Interface {
 	i.Methods = append(i.Methods, m...)
 	return i
+}
+
+type Service struct {
+	Comment token.String
+	Name    token.String
+	Fields  []*Field
+	Methods []*Method
+}
+
+func NewService(name, comment string) *Service {
+	return &Service{
+		Comment: traceStr(comment),
+		Name:    traceStr(name),
+	}
 }
 
 type DTO struct {

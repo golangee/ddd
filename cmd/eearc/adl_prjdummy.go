@@ -57,6 +57,12 @@ func createWorkspace() *Project {
 								NewInterface("Chats", "...provides CRUD access to Chats."),
 							),
 
+						).
+						AddUsecase(
+							// actually a service == group of single use cases == UML use case diagram
+							NewPackage("", "").AddServices(
+								NewService("Tickets", "...is all about the tickets higher order use cases."),
+							),
 						),
 				),
 		)

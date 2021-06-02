@@ -31,13 +31,13 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 
 	// domain package
 	domainTerm := prj.Glossary.Terms[src.Domain.Name.String()]
-	domainPkg := golang.MakePkgPath(src.Generator.Go.Module.String(), src.Domain.Name.String())
-	domain := astutil.MkPkg(mod, domainPkg)
+	domainRootPkg := golang.MakePkgPath(src.Generator.Go.Module.String(), src.Domain.Name.String(), "domain")
+	domain := astutil.MkPkg(mod, domainRootPkg)
 	domain.SetComment("...contains the core and usecase packages which represent the " + src.Domain.Name.String() + " domain model.\n" + golang2.DeEllipsis(domainTerm.Ident.String(), domainTerm.Description.String()))
 	domain.SetPreamble(makePreamble(src.Preamble))
 
 	// core packages
-	coreRootPkg := golang.MakePkgPath(domainPkg, "core")
+	coreRootPkg := golang.MakePkgPath(domainRootPkg, "core")
 	coreRoot := astutil.MkPkg(mod, coreRootPkg)
 	coreRoot.SetComment("...contains the domains primitives like Entities, Values, Repositories, Services (anemic), Events, aggregate roots (non-anemic) or DTOs.")
 	coreRoot.SetPreamble(makePreamble(src.Preamble))
@@ -48,7 +48,7 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 	}
 
 	// usecase packages
-	usecaseRootPkg := golang.MakePkgPath(domainPkg, "usecase")
+	usecaseRootPkg := golang.MakePkgPath(domainRootPkg, "usecase")
 	usecaseRoot := astutil.MkPkg(mod, usecaseRootPkg)
 	usecaseRoot.SetComment("...contains the domains use cases, usually in a service form, which uses an arbitrary composition of the domains primitives.")
 	usecaseRoot.SetPreamble(makePreamble(src.Preamble))
@@ -100,6 +100,19 @@ func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) erro
 		pkg.AddFiles(file)
 	}
 
+	// services
+	if len(src.Services) > 0 {
+		file := ast.NewFile(strings.ToLower("services.go"))
+		file.SetPreamble(makePreamble(srcMod.Preamble))
+		for _, dto := range src.Services {
+			_, _, err := buildService(file, srcMod, src, dto)
+			if err != nil {
+				return err
+			}
+		}
+		pkg.AddFiles(file)
+	}
+
 	return nil
 }
 
@@ -134,6 +147,22 @@ func buildStruct(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *ad
 		aType.AddFields(ast.NewField(field.Name.String(), ast.NewSimpleTypeDecl(ast.Name(field.TypeName.String()))).SetComment(field.Comment.String()))
 	}
 	return aType, nil
+}
+
+func buildService(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *adl.Service) (defaultService, service *ast.Struct, _ error) {
+	defaultService = ast.NewStruct("Default" + typ.Name.String()).SetComment("...is an implementation stub for " + typ.Name.String() + ".")
+
+	for _, field := range typ.Fields {
+		// TODO how to model complex types? TADL AST tree nodes?
+		defaultService.AddFields(ast.NewField(field.Name.String(), ast.NewSimpleTypeDecl(ast.Name(field.TypeName.String()))).SetComment(field.Comment.String()))
+	}
+
+	service = ast.NewStruct(typ.Name.String()).SetComment(typ.Comment.String()).AddEmbedded(ast.NewSimpleTypeDecl(ast.Name(defaultService.TypeName)))
+
+	parent.AddTypes(defaultService)
+	parent.AddTypes(service)
+
+	return defaultService, service, nil
 }
 
 func makePreamble(p adl.Preamble) string {
