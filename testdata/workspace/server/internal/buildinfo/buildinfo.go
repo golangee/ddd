@@ -14,24 +14,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package buildinfo
 
-import (
-	uuid "github.com/golangee/uuid"
-	time "time"
+var (
+	// BuildID is usually a strict monotonic increasing build number.
+	BuildID string = "unknown"
+
+	// BuildTag usually refers to the VCS branch or tag name.
+	BuildTag string = "unknown"
 )
 
-// Ticket represents a Ticket about a crash incident or other support requests.
-type Ticket struct {
-	// ID is the globally unique identifier.
-	ID uuid.UUID
+// buildInfo is a private type to allow an interface based access to the environment variables.
+type buildInfo struct{}
 
-	// When is date time.
-	When time.Time
-
-	// Map is key value stuff
-	Map map[string]int
-
-	// Other is a pointer example
-	Other *Ticket
+// ID returns the current BuildID.
+func (_ buildInfo) ID() string {
+	return BuildID
 }
+
+// Tag returns the current BuildTag.
+func (_ buildInfo) Tag() string {
+	return BuildTag
+}
+
+// Build provides the build information about the application.
+var Build buildInfo

@@ -16,11 +16,11 @@
 
 package usecase
 
-// DefaultTickets is an implementation stub for Tickets.
-type DefaultTickets struct {
+// defaultTickets is an implementation stub for Tickets.
+type defaultTickets struct {
 }
 
 // Tickets is all about the tickets higher order use cases.
 type Tickets struct {
-	DefaultTickets
+	defaultTickets
 }

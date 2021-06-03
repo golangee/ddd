@@ -1,8 +1,11 @@
 package astutil
 
 import (
+	"github.com/golangee/architecture/arc/adl"
 	"github.com/golangee/architecture/arc/token"
 	"github.com/golangee/src/ast"
+	"github.com/golangee/src/stdlib"
+	"strconv"
 	"strings"
 )
 
@@ -164,4 +167,39 @@ func WrapNode(n ast.Node) token.Position {
 			Col:    n.End().Col,
 		},
 	}
+}
+
+// MakeTypeDecl converts the more unspecific and generic adl type description into the ast model.
+func MakeTypeDecl(t *adl.TypeDecl) ast.TypeDecl {
+	if t.IsMap() {
+		return ast.NewGenericDecl(ast.NewSimpleTypeDecl(stdlib.Map), MakeTypeDecl(t.TypeParams[0]), MakeTypeDecl(t.TypeParams[1]))
+	}
+
+	if t.IsPtr() {
+		return ast.NewTypeDeclPtr(MakeTypeDecl(t.TypeParams[0]))
+	}
+
+	if t.IsSlice() {
+		return ast.NewSliceTypeDecl(MakeTypeDecl(t.TypeParams[1]))
+	}
+
+	if t.IsArray() {
+		l, err := strconv.Atoi(t.TypeParams[0].Name.String())
+		if err != nil {
+			panic(token.Explain(token.NewPosError(t.TypeParams[0].Name, "invalid array length")))
+		}
+
+		return ast.NewArrayTypeDecl(l, MakeTypeDecl(t.TypeParams[1]))
+	}
+
+	if len(t.TypeParams) == 0 {
+		return ast.NewSimpleTypeDecl(ast.Name(t.Name.String()))
+	}
+
+	var typeParams []ast.TypeDecl
+	for _, param := range t.TypeParams {
+		typeParams = append(typeParams, MakeTypeDecl(param))
+	}
+
+	return ast.NewGenericDecl(ast.NewSimpleTypeDecl(ast.Name(t.Name.String())), typeParams...)
 }

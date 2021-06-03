@@ -25,8 +25,25 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 		SetLangVersion(ast.LangVersionGo16).
 		SetOutputDirectory(src.Generator.OutDir.String())
 
+	mod.Require("github.com/golangee/log latest")
+
 	for _, require := range src.Generator.Go.Requires {
 		mod.Require(require.String())
+	}
+
+	// logger
+	if err := renderLogger(mod, src); err != nil {
+		return token.NewPosError(src.Name, "cannot render logger")
+	}
+
+	// buildinfo
+	if err := renderBuildInfo(mod, src); err != nil {
+		return token.NewPosError(src.Name, "cannot render build info")
+	}
+
+	// execs
+	if err := renderExecs(mod, src); err != nil {
+		return token.NewPosError(src.Name, "cannot render executable entry points")
 	}
 
 	// domain package
@@ -60,6 +77,10 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 
 	return nil
 }
+
+
+
+
 
 func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) error {
 	mod := astutil.Mod(parent)
@@ -123,13 +144,11 @@ func buildInterface(parent *ast.File, srcMod *adl.Module, src *adl.Package, ifac
 	for _, method := range iface.Methods {
 		aMethod := ast.NewFunc(method.Name.String()).SetComment(method.Comment.String())
 		for _, param := range method.In {
-			// TODO how to model complex types? TADL AST tree nodes?
-			aMethod.AddParams(ast.NewParam(param.Name.String(), ast.NewSimpleTypeDecl(ast.Name(param.TypeName.String()))).SetComment(param.Comment.String()))
+			aMethod.AddParams(ast.NewParam(param.Name.String(), astutil.MakeTypeDecl(param.Type)).SetComment(param.Comment.String()))
 		}
 
 		for _, param := range method.Out {
-			// TODO how to model complex types? TADL AST tree nodes?
-			aMethod.AddResults(ast.NewParam(param.Name.String(), ast.NewSimpleTypeDecl(ast.Name(param.TypeName.String()))).SetComment(param.Comment.String()))
+			aMethod.AddResults(ast.NewParam(param.Name.String(), astutil.MakeTypeDecl(param.Type)).SetComment(param.Comment.String()))
 		}
 
 		aType.AddMethods(aMethod)
@@ -143,18 +162,18 @@ func buildStruct(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *ad
 	parent.AddTypes(aType)
 
 	for _, field := range typ.Fields {
-		// TODO how to model complex types? TADL AST tree nodes?
-		aType.AddFields(ast.NewField(field.Name.String(), ast.NewSimpleTypeDecl(ast.Name(field.TypeName.String()))).SetComment(field.Comment.String()))
+		aType.AddFields(ast.NewField(field.Name.String(), astutil.MakeTypeDecl(field.Type)).SetComment(field.Comment.String()))
 	}
 	return aType, nil
 }
 
 func buildService(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *adl.Service) (defaultService, service *ast.Struct, _ error) {
-	defaultService = ast.NewStruct("Default" + typ.Name.String()).SetComment("...is an implementation stub for " + typ.Name.String() + ".")
+	defaultService = ast.NewStruct(golang.MakePrivate("Default" + typ.Name.String())).
+		SetComment("...is an implementation stub for " + typ.Name.String() + ".").
+		SetVisibility(ast.Private)
 
 	for _, field := range typ.Fields {
-		// TODO how to model complex types? TADL AST tree nodes?
-		defaultService.AddFields(ast.NewField(field.Name.String(), ast.NewSimpleTypeDecl(ast.Name(field.TypeName.String()))).SetComment(field.Comment.String()))
+		defaultService.AddFields(ast.NewField(field.Name.String(), astutil.MakeTypeDecl(field.Type)).SetComment(field.Comment.String()))
 	}
 
 	service = ast.NewStruct(typ.Name.String()).SetComment(typ.Comment.String()).AddEmbedded(ast.NewSimpleTypeDecl(ast.Name(defaultService.TypeName)))
@@ -165,19 +184,3 @@ func buildService(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *a
 	return defaultService, service, nil
 }
 
-func makePreamble(p adl.Preamble) string {
-	tmp := ""
-	if p.Generator != "" {
-		tmp = p.Generator
-	}
-
-	if tmp != "" && p.License != "" {
-		tmp += "\n\n"
-	}
-
-	if p.License != "" {
-		tmp += p.License
-	}
-
-	return tmp
-}

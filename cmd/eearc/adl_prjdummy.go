@@ -34,22 +34,29 @@ func createWorkspace() *Project {
 							Require("github.com/golangee/uuid latest"),
 						),
 				).
+				AddExecutables(
+					NewExecutable("supportiety-server", "...provides the rest service."),
+				).
 				SetDomain(
 					NewDomain("supportiety/tickets").
 						AddCore(
 							NewPackage("", "").
 								AddDataTransferObjects(
 									NewDTO("Ticket", "...represents a Ticket about a crash incident or other support requests.").
-										AddField("ID", "...is the globally unique identifier.", stdlib.UUID).
-										AddField("When", "...is date time.", stdlib.Time),
+										AddField("ID", "...is the globally unique identifier.", NewTypeDecl(stdlib.UUID)).
+										AddField("When", "...is date time.", NewTypeDecl(stdlib.Time)).
+										AddField("Map", "...is key value stuff", NewTypeDecl(stdlib.Map, NewTypeDecl(stdlib.String), NewTypeDecl(stdlib.Int))).
+										AddField("Other", "...is a pointer example", NewTypeDecl("*", NewTypeDecl("github.com/golangee/architecture/testdata/workspace/server/supportiety/tickets/domain/core.Ticket"))),
+
+
 								).
 								AddRepositories(
 									NewInterface("Tickets", "...provides CRUD access to Tickets.").
 										AddMethods(
 											NewMethod("CreateTicket", "...creates a Ticket.").
-												AddIn("id", "...is the unique ticket id.", "uuid!").
-												AddOut("", "...the empty but created ticket.", "Ticket").
-												AddOut("", "...if anything goes wrong.", "error!"),
+												AddIn("id", "...is the unique ticket id.", NewTypeDecl(stdlib.UUID)).
+												AddOut("", "...the empty but created ticket.", NewTypeDecl("Ticket")).
+												AddOut("", "...if anything goes wrong.", NewTypeDecl(stdlib.Error)),
 										),
 								),
 
