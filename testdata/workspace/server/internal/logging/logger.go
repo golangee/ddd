@@ -10,5 +10,4 @@ func NewLoggerFromEnv() log.Logger {
 	logger = log.WithFields(logger, log.V("build_id", "tbd"), log.V("build_tag", "tbd"))
 
 	return logger
-
 }

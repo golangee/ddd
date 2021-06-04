@@ -14,6 +14,14 @@ github.com/golangee/src v0.0.0-20210601142639-029c4888653f h1:m1nGugCqEQJ5grusm4
 github.com/golangee/src v0.0.0-20210601142639-029c4888653f/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/golangee/src v0.0.0-20210603132614-b6240bda652e h1:cM9dyn7qHFT1fYwUugcOx1Z19InHsUfyKtPlxB649Wk=
 github.com/golangee/src v0.0.0-20210603132614-b6240bda652e/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210604070842-53380394865a h1:spwTSff6Oegs+fPvd1SfjaNVMxEze8+rT/NyhmJaJQQ=
+github.com/golangee/src v0.0.0-20210604070842-53380394865a/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210604071651-4189473dd850 h1:YBeiz7BjFtxybYeDjB3D3115M7w95rCeZm/q3i1/gzE=
+github.com/golangee/src v0.0.0-20210604071651-4189473dd850/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210604072629-eb5cbe3ca67a h1:xboBXDgps9i2wQJPeFLrj2gyYFUxucCq09M6Sb+FK88=
+github.com/golangee/src v0.0.0-20210604072629-eb5cbe3ca67a/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210604144928-65dafe3dbeee h1:T3N87VzWIXIXSPw+HEobx4lUHqJOFcPjoNI3g3kynKg=
+github.com/golangee/src v0.0.0-20210604144928-65dafe3dbeee/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/r3labs/diff v1.1.0 h1:V53xhrbTHrWFWq3gI4b94AjgEJOerO1+1l0xyHOBi8M=
 github.com/r3labs/diff v1.1.0/go.mod h1:7WjXasNzi0vJetRcB/RqNl5dlIsmXcTTLmF5IoH6Xig=

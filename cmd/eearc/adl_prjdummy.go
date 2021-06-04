@@ -31,7 +31,9 @@ func createWorkspace() *Project {
 						SetOutDir("../../testdata/workspace/server").
 						SetGo(NewGolang().
 							SetModName("github.com/golangee/architecture/testdata/workspace/server").
-							Require("github.com/golangee/uuid latest"),
+							Require("github.com/golangee/uuid latest").
+							AddDist("darwin", "amd64").
+							AddDist("linux", "amd64"),
 						),
 				).
 				AddExecutables(

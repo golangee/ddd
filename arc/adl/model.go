@@ -108,14 +108,29 @@ func (g *Generator) SetOutDir(dir string) *Generator {
 	return g
 }
 
+type GoDist struct {
+	Arch token.String
+	Os   token.String
+}
+
 // Golang describes how a Go project (or module) must be created or updated.
 type Golang struct {
-	Module   token.String   // the name of the go module, e.g. github.com/worldiety/supportiety
+	Module   token.String // the name of the go module, e.g. github.com/worldiety/supportiety
+	GoDist   []*GoDist
 	Requires []token.String // require directives
 }
 
 func NewGolang() *Golang {
 	return &Golang{}
+}
+
+func (g *Golang) AddDist(goos, goarch string) *Golang {
+	g.GoDist = append(g.GoDist, &GoDist{
+		Arch: traceStr(goarch),
+		Os:   traceStr(goos),
+	})
+
+	return g
 }
 
 func (g *Golang) SetModName(name string) *Golang {

@@ -36,6 +36,10 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 		return token.NewPosError(src.Name, "cannot render logger")
 	}
 
+	if err := renderMakefile(mod, src); err != nil {
+		return token.NewPosError(src.Name, "cannot render makefile")
+	}
+
 	// buildinfo
 	if err := renderBuildInfo(mod, src); err != nil {
 		return token.NewPosError(src.Name, "cannot render build info")
@@ -77,10 +81,6 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 
 	return nil
 }
-
-
-
-
 
 func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) error {
 	mod := astutil.Mod(parent)
@@ -183,4 +183,3 @@ func buildService(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *a
 
 	return defaultService, service, nil
 }
-
