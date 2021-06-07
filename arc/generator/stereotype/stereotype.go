@@ -26,4 +26,7 @@ const (
 
 	// declares the default sort order
 	kSQLDefaultOrder secretKey  = "kSQLDefaultOrder"
+
+	// kCMDPkg declares a package as a main package entry point. Package must be a "main" package.
+	kCMDPkg secretKey = "kCMDPkg"
 )

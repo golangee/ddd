@@ -15,6 +15,21 @@
 # limitations under the License.
 
 
+prefix ?= /usr/local
+bindir ?= $(prefix)/bin
+DESTDIR ?= ./build
+
+CI_JOB_ID ?= $(shell date +%s)
+CI_COMMIT_TAG ?= $(shell git name-rev --name-only HEAD)
+CI_JOB_STARTED_AT ?= $(shell date +"%Y-%m-%dT%T%z") # RFC3339 | ISO8601
+CI_COMMIT_SHA ?= $(shell git rev-parse HEAD)
+CI_SERVER_HOST ?= $(shell hostname)
+
+
+buildInfo = github.com/golangee/architecture/testdata/workspace/server/internal/buildinfo
+LDFLAGS = -X $(buildInfo).JobID=${CI_JOB_ID} -X $(buildInfo).CommitTag=${CI_COMMIT_TAG} -X $(buildInfo).JobStartedAt=${CI_JOB_STARTED_AT} -X $(buildInfo).CommitSha=${CI_COMMIT_SHA} -X $(buildInfo).Host=${CI_SERVER_HOST}
+path_supportiety_server = "github.com/golangee/architecture/testdata/workspace/server/cmd/supportiety-server"
+
 test: ## Executes all tests.
 	@go test -race -timeout=5m ./...
 .PHONY: test
@@ -24,19 +39,33 @@ lint: ## Runs the linter. See golangci.yaml for details.
 	golangci-lint run --config golangci.yaml
 .PHONY: lint
 
+generate: ## runs go generate
+	@go generate ./...
+.PHONY: generate
+
 help: ## Shows this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
 
+run-supportiety-server: ## runs supportiety-server without installing
+	go run -ldflags "${LDFLAGS}" $(path_supportiety_server)
+
+
 # required by GNU standard
 
-dist: ## builds for all major platforms
-	GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${BUILD_DIR}/darwin_amd64/app.wasm ${MAIN_PATH}
-	GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o ${BUILD_DIR}/linux_amd64/app.wasm ${MAIN_PATH}
+check: lint test ## build and runs tests and linters
+
+install: ## builds and installs on the current system
+	go build -ldflags "${LDFLAGS}" -o $(DESTDIR)$(bindir)/supportiety-server $(path_supportiety_server)
 .PHONY: dist
 
-all: generate check build ## Compiles all programs
+dist: ## builds for all major platforms, example: make DESTDIR=/tmp/stage dist
+	GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $(DESTDIR)/darwin_amd64/supportiety-server $(path_supportiety_server)
+	GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $(DESTDIR)/linux_amd64/supportiety-server $(path_supportiety_server)
+.PHONY: dist
+
+all: generate check dist ## generate, check and build dist
 .PHONY: all
 
 .DEFAULT_GOAL := all

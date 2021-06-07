@@ -203,3 +203,12 @@ func MakeTypeDecl(t *adl.TypeDecl) ast.TypeDecl {
 
 	return ast.NewGenericDecl(ast.NewSimpleTypeDecl(ast.Name(t.Name.String())), typeParams...)
 }
+
+func LastPathSegment(path string) string {
+	segments := strings.Split(path, "/")
+	if len(segments) == 0 {
+		return ""
+	}
+
+	return segments[len(segments)-1]
+}

@@ -4,6 +4,7 @@ import (
 	"github.com/golangee/architecture/arc/adl"
 	"github.com/golangee/architecture/arc/generator/astutil"
 	"github.com/golangee/architecture/arc/generator/golang"
+	"github.com/golangee/architecture/arc/generator/stereotype"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib"
 )
@@ -19,6 +20,7 @@ func renderExecs(dst *ast.Mod, src *adl.Module) error {
 			cmdPkg.Name = "main"
 			cmdPkg.SetComment(executable.Comment.String())
 			cmdPkg.SetPreamble(makePreamble(src.Preamble))
+			stereotype.PkgFrom(cmdPkg).SetIsCMDPkg(true)
 
 			cmdPkg.AddFiles(
 				ast.NewFile("main.go").

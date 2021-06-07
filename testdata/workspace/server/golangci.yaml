@@ -64,6 +64,7 @@ linters:
   - 'unused'
   - 'varcheck'
   - 'whitespace'
+  - 'wsl'
 
 issues:
   exclude:
