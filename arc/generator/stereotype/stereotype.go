@@ -25,8 +25,11 @@ const (
 	kSQLColumnName secretKey = "kSQLColumnName"
 
 	// declares the default sort order
-	kSQLDefaultOrder secretKey  = "kSQLDefaultOrder"
+	kSQLDefaultOrder secretKey = "kSQLDefaultOrder"
 
 	// kCMDPkg declares a package as a main package entry point. Package must be a "main" package.
 	kCMDPkg secretKey = "kCMDPkg"
+
+	// kModuleDocs declares the root of all available documentations about a module.
+	kModuleDocs secretKey = "kModuleDocs"
 )

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golangee/architecture/arc/adl"
 	"github.com/golangee/architecture/arc/ddd/generator/golang"
+	"github.com/golangee/architecture/arc/ddd/generator/markdown"
 	"github.com/golangee/architecture/arc/token"
 	"github.com/golangee/src/ast"
 	golang2 "github.com/golangee/src/golang"
@@ -22,12 +23,16 @@ func Render(prj *adl.Project) (render.Artifact, error) {
 		if module.Generator.Go != nil {
 			noGenSettings = false
 			if err := golang.RenderModule(astPrj, prj, module); err != nil {
-				return nil, token.NewPosError(module.Name, "unable to render module").SetCause(err)
+				return nil, token.NewPosError(module.Name, "unable to render golang module").SetCause(err)
 			}
 		}
 
 		if noGenSettings {
 			return nil, token.NewPosError(module.Name, "module has no generator settings details")
+		}
+
+		if err := markdown.RenderModule(astPrj, prj, module); err != nil {
+			return nil, token.NewPosError(module.Name, "unable to render markdown from module").SetCause(err)
 		}
 	}
 

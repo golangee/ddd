@@ -28,6 +28,8 @@ CI_SERVER_HOST ?= $(shell hostname)
 
 buildInfo = github.com/golangee/architecture/testdata/workspace/server/internal/buildinfo
 LDFLAGS = -X $(buildInfo).JobID=${CI_JOB_ID} -X $(buildInfo).CommitTag=${CI_COMMIT_TAG} -X $(buildInfo).JobStartedAt=${CI_JOB_STARTED_AT} -X $(buildInfo).CommitSha=${CI_COMMIT_SHA} -X $(buildInfo).Host=${CI_SERVER_HOST}
+
+# doc: #go install --tags=extended github.com/gohugoio/hugo@latest
 path_supportiety_server = "github.com/golangee/architecture/testdata/workspace/server/cmd/supportiety-server"
 
 test: ## Executes all tests.

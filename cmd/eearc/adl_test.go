@@ -25,7 +25,7 @@ func TestADLMarshalling(t *testing.T) {
 func TestDummyProject(t *testing.T) {
 	ws := createWorkspace()
 	a, err := arc.Render(ws)
-	fmt.Println(a)
+	//fmt.Println(a)
 
 	if err != nil {
 		t.Fatal(err)

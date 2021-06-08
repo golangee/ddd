@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golangee/architecture/arc/adl"
 	"github.com/golangee/architecture/arc/generator/astutil"
+	"github.com/golangee/architecture/arc/generator/doc"
 	"github.com/golangee/architecture/arc/generator/golang"
 	"github.com/golangee/architecture/arc/generator/stereotype"
 	"github.com/golangee/src/ast"
@@ -102,7 +103,7 @@ CI_SERVER_HOST ?= $(shell hostname)
 buildInfo = {{.Get "modPath"}}/internal/buildinfo
 LDFLAGS = -X $(buildInfo).JobID=${CI_JOB_ID} -X $(buildInfo).CommitTag=${CI_COMMIT_TAG} -X $(buildInfo).JobStartedAt=${CI_JOB_STARTED_AT} -X $(buildInfo).CommitSha=${CI_COMMIT_SHA} -X $(buildInfo).Host=${CI_SERVER_HOST}
 
-
+# doc: #go install --tags=extended github.com/gohugoio/hugo@latest 
 
 {{- range .Get "install"}}
 {{.VarName}} = "{{.Path}}"
@@ -186,16 +187,24 @@ all: generate check dist ## generate, check and build dist
 	}
 
 	pkg := astutil.MkPkg(dst, golang.MakePkgPath(dst.Name))
-	pkg.AddRawFiles(ast.NewRawTpl("Makefile", "text/x-makefile", ast.NewTpl(
-		makeEscapedPreamble(src.Preamble, "# ")+mkfile,
-	).
-		Put("dists", targets).
-		Put("install", currentOsTargets).
-		Put("modPath", dst.Name)))
+	pkg.AddRawFiles(
+		ast.NewRawTpl("Makefile", "text/x-makefile", ast.NewTpl(
+			makeEscapedPreamble(src.Preamble, "# ")+mkfile,
+		).
+			Put("dists", targets).
+			Put("install", currentOsTargets).
+			Put("modPath", dst.Name)),
+	)
 
 	if err := renderGolangciyaml(dst, src); err != nil {
 		return fmt.Errorf("cannot create golangci.yml: %w", err)
 	}
+
+	stereotype.ModFrom(dst).Docs().Append(stereotype.DocDevelop,
+		doc.NewElement("div").Append(
+			doc.NewElement("h2").Append(doc.NewText("makefile")),
+			doc.NewText("yada yada yada"),
+		))
 
 	return nil
 }

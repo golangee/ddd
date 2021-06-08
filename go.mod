@@ -4,5 +4,5 @@ go 1.16
 
 require (
 	github.com/golangee/sql v0.0.0-20210531101020-33021aed64c2
-	github.com/golangee/src v0.0.0-20210604144928-65dafe3dbeee
+	github.com/golangee/src v0.0.0-20210608170152-8d7947b27f54
 )

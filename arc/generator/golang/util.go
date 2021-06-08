@@ -7,6 +7,26 @@ import (
 	"unicode"
 )
 
+// PkgPathDir is like filepath.Dir but always with /
+func PkgPathDir(p string) string {
+	segments := strings.Split(p, "/")
+	if len(segments) == 0 {
+		return p
+	}
+
+	return strings.Join(segments[:len(segments)-1], "/")
+}
+
+// PkgPathBase is like filepath.Base but always with /
+func PkgPathBase(p string) string {
+	segments := strings.Split(p, "/")
+	if len(segments) == 0 {
+		return p
+	}
+
+	return segments[len(segments)-1]
+}
+
 // MakePkgPath takes arbitrary fragments and creates a more or less idiomatic path of it.
 func MakePkgPath(frags ...string) string {
 	tmp := strings.Builder{}
