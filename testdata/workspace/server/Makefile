@@ -18,6 +18,7 @@
 prefix ?= /usr/local
 bindir ?= $(prefix)/bin
 DESTDIR ?= ./build
+TMPDIR ?= $(shell mktemp -d)
 
 CI_JOB_ID ?= $(shell date +%s)
 CI_COMMIT_TAG ?= $(shell git name-rev --name-only HEAD)
@@ -25,6 +26,10 @@ CI_JOB_STARTED_AT ?= $(shell date +"%Y-%m-%dT%T%z") # RFC3339 | ISO8601
 CI_COMMIT_SHA ?= $(shell git rev-parse HEAD)
 CI_SERVER_HOST ?= $(shell hostname)
 
+UNAME := $(shell uname)
+ifeq ($(UNAME),Darwin)
+	openHugoCMD := open http://localhost:4563
+endif
 
 buildInfo = github.com/golangee/architecture/testdata/workspace/server/internal/buildinfo
 LDFLAGS = -X $(buildInfo).JobID=${CI_JOB_ID} -X $(buildInfo).CommitTag=${CI_COMMIT_TAG} -X $(buildInfo).JobStartedAt=${CI_JOB_STARTED_AT} -X $(buildInfo).CommitSha=${CI_COMMIT_SHA} -X $(buildInfo).Host=${CI_SERVER_HOST}
@@ -63,9 +68,38 @@ install: ## builds and installs on the current system
 .PHONY: dist
 
 dist: ## builds for all major platforms, example: make DESTDIR=/tmp/stage dist
-	GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $(DESTDIR)/darwin_amd64/supportiety-server $(path_supportiety_server)
-	GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $(DESTDIR)/linux_amd64/supportiety-server $(path_supportiety_server)
+	GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $(DESTDIR)/bin/darwin_amd64/supportiety-server $(path_supportiety_server)
+	GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o $(DESTDIR)/bin/linux_amd64/supportiety-server $(path_supportiety_server)
 .PHONY: dist
+
+
+# download hugo theme only once
+$(DESTDIR)/docs/html/themes/hugo-book/:
+	mkdir -p $(DESTDIR)/docs/html/themes
+	curl https://codeload.github.com/alex-shpak/hugo-book/zip/refs/heads/master --output $(DESTDIR)/docs/html/hugo-book.zip
+	unzip $(DESTDIR)/docs/html/hugo-book.zip -d $(DESTDIR)/docs/html/themes/hugo-book
+	mv $(DESTDIR)/docs/html/themes/hugo-book/hugo-book-master/* $(DESTDIR)/docs/html/themes/hugo-book
+	rm -f $(DESTDIR)/docs/html/hugo-book.zip
+	rm -rf $(DESTDIR)/docs/html/themes/hugo-book/hugo-book-master
+	rm -rf $(DESTDIR)/docs/html/themes/hugo-book/images
+	rm -rf $(DESTDIR)/docs/html/themes/hugo-book/exampleSite
+	rm -f $(DESTDIR)/docs/html/themes/hugo-book/README.md
+
+html: $(DESTDIR)/docs/html/themes/hugo-book/ ## generates the html documentation.
+	rm -rf $(DESTDIR)/docs/html/content
+	cp -R docs/ $(DESTDIR)/docs/html/
+	cd $(DESTDIR)/docs/html/ && hugo 
+.PHONY: html
+
+serve-html: html ## builds the html documentation, serves it and opens a browser window
+	$(openHugoCMD)
+	cd $(DESTDIR)/docs/html/ && hugo server -p 4563
+.PHONY: serve-html
+
+clean:
+	rm -rf $(DESTDIR)/docs
+	rm -rf $(DESTDIR)/bin
+.PHONY: clean
 
 all: generate check dist ## generate, check and build dist
 .PHONY: all
