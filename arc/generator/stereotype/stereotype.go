@@ -32,4 +32,8 @@ const (
 
 	// kModuleDocs declares the root of all available documentations about a module.
 	kModuleDocs secretKey = "kModuleDocs"
+
+	// kModShortName is attached to a module and contains a (hopefully global) short and
+	// memorable identifier for the entire module.
+	kModShortName secretKey = "kModShortName"
 )

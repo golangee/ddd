@@ -173,7 +173,7 @@ html: $(DESTDIR)/docs/html/themes/hugo-book/ ## generates the html documentation
 
 serve-html: html ## builds the html documentation, serves it and opens a browser window
 	$(openHugoCMD)
-	cd $(DESTDIR)/docs/html/ && hugo server -p 4563
+	cd $(DESTDIR)/docs/html/ && hugo server -D -p 4563
 .PHONY: serve-html
 
 clean:
@@ -234,10 +234,16 @@ all: generate check dist ## generate, check and build dist
 		return fmt.Errorf("cannot create golangci.yml: %w", err)
 	}
 
-	stereotype.ModFrom(dst).Docs().Append(stereotype.DocDevelop,
+	stereotype.Doc(dst, "", stereotype.DocDevelop,
 		doc.NewElement("div").Append(
-			doc.NewElement("h2").Append(doc.NewText("makefile")),
-			doc.NewText("yada yada yada"),
+			doc.NewElement("h1").Append(doc.NewText("how to use the makefile")),
+			doc.NewText(""),
+		))
+
+	stereotype.Doc(dst, "de", stereotype.DocDevelop,
+		doc.NewElement("div").Append(
+			doc.NewElement("h1").Append(doc.NewText("so geht es: makefile")),
+			doc.NewText(""),
 		))
 
 	return nil

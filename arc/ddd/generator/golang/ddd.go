@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/golangee/architecture/arc/adl"
 	"github.com/golangee/architecture/arc/generator/astutil"
+	"github.com/golangee/architecture/arc/generator/doc"
 	"github.com/golangee/architecture/arc/generator/golang"
+	"github.com/golangee/architecture/arc/generator/stereotype"
 	"github.com/golangee/architecture/arc/token"
 	"github.com/golangee/src/ast"
 	golang2 "github.com/golangee/src/golang"
@@ -26,6 +28,17 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 		SetOutputDirectory(src.Generator.OutDir.String())
 
 	mod.Require("github.com/golangee/log latest")
+
+
+
+	stereotype.ModFrom(mod).SetIdent(src.Name.String())
+
+	stereotype.ModFrom(mod).Docs().Append("docs/content/_index.md", doc.NewText("welcome to the docs"))
+
+	stereotype.Doc(mod, "", "_index.md", doc.NewText("everything about this cool service is here"))
+
+	stereotype.ModFrom(mod).SetIdent(src.Name.String())
+	stereotype.Doc(mod, "", "getting-started/_index.md", doc.NewText("everything you must need to know to get started."))
 
 	for _, require := range src.Generator.Go.Requires {
 		mod.Require(require.String())

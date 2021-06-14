@@ -24,7 +24,7 @@ func createWorkspace() *Project {
 	return NewProject("supportiety").
 		PutGlossary("supportiety/tickets", "...describes the bounded context around anything in the error reporting context treated as a ticket.").
 		AddModules(
-			NewModule("server").
+			NewModule("supportiety-srv").
 				SetLicense(licenseExample).
 				SetGenerator(
 					NewGenerator().

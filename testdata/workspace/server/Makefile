@@ -93,7 +93,7 @@ html: $(DESTDIR)/docs/html/themes/hugo-book/ ## generates the html documentation
 
 serve-html: html ## builds the html documentation, serves it and opens a browser window
 	$(openHugoCMD)
-	cd $(DESTDIR)/docs/html/ && hugo server -p 4563
+	cd $(DESTDIR)/docs/html/ && hugo server -D -p 4563
 .PHONY: serve-html
 
 clean:
