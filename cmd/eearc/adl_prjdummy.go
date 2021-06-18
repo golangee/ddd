@@ -21,10 +21,10 @@ See the License for the specific language governing permissions and
 limitations under the License.`
 
 func createWorkspace() *Project {
-	return NewProject("supportiety").
+	return NewProject("supportiety", "...contains all modules, domains and bounded contexts around the ticket system 'supportiety'.").
 		PutGlossary("supportiety/tickets", "...describes the bounded context around anything in the error reporting context treated as a ticket.").
 		AddModules(
-			NewModule("supportiety-srv").
+			NewModule("supportiety-srv", "...defines a go module containing the supportiety microservice.").
 				SetLicense(licenseExample).
 				SetGenerator(
 					NewGenerator().
@@ -39,16 +39,18 @@ func createWorkspace() *Project {
 				AddExecutables(
 					NewExecutable("supportiety-server", "...provides the rest service."),
 				).
-				SetDomain(
-					NewDomain("supportiety/tickets").
+				AddBoundedContexts(
+					NewBoundedContext("Tickets","$MOD/internal/tickets").
 						AddCore(
 							NewPackage("", "").
-								AddDataTransferObjects(
+								AddStructs(
 									NewDTO("Ticket", "...represents a Ticket about a crash incident or other support requests.").
-										AddField("ID", "...is the globally unique identifier.", NewTypeDecl(stdlib.UUID)).
-										AddField("When", "...is date time.", NewTypeDecl(stdlib.Time)).
-										AddField("Map", "...is key value stuff", NewTypeDecl(stdlib.Map, NewTypeDecl(stdlib.String), NewTypeDecl(stdlib.Int))).
-										AddField("Other", "...is a pointer example", NewTypeDecl("*", NewTypeDecl("github.com/golangee/architecture/testdata/workspace/server/supportiety/tickets/domain/core.Ticket"))),
+										AddFields(
+											NewField("ID", "...is the globally unique identifier.", NewTypeDecl(stdlib.UUID)),
+											NewField("When", "...is date time.", NewTypeDecl(stdlib.Time)),
+											NewField("Map", "...is key value stuff", NewTypeDecl(stdlib.Map, NewTypeDecl(stdlib.String), NewTypeDecl(stdlib.Int))),
+											NewField("Other", "...is a pointer example", NewTypeDecl("*", NewTypeDecl("$BC/core.Ticket"))),
+										),
 
 
 								).
@@ -70,7 +72,16 @@ func createWorkspace() *Project {
 						AddUsecase(
 							// actually a service == group of single use cases == UML use case diagram
 							NewPackage("", "").AddServices(
-								NewService("Tickets", "...is all about the tickets higher order use cases."),
+								NewService("Tickets", "...is all about the tickets higher order use cases.").
+									AddFields(NewPrivateField("mutex", "...ensures that internal state is thread safe.", NewTypeDecl("sync.Mutex"))).
+									AddMethods(NewMethod("SayHelloTicket", "...says hello to tickets.")).
+									AddInjections(
+										NewInjection("myCfg", "", Cfg, NewTypeDecl("$BC/usecase.MyConfig")),
+										NewInjection("tickets", "... is the other tickets stuff", ServiceComponent, NewTypeDecl("$BC/core.Tickets")),
+									),
+							).AddStructs(
+								NewStruct("MyConfig", "...is use case feature flag configuration.", Cfg).
+									AddFields(NewField("FancyFeature", "... is the fancy feature toggle.", NewTypeDecl(stdlib.Bool))),
 							),
 						),
 				),

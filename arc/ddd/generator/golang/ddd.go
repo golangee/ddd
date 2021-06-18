@@ -14,6 +14,8 @@ import (
 )
 
 func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
+	normalizeNames(src)
+
 	if src.Generator == nil {
 		return fmt.Errorf("cannot render a non-target project: %s", src.Name)
 	}
@@ -29,13 +31,20 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 
 	mod.Require("github.com/golangee/log latest")
 
-
-
+	stereotype.ModFrom(mod).SetProjectIdent(prj.Name.String())
 	stereotype.ModFrom(mod).SetIdent(src.Name.String())
 
-	stereotype.ModFrom(mod).Docs().Append("docs/content/_index.md", doc.NewText("welcome to the docs"))
+	// set the root doc (lets use the project context)
+	stereotype.ModFrom(mod).Docs().Append("docs/content/_index.md",
+		doc.NewElement("h2").Append(doc.NewText(prj.Name.String())),
+		doc.NewText(golang2.DeEllipsis(prj.Name.String(), prj.Comment.String())),
+	)
 
-	stereotype.Doc(mod, "", "_index.md", doc.NewText("everything about this cool service is here"))
+	// set the module doc
+	stereotype.Doc(mod, "", "_index.md",
+		doc.NewElement("h2").Append(doc.NewText(src.Name.String())),
+		doc.NewText(golang2.DeEllipsis(prj.Name.String(), src.Comment.String())),
+	)
 
 	stereotype.ModFrom(mod).SetIdent(src.Name.String())
 	stereotype.Doc(mod, "", "getting-started/_index.md", doc.NewText("everything you must need to know to get started."))
@@ -64,32 +73,34 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 		return token.NewPosError(src.Name, "cannot render makefile")
 	}
 
-	// domain package
-	domainTerm := prj.Glossary.Terms[src.Domain.Name.String()]
-	domainRootPkg := golang.MakePkgPath(src.Generator.Go.Module.String(), src.Domain.Name.String(), "domain")
-	domain := astutil.MkPkg(mod, domainRootPkg)
-	domain.SetComment("...contains the core and usecase packages which represent the " + src.Domain.Name.String() + " domain model.\n" + golang2.DeEllipsis(domainTerm.Ident.String(), domainTerm.Description.String()))
-	domain.SetPreamble(makePreamble(src.Preamble))
+	// bounded context packages
+	for _, bc := range src.BoundedContexts {
+		domainTerm := prj.Glossary.Terms[bc.Name.String()]
+		domainRootPkg := golang.MakePkgPath(bc.Path.String())
+		domain := astutil.MkPkg(mod, domainRootPkg)
+		domain.SetComment("...contains the core and usecase packages which represent the bounded contexts" + bc.Name.String() + " domain model.\n" + golang2.DeEllipsis(domainTerm.Ident.String(), domainTerm.Description.String()))
+		domain.SetPreamble(makePreamble(src.Preamble))
 
-	// core packages
-	coreRootPkg := golang.MakePkgPath(domainRootPkg, "core")
-	coreRoot := astutil.MkPkg(mod, coreRootPkg)
-	coreRoot.SetComment("...contains the domains primitives like Entities, Values, Repositories, Services (anemic), Events, aggregate roots (non-anemic) or DTOs.")
-	coreRoot.SetPreamble(makePreamble(src.Preamble))
-	for _, p := range src.Domain.Core {
-		if err := renderUserTypes(coreRoot, src, p); err != nil {
-			return token.NewPosError(p.Name, "unable to render domain core package").SetCause(err)
+		// core packages
+		coreRootPkg := golang.MakePkgPath(domainRootPkg, "core")
+		coreRoot := astutil.MkPkg(mod, coreRootPkg)
+		coreRoot.SetComment("...contains the domains primitives like Entities, Values, Repositories, Services (anemic), Events, aggregate roots (non-anemic) or DTOs.")
+		coreRoot.SetPreamble(makePreamble(src.Preamble))
+		for _, p := range bc.Core {
+			if err := renderUserTypes(coreRoot, src, p); err != nil {
+				return token.NewPosError(p.Name, "unable to render domain core package").SetCause(err)
+			}
 		}
-	}
 
-	// usecase packages
-	usecaseRootPkg := golang.MakePkgPath(domainRootPkg, "usecase")
-	usecaseRoot := astutil.MkPkg(mod, usecaseRootPkg)
-	usecaseRoot.SetComment("...contains the domains use cases, usually in a service form, which uses an arbitrary composition of the domains primitives.")
-	usecaseRoot.SetPreamble(makePreamble(src.Preamble))
-	for _, p := range src.Domain.Usecase {
-		if err := renderUserTypes(usecaseRoot, src, p); err != nil {
-			return token.NewPosError(p.Name, "unable to render domain usecase package").SetCause(err)
+		// usecase packages
+		usecaseRootPkg := golang.MakePkgPath(domainRootPkg, "usecase")
+		usecaseRoot := astutil.MkPkg(mod, usecaseRootPkg)
+		usecaseRoot.SetComment("...contains the domains use cases, usually in a service form, which uses an arbitrary composition of the domains primitives.")
+		usecaseRoot.SetPreamble(makePreamble(src.Preamble))
+		for _, p := range bc.Usecase {
+			if err := renderUserTypes(usecaseRoot, src, p); err != nil {
+				return token.NewPosError(p.Name, "unable to render domain usecase package").SetCause(err)
+			}
 		}
 	}
 
@@ -123,29 +134,29 @@ func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) erro
 	// dtos
 	if len(src.DTOs) > 0 {
 		file := ast.NewFile(strings.ToLower("dtos.go"))
+		pkg.AddFiles(file)
 		file.SetPreamble(makePreamble(srcMod.Preamble))
 		for _, dto := range src.DTOs {
-			typ, err := buildStruct(file, srcMod, src, dto)
+			typ, err := golang.AddComponent(file, dto)
 			if err != nil {
 				return err
 			}
 
 			_ = typ
 		}
-		pkg.AddFiles(file)
 	}
 
 	// services
 	if len(src.Services) > 0 {
 		file := ast.NewFile(strings.ToLower("services.go"))
+		pkg.AddFiles(file)
 		file.SetPreamble(makePreamble(srcMod.Preamble))
-		for _, dto := range src.Services {
-			_, _, err := buildService(file, srcMod, src, dto)
+		for _, srv := range src.Services {
+			_, err := golang.AddComponent(file, srv.Component)
 			if err != nil {
 				return err
 			}
 		}
-		pkg.AddFiles(file)
 	}
 
 	return nil
@@ -169,31 +180,4 @@ func buildInterface(parent *ast.File, srcMod *adl.Module, src *adl.Package, ifac
 	}
 
 	return aType, nil
-}
-
-func buildStruct(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *adl.DTO) (*ast.Struct, error) {
-	aType := ast.NewStruct(typ.Name.String()).SetComment(typ.Comment.String())
-	parent.AddTypes(aType)
-
-	for _, field := range typ.Fields {
-		aType.AddFields(ast.NewField(field.Name.String(), astutil.MakeTypeDecl(field.Type)).SetComment(field.Comment.String()))
-	}
-	return aType, nil
-}
-
-func buildService(parent *ast.File, srcMod *adl.Module, src *adl.Package, typ *adl.Service) (defaultService, service *ast.Struct, _ error) {
-	defaultService = ast.NewStruct(golang.MakePrivate("Default" + typ.Name.String())).
-		SetComment("...is an implementation stub for " + typ.Name.String() + ".").
-		SetVisibility(ast.Private)
-
-	for _, field := range typ.Fields {
-		defaultService.AddFields(ast.NewField(field.Name.String(), astutil.MakeTypeDecl(field.Type)).SetComment(field.Comment.String()))
-	}
-
-	service = ast.NewStruct(typ.Name.String()).SetComment(typ.Comment.String()).AddEmbedded(ast.NewSimpleTypeDecl(ast.Name(defaultService.TypeName)))
-
-	parent.AddTypes(defaultService)
-	parent.AddTypes(service)
-
-	return defaultService, service, nil
 }

@@ -34,9 +34,9 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 				pkg.AddRawFiles(ast.NewRawFile(golang.PkgPathBase(path), "text/markdown", buf.Bytes()))
 			}
 
-			modIdent := stereotype.ModFrom(mod).Ident()
+			prjIdent := stereotype.ModFrom(mod).ProjectIdent()
 			pkg := astutil.MkPkg(mod, golang.MakePkgPath(mod.Name, "docs"))
-			pkg.AddRawFiles(ast.NewRawFile("config.toml", "text/x-toml", []byte(strings.ReplaceAll(configToml, "{{.Title}}", modIdent))))
+			pkg.AddRawFiles(ast.NewRawFile("config.toml", "text/x-toml", []byte(strings.ReplaceAll(configToml, "{{.Title}}", prjIdent))))
 		}
 	}
 

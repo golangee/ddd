@@ -36,4 +36,8 @@ const (
 	// kModShortName is attached to a module and contains a (hopefully global) short and
 	// memorable identifier for the entire module.
 	kModShortName secretKey = "kModShortName"
+
+	// kPrjShortName is attached to a module and contains a short and
+	// memorable identifier for the entire project (containing this and other modules).
+	kPrjShortName secretKey = "kPrjShortName"
 )

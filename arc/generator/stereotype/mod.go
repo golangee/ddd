@@ -37,6 +37,20 @@ func (c Mod) SetIdent(ident string) {
 	c.obj.PutValue(kModShortName, ident)
 }
 
+// ProjectIdent returns a unique identifier for the module or the empty string.
+func (c Mod) ProjectIdent() string {
+	v := c.obj.Value(kPrjShortName)
+	if v == nil {
+		return ""
+	}
+
+	return v.(string)
+}
+
+func (c Mod) SetProjectIdent(ident string) {
+	c.obj.PutValue(kPrjShortName, ident)
+}
+
 func (c Mod) Docs() *Docs {
 	v := c.obj.Value(kModuleDocs)
 	if f, ok := v.(*Docs); ok {

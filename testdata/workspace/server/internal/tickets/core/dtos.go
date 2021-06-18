@@ -14,13 +14,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package usecase
+package core
 
-// defaultTickets is an implementation stub for Tickets.
-type defaultTickets struct {
-}
+import (
+	uuid "github.com/golangee/uuid"
+	time "time"
+)
 
-// Tickets is all about the tickets higher order use cases.
-type Tickets struct {
-	defaultTickets
+// Ticket represents a Ticket about a crash incident or other support requests.
+//
+// The stereotype of this type is 'dto'.
+type Ticket struct {
+	// ID is the globally unique identifier.
+	ID uuid.UUID
+
+	// When is date time.
+	When time.Time
+
+	// Map is key value stuff
+	Map map[string]int
+
+	// Other is a pointer example
+	Other *Ticket
 }

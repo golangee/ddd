@@ -68,6 +68,7 @@ func TestDummyProject(t *testing.T) {
 	out, err = cmd.CombinedOutput()
 	t.Log(string(out))
 	if err != nil {
+		fmt.Println(a)
 		t.Fatal(err)
 	}
 }
