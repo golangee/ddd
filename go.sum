@@ -26,6 +26,8 @@ github.com/golangee/src v0.0.0-20210608170152-8d7947b27f54 h1:8FLVGSy57nqxHyBmby
 github.com/golangee/src v0.0.0-20210608170152-8d7947b27f54/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/golangee/src v0.0.0-20210621093909-b45529a1d31b h1:y6gy6cPZyiV8y/5LSx/JjT60+EZqKy2x7EEDUnW2k6U=
 github.com/golangee/src v0.0.0-20210621093909-b45529a1d31b/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
+github.com/golangee/src v0.0.0-20210621131033-63e12ff82111 h1:Lugmp4/ccL/qGG9POr3YlagD/HFFNANTTlSMNPk7F6k=
+github.com/golangee/src v0.0.0-20210621131033-63e12ff82111/go.mod h1:zQhMlD1AUuj1QJyuHtN2HNpt/PVRJIhEVdpzzEi00gg=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/r3labs/diff v1.1.0 h1:V53xhrbTHrWFWq3gI4b94AjgEJOerO1+1l0xyHOBi8M=
 github.com/r3labs/diff v1.1.0/go.mod h1:7WjXasNzi0vJetRcB/RqNl5dlIsmXcTTLmF5IoH6Xig=

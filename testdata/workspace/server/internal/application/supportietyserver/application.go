@@ -22,14 +22,38 @@ import (
 	usecase "github.com/golangee/architecture/testdata/workspace/server/internal/tickets/usecase"
 )
 
-// Application aggregates all contained bounded contexts and starts their driver adapters.
+// Application embeds the defaultApplication to provide the default application behavior.
+// It also provides the inversion of control injection mechanism for all bounded contexts.
 type Application struct {
+	defaultApplication
+}
+
+func NewApplication() (*Application, error) {
+	a := &Application{}
+	a.defaultApplication.self = a
+	if err := a.init(); err != nil {
+		return nil, fmt.Errorf("cannot init application: %w", err)
+	}
+
+	return a, nil
+}
+
+// defaultApplication aggregates all contained bounded contexts and starts their driver adapters.
+type defaultApplication struct {
+	// self provides a pointer to the actual Application instance to provide
+	// one level of vtable calling indirection for simple method 'overriding'.
+	self *Application
+
 	ticketsUsecaseTickets *usecase.Tickets
 }
 
-func (a *Application) getTicketsUsecaseTickets(myCfg usecase.MyConfig, tickets core.Tickets) (*usecase.Tickets, error) {
-	if a.ticketsUsecaseTickets != nil {
-		return a.ticketsUsecaseTickets, nil
+func (_ defaultApplication) init() error {
+	return nil
+}
+
+func (d *defaultApplication) getTicketsUsecaseTickets(myCfg usecase.MyConfig, tickets core.Tickets) (*usecase.Tickets, error) {
+	if d.ticketsUsecaseTickets != nil {
+		return d.ticketsUsecaseTickets, nil
 	}
 
 	s, err := usecase.NewTickets(myCfg, tickets)
@@ -37,7 +61,7 @@ func (a *Application) getTicketsUsecaseTickets(myCfg usecase.MyConfig, tickets c
 		return nil, fmt.Errorf("cannot create service 'Tickets': %w", err)
 	}
 
-	a.ticketsUsecaseTickets = s
+	d.ticketsUsecaseTickets = s
 
 	return s, nil
 }

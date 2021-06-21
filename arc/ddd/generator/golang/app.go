@@ -29,8 +29,29 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 			cmdPkg.SetComment("...defines the application and dependency injection layer for the '" + executable.Name.String() + "' executable.\n\n" + executable.Comment.String())
 			cmdPkg.SetPreamble(makePreamble(src.Preamble))
 
-			app := ast.NewStruct("Application")
-			app.SetComment("...aggregates all contained bounded contexts and starts their driver adapters.")
+			appStub := ast.NewStruct("defaultApplication").SetComment("...embeds an IoC instance to provide a default behavior").SetVisibility(ast.Private)
+			app := ast.NewStruct("Application").SetComment("...embeds the defaultApplication to provide the default application behavior.\nIt also provides the inversion of control injection mechanism for all bounded contexts.")
+
+			appStub.AddMethods(ast.NewFunc("init").
+				SetVisibility(ast.Private).
+				AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
+				SetBody(ast.NewBlock(ast.NewReturnStmt(ast.NewIdentLit("nil")))))
+			appConst := ast.NewFunc("New"+app.TypeName).
+				AddResults(
+					ast.NewParam("", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl("Application"))),
+					ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+				).
+				SetBody(ast.NewBlock(ast.NewTpl("a := &Application{}\na." + appStub.TypeName + ".self = a\nif err:=a.init();err!=nil{\nreturn nil, fmt.Errorf(\"cannot init application: %w\",err)\n}\n\nreturn a,nil\n")))
+
+			cmdPkg.AddFiles(
+				ast.NewFile("application.go").
+					SetPreamble(makePreamble(src.Preamble)).
+					AddNodes(app, appConst, appStub),
+			)
+
+			app.AddEmbedded(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(appStub))))
+			appStub.AddFields(ast.NewField("self", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(app))))).SetVisibility(ast.Private).SetComment("...provides a pointer to the actual Application instance to provide\none level of vtable calling indirection for simple method 'overriding'."))
+			appStub.SetComment("...aggregates all contained bounded contexts and starts their driver adapters.")
 			for _, path := range executable.BoundedContextPaths {
 				bc := astutil.FindPkg(dst, path.String())
 				if bc == nil {
@@ -43,7 +64,7 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 				})
 
 				for _, service := range coreServices {
-					makeServiceGetter(app, service)
+					makeServiceGetter(appStub, service)
 				}
 
 				// the domain use cases
@@ -52,15 +73,10 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 				})
 
 				for _, service := range usecaseServices {
-					makeServiceGetter(app, service)
+					makeServiceGetter(appStub, service)
 				}
 			}
 
-			cmdPkg.AddFiles(
-				ast.NewFile("application.go").
-					SetPreamble(makePreamble(src.Preamble)).
-					AddTypes(app),
-			)
 		}
 	}
 
@@ -102,6 +118,7 @@ func makeServiceGetter(app, service *ast.Struct) {
 
 	app.AddFields(serviceField)
 	app.AddMethods(getter)
+
 }
 
 // findPrefixPkgs returns all packages using the according prefix.

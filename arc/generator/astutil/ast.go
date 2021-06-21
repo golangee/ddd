@@ -233,3 +233,30 @@ func LastPathSegment(path string) string {
 
 	return segments[len(segments)-1]
 }
+
+func CloneFuncSig(f *ast.Func) *ast.Func {
+	c := ast.NewFunc(f.FunName).SetVisibility(f.FunVisibility)
+	if f.Comment() != nil {
+		c.SetComment(f.CommentText())
+	}
+
+	for _, param := range f.FunParams {
+		p := ast.NewParam(param.ParamName, param.TypeDecl().Clone())
+		if param.Comment() != nil {
+			p.SetComment(param.CommentText())
+		}
+
+		c.AddParams(p)
+	}
+
+	for _, param := range f.FunResults {
+		p := ast.NewParam(param.ParamName, param.TypeDecl().Clone())
+		if param.Comment() != nil {
+			p.SetComment(param.CommentText())
+		}
+
+		c.AddResults(p)
+	}
+
+	return c
+}
