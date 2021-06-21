@@ -3,6 +3,7 @@ package golang
 import (
 	"github.com/golangee/architecture/arc/generator/astutil"
 	"github.com/golangee/src/ast"
+	"github.com/golangee/src/golang"
 	"strings"
 	"unicode"
 )
@@ -105,6 +106,14 @@ func ShortModName(n ast.Node) string {
 	}
 
 	return name
+}
+
+// GlobalFlatName tries to generate a readable and globally unique name without evaluating the actual context.
+func GlobalFlatName(n ast.NamedType) string {
+	const marker = "internal"
+	fqn := astutil.FullQualifiedName(n)
+	pos := strings.Index(fqn, marker)
+	return MakePublic(golang.MakeIdentifier(fqn[pos+len(marker):]))
 }
 
 func MkFile(dst *ast.Prj, modName, pkgName, fname string) *ast.File {

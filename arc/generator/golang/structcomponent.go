@@ -48,7 +48,7 @@ func AddComponent(parent *ast.File, compo *adl.Struct) (component *ast.Struct, _
 
 		c.SetBody(ast.NewBlock(ast.NewTpl(shortName + " := &" + compo.Name.String() + "{}\n" + injectFieldAssigns + "\nif err := " + shortName + ".init(); err != nil {\nreturn nil, {{.Use \"fmt.Errorf\"}}(\"cannot initialize '" + compo.Name.String() + "': %w\",err)}\n\n return " + shortName + ",nil\n")))
 
-		component.AddFactoryRefs(*c)
+		component.AddFactoryRefs(c)
 		parent.AddNodes(c)
 	}
 

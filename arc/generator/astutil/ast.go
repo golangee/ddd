@@ -33,6 +33,17 @@ func MkMod(prj *ast.Prj, modName string) *ast.Mod {
 	return mod
 }
 
+// FindPkg returns an existing package or nil.
+func FindPkg(mod *ast.Mod, pkgPath string) *ast.Pkg {
+	for _, pkg := range mod.Pkgs {
+		if pkg.Path == pkgPath {
+			return pkg
+		}
+	}
+
+	return nil
+}
+
 // MkPkg returns an existing or create a new package inside mod.
 func MkPkg(mod *ast.Mod, pkgPath string) *ast.Pkg {
 	for _, pkg := range mod.Pkgs {
@@ -125,6 +136,16 @@ func Pkg(n ast.Node) *ast.Pkg {
 	}
 
 	return nil
+}
+
+// FullQualifiedName tries to resolve and return the full qualified name (<package>.<Identifier>).
+func FullQualifiedName(n ast.NamedType) string {
+	return Pkg(n).Path + "." + n.Identifier()
+}
+
+// TypeDecl tries to resolve and returns a type declaration from the given named type.
+func TypeDecl(n ast.NamedType) ast.TypeDecl {
+	return ast.NewSimpleTypeDecl(ast.Name(FullQualifiedName(n)))
 }
 
 // UseTypeDeclIn does a quite complex job. It looks up the different parts

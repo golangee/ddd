@@ -15,6 +15,9 @@ const (
 	// denotes if a struct is used for database configuration (env and program flags). Either nil, true or false.
 	kDBConfiguration secretKey = "kDBConfiguration"
 
+	// kService declares a struct as an application wide (singleton) service.
+	kService secretKey = "kService"
+
 	// denotes if is mysql related.
 	kMySQLRelated secretKey = "kMySQLRelated"
 

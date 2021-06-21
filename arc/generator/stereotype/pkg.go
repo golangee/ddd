@@ -31,6 +31,23 @@ func (c Pkg) IsCMDPkg() bool {
 	return false
 }
 
+// FindStructs applies the predicate on each contained struct. However,
+// only non-raw types can be inspected.
+func (c Pkg) FindStructs(predicate func(s Struct) bool) []*ast.Struct {
+	var r []*ast.Struct
+	for _, file := range c.obj.PkgFiles {
+		for _, namedType := range file.Types() {
+			if s, ok := namedType.(*ast.Struct); ok {
+				if predicate(StructFrom(s)) {
+					r = append(r, s)
+				}
+			}
+		}
+	}
+
+	return r
+}
+
 // WithPkg visits recursively all Pkg elements.
 func WithPkg(n ast.Node, f func(pkg Pkg) error) error {
 	return ast.ForEach(n, func(n ast.Node) error {

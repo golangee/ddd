@@ -37,10 +37,11 @@ func createWorkspace() *Project {
 						),
 				).
 				AddExecutables(
-					NewExecutable("supportiety-server", "...provides the rest service."),
+					NewExecutable("supportiety-server", "...provides the rest service.").
+						Application("$MOD/internal/tickets"),
 				).
 				AddBoundedContexts(
-					NewBoundedContext("Tickets","$MOD/internal/tickets").
+					NewBoundedContext("Tickets", "$MOD/internal/tickets").
 						AddCore(
 							NewPackage("", "").
 								AddStructs(
@@ -51,8 +52,6 @@ func createWorkspace() *Project {
 											NewField("Map", "...is key value stuff", NewTypeDecl(stdlib.Map, NewTypeDecl(stdlib.String), NewTypeDecl(stdlib.Int))),
 											NewField("Other", "...is a pointer example", NewTypeDecl("*", NewTypeDecl("$BC/core.Ticket"))),
 										),
-
-
 								).
 								AddRepositories(
 									NewInterface("Tickets", "...provides CRUD access to Tickets.").

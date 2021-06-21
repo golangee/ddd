@@ -3,6 +3,7 @@ package eearc
 import (
 	"fmt"
 	"github.com/golangee/architecture/arc"
+	"github.com/golangee/architecture/arc/token"
 	"github.com/golangee/src/render"
 	"os"
 	"os/exec"
@@ -28,7 +29,7 @@ func TestDummyProject(t *testing.T) {
 	//fmt.Println(a)
 
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal(token.Explain(err))
 	}
 
 	cwd, err := os.Getwd()

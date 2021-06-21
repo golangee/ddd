@@ -55,22 +55,22 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 
 	// logger
 	if err := renderLogger(mod, src); err != nil {
-		return token.NewPosError(src.Name, "cannot render logger")
+		return token.NewPosError(src.Name, "cannot render logger").SetCause(err)
 	}
 
 	// buildinfo
 	if err := renderBuildInfo(mod, src); err != nil {
-		return token.NewPosError(src.Name, "cannot render build info")
+		return token.NewPosError(src.Name, "cannot render build info").SetCause(err)
 	}
 
 	// execs
 	if err := renderExecs(mod, src); err != nil {
-		return token.NewPosError(src.Name, "cannot render executable entry points")
+		return token.NewPosError(src.Name, "cannot render executable entry points").SetCause(err)
 	}
 
 	// makefile
 	if err := renderMakefile(mod, src); err != nil {
-		return token.NewPosError(src.Name, "cannot render makefile")
+		return token.NewPosError(src.Name, "cannot render makefile").SetCause(err)
 	}
 
 	// bounded context packages
@@ -102,6 +102,11 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 				return token.NewPosError(p.Name, "unable to render domain usecase package").SetCause(err)
 			}
 		}
+	}
+
+	// actual app and di layer
+	if err := renderApps(mod, src); err != nil {
+		return token.NewPosError(src.Name, "cannot render application").SetCause(err)
 	}
 
 	return nil
@@ -152,7 +157,8 @@ func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) erro
 		pkg.AddFiles(file)
 		file.SetPreamble(makePreamble(srcMod.Preamble))
 		for _, srv := range src.Services {
-			_, err := golang.AddComponent(file, srv.Component)
+			t, err := golang.AddComponent(file, srv.Component)
+			stereotype.StructFrom(t).SetIsService(true)
 			if err != nil {
 				return err
 			}

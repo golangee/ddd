@@ -12,6 +12,11 @@ func normalizeNames(src *adl.Module) {
 	ctx := adl.Ctx{
 		Mod: mod,
 	}
+
+	for _, executable := range src.Executables {
+		executable.Normalize(ctx)
+	}
+
 	for _, bc := range src.BoundedContexts {
 		bc.Normalize(ctx)
 	}

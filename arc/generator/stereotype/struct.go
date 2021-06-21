@@ -26,6 +26,22 @@ func (s Struct) IsConfiguration() bool {
 	return false
 }
 
+// SetIsService marks this struct as a public service component.
+func (s Struct) SetIsService(isPublicConfig bool) Struct {
+	s.obj.PutValue(kService, isPublicConfig)
+	return s
+}
+
+// IsService returns only true, if this struct shall be used as a service object.
+func (s Struct) IsService() bool {
+	v := s.obj.Value(kService)
+	if f, ok := v.(bool); ok {
+		return f
+	}
+
+	return false
+}
+
 // SetIsDatabaseConfiguration marks this struct as a public configuration object. It provides environmental and program flags.
 func (s Struct) SetIsDatabaseConfiguration(isDbConfig bool) Struct {
 	s.obj.PutValue(kDBConfiguration, isDbConfig)

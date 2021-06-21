@@ -42,8 +42,9 @@ func (w *Project) AddModules(p ...*Module) *Project {
 // An Executable defines an entry point into the application. At least Java and Go support an arbitrary set of
 // main entry points.
 type Executable struct {
-	Comment token.String
-	Name    token.String
+	Comment             token.String
+	Name                token.String
+	BoundedContextPaths []token.String
 }
 
 func NewExecutable(name, comment string) *Executable {
@@ -51,6 +52,20 @@ func NewExecutable(name, comment string) *Executable {
 		Name:    traceStr(name),
 		Comment: traceStr(comment),
 	}
+}
+
+func (e *Executable) Normalize(ctx Ctx) {
+	for i := range e.BoundedContextPaths {
+		ctx.applyToken(&e.BoundedContextPaths[i])
+	}
+}
+
+func (e *Executable) Application(paths ...string) *Executable {
+	for _, path := range paths {
+		e.BoundedContextPaths = append(e.BoundedContextPaths, traceStr(path))
+	}
+
+	return e
 }
 
 // A Module is e.g. a server application, a frontend or a shared library.
@@ -152,7 +167,7 @@ func (g *Golang) Require(dep string) *Golang {
 // ubiquitous language (== glossary).
 type BoundedContext struct {
 	Name    token.String
-	Path token.String
+	Path    token.String
 	Core    []*Package // multiple core packages are allowed, to allow arbitrary large and complex nested (sub or supporting) domains.
 	Usecase []*Package // same for the use cases
 }
@@ -160,7 +175,7 @@ type BoundedContext struct {
 func NewBoundedContext(name, path string) *BoundedContext {
 	return &BoundedContext{
 		Name: traceStr(name),
-		Path:traceStr(path),
+		Path: traceStr(path),
 	}
 }
 
