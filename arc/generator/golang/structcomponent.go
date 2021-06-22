@@ -3,6 +3,7 @@ package golang
 import (
 	"github.com/golangee/architecture/arc/adl"
 	"github.com/golangee/architecture/arc/generator/astutil"
+	"github.com/golangee/architecture/arc/generator/stereotype"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/golang"
 	"github.com/golangee/src/stdlib"
@@ -110,6 +111,12 @@ func AddComponent(parent *ast.File, compo *adl.Struct) (component *ast.Struct, _
 		}
 
 		component.AddFields(f)
+	}
+
+	switch compo.Stereotype.String() {
+	case adl.Cfg:
+		stereotype.StructFrom(component).
+			SetIsConfiguration(true)
 	}
 
 	return component, nil

@@ -23,11 +23,11 @@ func AddParseEnvFunc(fieldPrefix string, node *ast.Struct) (*ast.Func, error) {
 	body := ast.NewBlock()
 	fun.SetBody(body)
 
-	envNamePrefix := strings.ReplaceAll(ShortModName(node)+"_"+PkgRelativeName(node)+"/"+fieldPrefix, "/", "_")
+	envNamePrefix := strings.ReplaceAll(fieldPrefix, "/", "_")
 
 	for _, field := range node.Fields() {
 		flagName := strings.ToLower(envNamePrefix + "_" + field.FieldName)
-		comment += " * " + field.FieldName + " is parsed from flag '" + flagName + "' if it has been set.\n"
+		comment += " * " + field.FieldName + " is parsed from variable '" + flagName + "' if it has been set.\n"
 
 		stereotype.FieldFrom(field).SetEnvironmentVariable(flagName)
 
@@ -74,6 +74,10 @@ func AddParseEnvFunc(fieldPrefix string, node *ast.Struct) (*ast.Func, error) {
 
 	}
 
+	body.Add(
+		lang.Term(),
+		ast.NewReturnStmt(ast.NewIdentLit("nil")),
+	)
 	fun.SetComment(comment)
 	return fun, nil
 }

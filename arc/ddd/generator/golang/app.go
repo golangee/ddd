@@ -15,13 +15,14 @@ import (
 )
 
 const (
-	pkgCore    = "core"
-	pkgUsecase = "usecase"
+	pkgCore        = "core"
+	pkgUsecase     = "usecase"
+	pkgInternalApp = "internal/application"
 )
 
 func renderApps(dst *ast.Mod, src *adl.Module) error {
 	if len(src.Executables) > 0 {
-		cmd := astutil.MkPkg(dst, golang.MakePkgPath(dst.Name, "internal/application"))
+		cmd := astutil.MkPkg(dst, golang.MakePkgPath(dst.Name, pkgInternalApp))
 		cmd.SetComment("...contains individual applications and dependency injection layers for each executable.")
 		cmd.SetPreamble(makePreamble(src.Preamble))
 
@@ -63,6 +64,8 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 			app.AddEmbedded(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(appStub))))
 			appStub.AddFields(ast.NewField("self", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(app))))).SetVisibility(ast.Private).SetComment("...provides a pointer to the actual Application instance to provide\none level of a quasi-vtable calling indirection for simple method 'overriding'."))
 			appStub.SetComment("...aggregates all contained bounded contexts and starts their driver adapters.")
+			appStub.SetDefaultRecName(strings.ToLower(appStub.TypeName)[:1])
+
 			for _, path := range executable.BoundedContextPaths {
 				bc := astutil.FindPkg(dst, path.String())
 				if bc == nil {
@@ -99,7 +102,7 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 }
 
 func getApplicationPath(mod *ast.Mod, exec *adl.Executable) string {
-	return golang.MakePkgPath(mod.Name, "internal", "application", golang2.MakeIdentifier(exec.Name.String()))
+	return golang.MakePkgPath(mod.Name, pkgInternalApp, golang2.MakeIdentifier(exec.Name.String()))
 }
 
 func makeGetter(app *ast.Struct, typ ast.TypeDecl) (*ast.Func, error) {
@@ -123,6 +126,7 @@ func makeGetter(app *ast.Struct, typ ast.TypeDecl) (*ast.Func, error) {
 
 	fun = ast.NewFunc(funName).
 		SetVisibility(ast.Private).
+		SetRecName(app.DefaultRecName).
 		SetPtrReceiver(true).
 		AddResults(
 			ast.NewParam("", typ.Clone()),
@@ -153,7 +157,7 @@ func makeGetter(app *ast.Struct, typ ast.TypeDecl) (*ast.Func, error) {
 
 func makeServiceGetter(app, service *ast.Struct) error {
 	getter := ast.NewFunc("get"+golang.GlobalFlatName(service)).
-		SetRecName(strings.ToLower(app.TypeName)[:1]).
+		SetRecName(app.DefaultRecName).
 		SetPtrReceiver(true).
 		AddResults(
 			ast.NewParam("", ast.NewTypeDeclPtr(astutil.TypeDecl(service))),
@@ -182,7 +186,6 @@ func makeServiceGetter(app, service *ast.Struct) error {
 			return fmt.Errorf("invalid service parameter: %w", err)
 		}
 
-		paramGetter.SetRecName(getter.RecName())
 		callParamGetter := ast.NewCallExpr(ast.NewSelExpr(ast.NewSelExpr(ast.NewIdent(getter.RecName()), ast.NewIdent("self")), ast.NewIdent(paramGetter.FunName)))
 		body.Add(lang.TryDefine(ast.NewIdent(param.ParamName), callParamGetter, "cannot get parameter '"+param.ParamName+"'"))
 

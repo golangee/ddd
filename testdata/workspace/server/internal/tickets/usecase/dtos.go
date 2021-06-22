@@ -16,10 +16,55 @@
 
 package usecase
 
+import (
+	flag "flag"
+	fmt "fmt"
+	os "os"
+	strconv "strconv"
+)
+
 // MyConfig is use case feature flag configuration.
 //
 // The stereotype of this type is 'cfg'.
 type MyConfig struct {
 	// FancyFeature is the fancy feature toggle.
 	FancyFeature bool
+}
+
+// Reset restores this instance to the default state.
+//  * The default value of FancyFeature is 'false'
+func (m *MyConfig) Reset() {
+	m.FancyFeature = false
+}
+
+// ParseEnv tries to parse the environment variables into this instance.
+// It will only set those values, which have been actually defined.
+// If values cannot be parsed, an error is returned.
+//  * FancyFeature is parsed from variable 'tickets_usecase_fancyfeature' if it has been set.
+func (m *MyConfig) ParseEnv() error {
+	if value, ok := os.LookupEnv("tickets_usecase_fancyfeature"); ok {
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("unable to parse flag 'tickets_usecase_fancyfeature': %w", err)
+		}
+
+		m.FancyFeature = parsed
+	}
+
+	return nil
+}
+
+// ConfigureFlags configures the flags to be ready to get evaluated. The default values are taken from the struct at calling time.
+// After calling, use flag.Parse() to load the values. You can only use it once, otherwise the flag package will panic.
+// The default values are the field values at calling time.
+// Example:
+//   cfg := MyConfig{}
+//   cfg.Reset()
+//   cfg.ConfigureFlags()
+//   flag.Parse()
+//
+// The following flags will be tied to this instance:
+//  * FancyFeature is parsed from flag 'tickets-usecase-fancyfeature' if it has been set.
+func (m *MyConfig) ConfigureFlags() {
+	flag.BoolVar(&m.FancyFeature, "tickets-usecase-fancyfeature", m.FancyFeature, "... is the fancy feature toggle.")
 }

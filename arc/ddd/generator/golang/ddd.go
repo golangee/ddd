@@ -104,6 +104,11 @@ func RenderModule(dst *ast.Prj, prj *adl.Project, src *adl.Module) error {
 		}
 	}
 
+	// build super configuration
+	if err := renderConfigs(mod, src); err != nil {
+		return token.NewPosError(src.Name, "cannot render configurations").SetCause(err)
+	}
+
 	// actual app and di layer
 	if err := renderApps(mod, src); err != nil {
 		return token.NewPosError(src.Name, "cannot render application").SetCause(err)

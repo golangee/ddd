@@ -32,11 +32,17 @@ func AddResetFunc(node *ast.Struct) (*ast.Func, error) {
 		case *ast.SimpleTypeDecl:
 			switch t.SimpleName {
 			case stdlib.Bool:
+				if rawLiteral == "" {
+					rawLiteral = "false"
+					field.FieldDefault = ast.NewBasicLit(ast.TokenIdent, rawLiteral)
+				}
+
 				body.Add(ast.NewAssign(ast.Exprs(ast.NewSelExpr(ast.NewIdent(fun.RecName()), ast.NewIdent(field.FieldName))), ast.AssignSimple, ast.Exprs(ast.NewBasicLit(ast.TokenIdent, rawLiteral))))
 				body.Add(ast.NewSym(ast.SymNewline))
 			case stdlib.String:
 				if rawLiteral == "" {
 					rawLiteral = strconv.Quote("")
+					field.FieldDefault = ast.NewBasicLit(ast.TokenString, rawLiteral)
 				}
 
 				body.Add(ast.NewAssign(ast.Exprs(ast.NewSelExpr(ast.NewIdent(fun.RecName()), ast.NewIdent(field.FieldName))), ast.AssignSimple, ast.Exprs(ast.NewBasicLit(ast.TokenString, rawLiteral))))
@@ -54,6 +60,7 @@ func AddResetFunc(node *ast.Struct) (*ast.Func, error) {
 			case stdlib.Int:
 				if rawLiteral == "" {
 					rawLiteral = "0"
+					field.FieldDefault = ast.NewBasicLit(ast.TokenInt, rawLiteral)
 				}
 
 				body.Add(ast.NewAssign(ast.Exprs(ast.NewSelExpr(ast.NewIdent(fun.RecName()), ast.NewIdent(field.FieldName))), ast.AssignSimple, ast.Exprs(ast.NewBasicLit(ast.TokenInt, rawLiteral))))
@@ -62,6 +69,7 @@ func AddResetFunc(node *ast.Struct) (*ast.Func, error) {
 			case stdlib.Duration:
 				if rawLiteral == "" {
 					rawLiteral = "0"
+					field.FieldDefault = ast.NewBasicLit(ast.TokenInt, rawLiteral)
 					body.Add(ast.NewAssign(ast.Exprs(ast.NewSelExpr(ast.NewIdent(fun.RecName()), ast.NewIdent(field.FieldName))), ast.AssignSimple, ast.Exprs(ast.NewBasicLit(ast.TokenInt, rawLiteral))))
 				} else {
 					d, err := time.ParseDuration(rawLiteral)
@@ -87,6 +95,7 @@ func AddResetFunc(node *ast.Struct) (*ast.Func, error) {
 		}
 
 		comment += " * The default value of " + field.FieldName + " is '" + commentLit + "'\n"
+
 	}
 
 	fun.SetComment(comment)

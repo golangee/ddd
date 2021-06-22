@@ -28,7 +28,7 @@ func AddParseFlagFunc(fieldPrefix string, node *ast.Struct) (*ast.Func, error) {
 	comment := "... configures the flags to be ready to get evaluated. The default values are taken from the struct at calling time.\nAfter calling, use flag.Parse() to load the values. You can only use it once, otherwise the flag package will panic.\nThe default values are the field values at calling time.\n" +
 		"Example:\n  cfg := " + node.TypeName + "{}\n  cfg.Reset()\n  cfg." + fun.FunName + "()\n  flag.Parse()\n\n" +
 		"The following flags will be tied to this instance:\n"
-	envNamePrefix := strings.ReplaceAll(PkgRelativeName(node)+"/"+fieldPrefix, "/", sep)
+	envNamePrefix := strings.ReplaceAll(fieldPrefix, "/", sep)
 
 	for _, field := range node.Fields() {
 		flagName := strings.ToLower(envNamePrefix + sep + field.FieldName)

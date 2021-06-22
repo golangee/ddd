@@ -138,6 +138,15 @@ func Pkg(n ast.Node) *ast.Pkg {
 	return nil
 }
 
+func File(n ast.Node) *ast.File {
+	p := &ast.File{}
+	if ok := ast.ParentAs(n, &p); ok {
+		return p
+	}
+
+	return nil
+}
+
 // FullQualifiedName tries to resolve and return the full qualified name (<package>.<Identifier>).
 func FullQualifiedName(n ast.NamedType) string {
 	return Pkg(n).Path + "." + n.Identifier()
