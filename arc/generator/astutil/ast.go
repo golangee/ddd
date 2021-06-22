@@ -9,6 +9,26 @@ import (
 	"strings"
 )
 
+func CallMember(recName, fieldName, methodName string, args ...ast.Expr) *ast.CallExpr {
+	return ast.NewCallExpr(ast.NewSelExpr(ast.NewSelExpr(ast.NewIdent(recName), ast.NewIdent(fieldName)), ast.NewIdent(methodName)), args...)
+}
+
+func MethodByName(f ast.Node, name string) *ast.Func {
+	type Methoder interface {
+		Methods() []*ast.Func
+	}
+
+	if m, ok := f.(Methoder); ok {
+		for _, a := range m.Methods() {
+			if a.FunName == name {
+				return a
+			}
+		}
+	}
+
+	return nil
+}
+
 func FindMod(name token.String, prj *ast.Prj) (*ast.Mod, error) {
 	for _, mod := range prj.Mods {
 		if mod.Name == name.String() {

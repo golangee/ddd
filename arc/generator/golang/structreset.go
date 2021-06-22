@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"fmt"
 	"github.com/golangee/architecture/arc/generator/astutil"
 	"github.com/golangee/architecture/arc/token"
 	"github.com/golangee/src/ast"
@@ -9,6 +10,85 @@ import (
 	"strings"
 	"time"
 )
+
+// SimulateDefaultJson inspects the fields default values and estimates how a potential json serialization may look like.
+// Better to call AddResetFunc before, to ensure more correctly defined default values.
+func SimulateDefaultJson(node *ast.Struct) (interface{}, error) {
+	obj := map[string]interface{}{}
+	for _, field := range node.Fields() {
+		var rawLiteral string
+		if field.FieldDefault != nil {
+			rawLiteral = field.FieldDefault.Val
+		}
+		switch t := field.FieldType.(type) {
+
+		case *ast.SimpleTypeDecl:
+			switch t.SimpleName {
+			case stdlib.Bool:
+				v, err := strconv.ParseBool(rawLiteral)
+				if err != nil {
+					return "", fmt.Errorf("default value of '%s' not a bool: %w", field.FieldName, err)
+				}
+
+				obj[field.FieldName] = v
+			case stdlib.String:
+				v, err := strconv.Unquote(rawLiteral)
+				if err != nil {
+					return "", fmt.Errorf("default value of '%s' not a quoted string: %w", field.FieldName, err)
+				}
+
+				obj[field.FieldName] = v
+			case stdlib.Int64:
+				fallthrough
+			case stdlib.Int32:
+				fallthrough
+			case stdlib.Int16:
+				fallthrough
+			case stdlib.Float64:
+				fallthrough
+			case stdlib.Float32:
+				fallthrough
+			case stdlib.Int:
+				v, err := strconv.ParseFloat(rawLiteral, 64)
+				if err != nil {
+					return "", fmt.Errorf("default value of '%s' not a number: %w", field.FieldName, err)
+				}
+
+				obj[field.FieldName] = v
+			case stdlib.Duration:
+				v, err := time.ParseDuration(rawLiteral)
+				if err != nil {
+					return "", fmt.Errorf("default value of '%s' not a duration: %w", field.FieldName, err)
+				}
+
+				obj[field.FieldName] = v
+			default:
+				// try to resolve nested structs
+				node := astutil.Resolve(node, t.String())
+				if node == nil {
+					return "", fmt.Errorf("default value of '%s' not resolvable: '%s'", field.FieldName, t.String())
+				}
+
+				if s, ok := node.(*ast.Struct); ok {
+					v, err := SimulateDefaultJson(s)
+					if err != nil {
+						return "", fmt.Errorf("default value of nested struct '%s' not simulatable: %w", field.FieldName, err)
+					}
+
+					obj[field.FieldName] = v
+				} else {
+					return "", fmt.Errorf("default value of '%s' not supported: '%s'", field.FieldName, t.String())
+				}
+			}
+		default:
+			// don't know what to do, but maps and slices may be possible but yet not supported as a configuration.
+			obj[field.FieldName] = nil
+		}
+
+	}
+
+	return obj, nil
+}
 
 // AddResetFunc appends a method named "Reset" which has the given struct as a pointer receiver and sets all
 // literals back to default.

@@ -17,20 +17,112 @@
 package supportietyserver
 
 import (
+	json "encoding/json"
+	fmt "fmt"
 	usecase "github.com/golangee/architecture/testdata/workspace/server/internal/tickets/usecase"
+	os "os"
 )
 
 // Configuration contains all aggregated configurations for the entire application and all contained bounded contexts.
 type Configuration struct {
-	TicketsConfig TicketsConfig
+	Tickets TicketsConfig
+}
+
+// Reset restores this instance to the default state.
+func (c *Configuration) Reset() {
+	c.Tickets.Reset()
+}
+
+// ConfigureFlags configures the flags to be ready to get evaluated.
+// You can only use it once, otherwise the flag package will panic.
+func (c *Configuration) ConfigureFlags() {
+	c.Tickets.ConfigureFlags()
+}
+
+// ParseEnv tries to parse the environment variables into this instance.
+func (c *Configuration) ParseEnv() error {
+	if err := c.Tickets.ParseEnv(); err != nil {
+		return fmt.Errorf("cannot parse 'Tickets': %w", err)
+	}
+
+	return nil
+}
+
+// ParseFile tries to parse a json file into this instance. Only the defined values are overridden.
+//
+// Example JSON
+//
+//   {
+//     "Tickets": {
+//       "Usecase": {
+//         "MyConfig": {
+//           "FancyFeature": false
+//         }
+//       }
+//     }
+//   }
+func (c *Configuration) ParseFile(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return fmt.Errorf("cannot open configuration file: %w", err)
+	}
+
+	defer file.Close() // intentionally ignoring read-only error on close
+
+	dec := json.NewDecoder(file)
+	if err := dec.Decode(c); err != nil {
+		return fmt.Errorf("cannot decode json: %w", err)
+	}
+
+	return nil
 }
 
 // TicketsConfig contains all aggregated configurations for the entire bounded context 'tickets'.
 type TicketsConfig struct {
-	TicketsUsecaseConfig TicketsUsecaseConfig
+	Usecase TicketsUsecaseConfig
+}
+
+// Reset restores this instance to the default state.
+func (t *TicketsConfig) Reset() {
+	t.Usecase.Reset()
+}
+
+// ConfigureFlags configures the flags to be ready to get evaluated.
+// You can only use it once, otherwise the flag package will panic.
+func (t *TicketsConfig) ConfigureFlags() {
+	t.Usecase.ConfigureFlags()
+}
+
+// ParseEnv tries to parse the environment variables into this instance.
+func (t *TicketsConfig) ParseEnv() error {
+	if err := t.Usecase.ParseEnv(); err != nil {
+		return fmt.Errorf("cannot parse 'Usecase': %w", err)
+	}
+
+	return nil
 }
 
 // TicketsUsecaseConfig contains all configurations for the 'usecase' layer of 'tickets'.
 type TicketsUsecaseConfig struct {
 	MyConfig usecase.MyConfig
+}
+
+// Reset restores this instance to the default state.
+func (t *TicketsUsecaseConfig) Reset() {
+	t.MyConfig.Reset()
+}
+
+// ParseEnv tries to parse the environment variables into this instance.
+func (t *TicketsUsecaseConfig) ParseEnv() error {
+	if err := t.MyConfig.ParseEnv(); err != nil {
+		return fmt.Errorf("cannot parse 'MyConfig': %w", err)
+	}
+
+	return nil
+}
+
+// ConfigureFlags configures the flags to be ready to get evaluated.
+// You can only use it once, otherwise the flag package will panic.
+func (t *TicketsUsecaseConfig) ConfigureFlags() {
+	t.MyConfig.ConfigureFlags()
 }
