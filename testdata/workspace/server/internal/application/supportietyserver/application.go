@@ -18,9 +18,13 @@ package supportietyserver
 
 import (
 	context "context"
+	errors "errors"
+	flag "flag"
 	fmt "fmt"
 	core "github.com/golangee/architecture/testdata/workspace/server/internal/tickets/core"
 	usecase "github.com/golangee/architecture/testdata/workspace/server/internal/tickets/usecase"
+	os "os"
+	filepath "path/filepath"
 )
 
 // Application embeds the defaultApplication to provide the default application behavior.
@@ -41,6 +45,9 @@ func NewApplication(ctx context.Context) (*Application, error) {
 
 // defaultApplication aggregates all contained bounded contexts and starts their driver adapters.
 type defaultApplication struct {
+	// cfg contains the global read-only configuration for all bounded contexts.
+	cfg Configuration
+
 	// self provides a pointer to the actual Application instance to provide
 	// one level of a quasi-vtable calling indirection for simple method 'overriding'.
 	self *Application
@@ -48,7 +55,43 @@ type defaultApplication struct {
 	ticketsUsecaseTickets *usecase.Tickets
 }
 
-func (_ defaultApplication) init(ctx context.Context) error {
+// configure resets, prepares and parses the configuration. The priority of evaluation
+func (d *defaultApplication) configure() error {
+	usrCfgHome, err := os.UserConfigDir()
+	if err == nil {
+		usrCfgHome = filepath.Join(usrCfgHome, ".supportiety-server", "settings.json")
+	}
+
+	filename := flag.String("config", usrCfgHome, "filename to a configuration file in JSON format.")
+
+	// prio 0: hardcoded defaults
+	d.cfg.Reset()
+	d.cfg.ConfigureFlags()
+	flag.Parse()
+
+	// prio 1: values from configuration file
+	if *filename != "" {
+		if err := d.cfg.ParseFile(*filename); err != nil {
+			if *filename != usrCfgHome || !errors.Is(err, os.ErrNotExist) {
+				return fmt.Errorf("cannot explicitly parse configuration file: %w", err)
+			}
+		}
+	}
+
+	// prio 2: values from environment variables
+	if err := d.cfg.ParseEnv(); err != nil {
+		return fmt.Errorf("cannot parse environment variables: %w", err)
+	}
+
+	// prio 3: values from TODO wrong order
+	return nil
+}
+
+func (d *defaultApplication) init(ctx context.Context) error {
+	if err := d.configure(); err != nil {
+		return fmt.Errorf("cannot configure: %w", err)
+	}
+
 	return nil
 }
 

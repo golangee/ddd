@@ -31,15 +31,78 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 			cmdPkg.SetComment("...defines the application and dependency injection layer for the '" + executable.Name.String() + "' executable.\n\n" + executable.Comment.String())
 			cmdPkg.SetPreamble(makePreamble(src.Preamble))
 
-			appStub := ast.NewStruct("defaultApplication").SetComment("...embeds an IoC instance to provide a default behavior").SetVisibility(ast.Private)
-			app := ast.NewStruct("Application").SetComment("...embeds the defaultApplication to provide the default application behavior.\nIt also provides the inversion of control injection mechanism for all bounded contexts.")
+			appStub := ast.NewStruct("defaultApplication").
+				SetComment("...embeds an IoC instance to provide a default behavior").
+				SetVisibility(ast.Private).
+				AddFields(
+					ast.NewField("cfg", ast.NewSimpleTypeDecl(ast.Name(cmdPkg.Path+".Configuration"))).
+						SetVisibility(ast.Private).
+						SetComment("...contains the global read-only configuration for all bounded contexts."),
+				)
+			appStub.SetDefaultRecName(strings.ToLower(appStub.TypeName)[:1])
+
+			app := ast.NewStruct("Application").
+				SetComment("...embeds the defaultApplication to provide the default application behavior.\nIt also provides the inversion of control injection mechanism for all bounded contexts.")
 
 			appStub.AddMethods(
+				ast.NewFunc("configure").
+					SetVisibility(ast.Private).
+					SetComment("...resets, prepares and parses the configuration. The priority of evaluation").
+					SetPtrReceiver(true).
+					SetRecName(appStub.DefaultRecName).
+					AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
+					SetBody(
+						ast.NewBlock(
+							ast.NewTpl(
+								`usrCfgHome, err := {{.Use "os.UserConfigDir"}}() 
+								if err == nil{
+									usrCfgHome = {{.Use "path/filepath.Join"}}(usrCfgHome,".{{.Get "appName"}}", "settings.json")
+								}
+		
+								filename := {{.Use "flag.String"}}("config",usrCfgHome,"filename to a configuration file in JSON format.")
+
+								// prio 0: hardcoded defaults
+								{{.Get "rec"}}.cfg.Reset()
+								{{.Get "rec"}}.cfg.ConfigureFlags()
+								{{.Use "flag.Parse"}}()
+								
+								// prio 1: values from configuration file
+								if *filename != "" {
+									if err:={{.Get "rec"}}.cfg.ParseFile(*filename); err!=nil {
+										if *filename != usrCfgHome || !{{.Use "errors.Is"}}(err,os.ErrNotExist) {
+											return {{.Use "fmt.Errorf"}}("cannot explicitly parse configuration file: %w",err)
+										}
+									}
+								}
+		
+								// prio 2: values from environment variables
+								if err:={{.Get "rec"}}.cfg.ParseEnv();err!=nil{
+									return {{.Use "fmt.Errorf"}}("cannot parse environment variables: %w",err)
+								}
+								
+								// prio 3: values from TODO wrong order
+								return nil
+								`,
+							).Put("rec", appStub.DefaultRecName).Put("appName", strings.ToLower(executable.Name.String())),
+						),
+					),
+
 				ast.NewFunc("init").
 					SetVisibility(ast.Private).
+					SetPtrReceiver(true).
+					SetRecName(appStub.DefaultRecName).
 					AddParams(ast.NewParam("ctx", ast.NewSimpleTypeDecl("context.Context"))).
 					AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
-					SetBody(ast.NewBlock(ast.NewReturnStmt(ast.NewIdentLit("nil")))),
+					SetBody(ast.NewBlock(
+						ast.NewTpl(
+							`if err:={{.Get "rec"}}.configure();err!=nil{
+									return {{.Use "fmt.Errorf"}}("cannot configure: %w",err)
+								}
+
+								return nil
+								`,
+						).Put("rec", appStub.DefaultRecName),
+					)),
 
 				ast.NewFunc("Run").
 					AddParams(ast.NewParam("ctx", ast.NewSimpleTypeDecl("context.Context"))).
@@ -64,7 +127,6 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 			app.AddEmbedded(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(appStub))))
 			appStub.AddFields(ast.NewField("self", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(app))))).SetVisibility(ast.Private).SetComment("...provides a pointer to the actual Application instance to provide\none level of a quasi-vtable calling indirection for simple method 'overriding'."))
 			appStub.SetComment("...aggregates all contained bounded contexts and starts their driver adapters.")
-			appStub.SetDefaultRecName(strings.ToLower(appStub.TypeName)[:1])
 
 			for _, path := range executable.BoundedContextPaths {
 				bc := astutil.FindPkg(dst, path.String())
