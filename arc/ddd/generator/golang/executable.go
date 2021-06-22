@@ -7,6 +7,7 @@ import (
 	"github.com/golangee/architecture/arc/generator/stereotype"
 	"github.com/golangee/src/ast"
 	"github.com/golangee/src/stdlib"
+	"github.com/golangee/src/stdlib/lang"
 )
 
 func renderExecs(dst *ast.Mod, src *adl.Module) error {
@@ -60,6 +61,8 @@ func renderExecs(dst *ast.Mod, src *adl.Module) error {
 							AddParams(ast.NewParam("ctx", ast.NewSimpleTypeDecl("context.Context"))).
 							AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
 							SetBody(ast.NewBlock(
+								lang.TryDefine(ast.NewIdent("a"), lang.CallStatic(ast.Name(getApplicationPath(dst, executable)+".NewApplication"), ast.NewIdent("ctx")), "cannot create application '"+executable.Name.String()+"'"),
+								lang.TryDefine(nil, lang.CallIdent("a", "Run", ast.NewIdent("ctx")), "cannot run application '"+executable.Name.String()+"'"),
 								ast.NewReturnStmt(ast.NewIdentLit("nil")),
 							)),
 					),

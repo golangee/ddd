@@ -18,6 +18,8 @@ package main
 
 import (
 	context "context"
+	fmt "fmt"
+	supportietyserver "github.com/golangee/architecture/testdata/workspace/server/internal/application/supportietyserver"
 	buildinfo "github.com/golangee/architecture/testdata/workspace/server/internal/buildinfo"
 	logging "github.com/golangee/architecture/testdata/workspace/server/internal/logging"
 	log "github.com/golangee/log"
@@ -48,5 +50,14 @@ func main() {
 	logger.Println(ecs.Info(), "successful shutdown")
 }
 func realMain(ctx context.Context) error {
+	a, err := supportietyserver.NewApplication(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot create application 'supportiety-server': %w", err)
+	}
+
+	if err := a.Run(ctx); err != nil {
+		return fmt.Errorf("cannot run application 'supportiety-server': %w", err)
+	}
+
 	return nil
 }

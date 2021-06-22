@@ -17,6 +17,7 @@
 package supportietyserver
 
 import (
+	context "context"
 	fmt "fmt"
 	core "github.com/golangee/architecture/testdata/workspace/server/internal/tickets/core"
 	usecase "github.com/golangee/architecture/testdata/workspace/server/internal/tickets/usecase"
@@ -28,10 +29,10 @@ type Application struct {
 	defaultApplication
 }
 
-func NewApplication() (*Application, error) {
+func NewApplication(ctx context.Context) (*Application, error) {
 	a := &Application{}
 	a.defaultApplication.self = a
-	if err := a.init(); err != nil {
+	if err := a.init(ctx); err != nil {
 		return nil, fmt.Errorf("cannot init application: %w", err)
 	}
 
@@ -47,7 +48,21 @@ type defaultApplication struct {
 	ticketsUsecaseTickets *usecase.Tickets
 }
 
-func (_ defaultApplication) init() error {
+func (_ defaultApplication) init(ctx context.Context) error {
+	return nil
+}
+
+func (_ defaultApplication) Run(ctx context.Context) error {
+	return nil
+}
+
+func (_ Application) init(ctx context.Context) error {
+	fmt.Println("hey concrete init")
+	return nil
+}
+
+func (a *Application)Run(ctx context.Context)error{
+	fmt.Println("hey concrete run")
 	return nil
 }
 

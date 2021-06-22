@@ -25,23 +25,33 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 		cmd.SetPreamble(makePreamble(src.Preamble))
 
 		for _, executable := range src.Executables {
-			cmdPkg := astutil.MkPkg(dst, golang.MakePkgPath(dst.Name, "internal", "application", golang2.MakeIdentifier(executable.Name.String())))
+			cmdPkg := astutil.MkPkg(dst, getApplicationPath(dst, executable))
 			cmdPkg.SetComment("...defines the application and dependency injection layer for the '" + executable.Name.String() + "' executable.\n\n" + executable.Comment.String())
 			cmdPkg.SetPreamble(makePreamble(src.Preamble))
 
 			appStub := ast.NewStruct("defaultApplication").SetComment("...embeds an IoC instance to provide a default behavior").SetVisibility(ast.Private)
 			app := ast.NewStruct("Application").SetComment("...embeds the defaultApplication to provide the default application behavior.\nIt also provides the inversion of control injection mechanism for all bounded contexts.")
 
-			appStub.AddMethods(ast.NewFunc("init").
-				SetVisibility(ast.Private).
-				AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
-				SetBody(ast.NewBlock(ast.NewReturnStmt(ast.NewIdentLit("nil")))))
+			appStub.AddMethods(
+				ast.NewFunc("init").
+					SetVisibility(ast.Private).
+					AddParams(ast.NewParam("ctx", ast.NewSimpleTypeDecl("context.Context"))).
+					AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
+					SetBody(ast.NewBlock(ast.NewReturnStmt(ast.NewIdentLit("nil")))),
+
+				ast.NewFunc("Run").
+					AddParams(ast.NewParam("ctx", ast.NewSimpleTypeDecl("context.Context"))).
+					AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
+					SetBody(ast.NewBlock(ast.NewReturnStmt(ast.NewIdentLit("nil")))),
+			)
+
 			appConst := ast.NewFunc("New"+app.TypeName).
+				AddParams(ast.NewParam("ctx", ast.NewSimpleTypeDecl("context.Context"))).
 				AddResults(
 					ast.NewParam("", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl("Application"))),
 					ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
 				).
-				SetBody(ast.NewBlock(ast.NewTpl("a := &Application{}\na." + appStub.TypeName + ".self = a\nif err:=a.init();err!=nil{\nreturn nil, fmt.Errorf(\"cannot init application: %w\",err)\n}\n\nreturn a,nil\n")))
+				SetBody(ast.NewBlock(ast.NewTpl("a := &Application{}\na." + appStub.TypeName + ".self = a\nif err:=a.init(ctx);err!=nil{\nreturn nil, fmt.Errorf(\"cannot init application: %w\",err)\n}\n\nreturn a,nil\n")))
 
 			cmdPkg.AddFiles(
 				ast.NewFile("application.go").
@@ -83,6 +93,10 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 	return nil
 }
 
+func getApplicationPath(mod *ast.Mod, exec *adl.Executable) string {
+	return golang.MakePkgPath(mod.Name, "internal", "application", golang2.MakeIdentifier(exec.Name.String()))
+}
+
 func makeServiceGetter(app, service *ast.Struct) {
 	getter := ast.NewFunc("get"+golang.GlobalFlatName(service)).
 		SetRecName(strings.ToLower(app.TypeName)[:1]).
@@ -95,7 +109,7 @@ func makeServiceGetter(app, service *ast.Struct) {
 	serviceField := ast.NewField(golang.MakePrivate(golang.GlobalFlatName(service)), ast.NewTypeDeclPtr(astutil.TypeDecl(service))).
 		SetVisibility(ast.Private)
 
-	factory := service.FactoryRefs[0]
+	factory := service.FactoryRefs[0] // always expecting at least one factory
 	factoryFQN := ast.Name(ast.Name(astutil.FullQualifiedName(service)).Qualifier() + "." + factory.FunName)
 	var callIdents []ast.Expr
 	for _, param := range factory.Params() {
