@@ -29,6 +29,7 @@ func TestDummyProject(t *testing.T) {
 	//fmt.Println(a)
 
 	if err != nil {
+		fmt.Println(a)
 		t.Fatal(token.Explain(err))
 	}
 

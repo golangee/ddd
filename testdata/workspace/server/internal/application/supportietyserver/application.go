@@ -42,7 +42,7 @@ func NewApplication(ctx context.Context) (*Application, error) {
 // defaultApplication aggregates all contained bounded contexts and starts their driver adapters.
 type defaultApplication struct {
 	// self provides a pointer to the actual Application instance to provide
-	// one level of vtable calling indirection for simple method 'overriding'.
+	// one level of a quasi-vtable calling indirection for simple method 'overriding'.
 	self *Application
 
 	ticketsUsecaseTickets *usecase.Tickets
@@ -56,19 +56,27 @@ func (_ defaultApplication) Run(ctx context.Context) error {
 	return nil
 }
 
-func (_ Application) init(ctx context.Context) error {
-	fmt.Println("hey concrete init")
-	return nil
+func (d *defaultApplication) getTicketsUsecaseMyConfig() (usecase.MyConfig, error) {
+	panic("assemble super config, parse that once and then poke from that")
 }
 
-func (a *Application)Run(ctx context.Context)error{
-	fmt.Println("hey concrete run")
-	return nil
+func (d *defaultApplication) getTicketsCoreTickets() (core.Tickets, error) {
+	panic("find different implementations and make them configurable, e.g. mysql vs postgres")
 }
 
-func (d *defaultApplication) getTicketsUsecaseTickets(myCfg usecase.MyConfig, tickets core.Tickets) (*usecase.Tickets, error) {
+func (d *defaultApplication) getTicketsUsecaseTickets() (*usecase.Tickets, error) {
 	if d.ticketsUsecaseTickets != nil {
 		return d.ticketsUsecaseTickets, nil
+	}
+
+	myCfg, err := d.self.getTicketsUsecaseMyConfig()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get parameter 'myCfg': %w", err)
+	}
+
+	tickets, err := d.self.getTicketsCoreTickets()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get parameter 'tickets': %w", err)
 	}
 
 	s, err := usecase.NewTickets(myCfg, tickets)

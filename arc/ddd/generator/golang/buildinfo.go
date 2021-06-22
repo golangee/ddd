@@ -34,7 +34,7 @@ func renderBuildInfo(dst *ast.Mod, src *adl.Module) error {
 						// CI_COMMIT_SHA environment variable at build time.
 						CommitSha string = "unknown"
 
-						// Host refers to the building host name, probably copied form the
+						// Host refers to the building host name, probably copied from the
 						// CI_SERVER_HOST environment variable at build time.
 						Host string = "unknown"
 					)

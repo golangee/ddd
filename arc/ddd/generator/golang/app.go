@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"fmt"
 	"github.com/golangee/architecture/arc/adl"
 	"github.com/golangee/architecture/arc/generator/astutil"
 	"github.com/golangee/architecture/arc/generator/golang"
@@ -60,7 +61,7 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 			)
 
 			app.AddEmbedded(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(appStub))))
-			appStub.AddFields(ast.NewField("self", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(app))))).SetVisibility(ast.Private).SetComment("...provides a pointer to the actual Application instance to provide\none level of vtable calling indirection for simple method 'overriding'."))
+			appStub.AddFields(ast.NewField("self", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(app))))).SetVisibility(ast.Private).SetComment("...provides a pointer to the actual Application instance to provide\none level of a quasi-vtable calling indirection for simple method 'overriding'."))
 			appStub.SetComment("...aggregates all contained bounded contexts and starts their driver adapters.")
 			for _, path := range executable.BoundedContextPaths {
 				bc := astutil.FindPkg(dst, path.String())
@@ -74,7 +75,9 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 				})
 
 				for _, service := range coreServices {
-					makeServiceGetter(appStub, service)
+					if err := makeServiceGetter(appStub, service); err != nil {
+						return fmt.Errorf("cannot create service: %w", err)
+					}
 				}
 
 				// the domain use cases
@@ -83,7 +86,9 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 				})
 
 				for _, service := range usecaseServices {
-					makeServiceGetter(appStub, service)
+					if err := makeServiceGetter(appStub, service); err != nil {
+						return fmt.Errorf("cannot create service: %w", err)
+					}
 				}
 			}
 
@@ -97,7 +102,56 @@ func getApplicationPath(mod *ast.Mod, exec *adl.Executable) string {
 	return golang.MakePkgPath(mod.Name, "internal", "application", golang2.MakeIdentifier(exec.Name.String()))
 }
 
-func makeServiceGetter(app, service *ast.Struct) {
+func makeGetter(app *ast.Struct, typ ast.TypeDecl) (*ast.Func, error) {
+	if _, ok := typ.(*ast.SimpleTypeDecl); !ok {
+		return nil, fmt.Errorf("type must be a SimpleTypeDecl: " + typ.String())
+	}
+
+	funName := "get" + golang.GlobalFlatName2(typ)
+
+	var fun *ast.Func
+	for _, f := range app.Methods() {
+		if f.FunName == funName {
+			fun = f
+			break
+		}
+	}
+
+	if fun != nil {
+		return fun, nil
+	}
+
+	fun = ast.NewFunc(funName).
+		SetVisibility(ast.Private).
+		SetPtrReceiver(true).
+		AddResults(
+			ast.NewParam("", typ.Clone()),
+			ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error)),
+		)
+
+	body := ast.NewBlock()
+	fun.SetBody(body)
+	app.AddMethods(fun)
+
+	resolvedType := astutil.Resolve(app, typ.String())
+	if resolvedType == nil {
+		body.Add(ast.NewTpl("panic(\"not implemented\")"))
+		return fun, nil
+	}
+
+	switch t := resolvedType.(type) {
+	case *ast.Struct:
+		body.Add(ast.NewTpl(`panic("assemble super config, parse that once and then poke from that")`))
+	case *ast.Interface:
+		body.Add(ast.NewTpl(`panic("find different implementations and make them configurable, e.g. mysql vs postgres")`))
+	default:
+		return nil, fmt.Errorf("unsupported resolved getter injection type: %v", t)
+	}
+
+	return fun, nil
+}
+
+func makeServiceGetter(app, service *ast.Struct) error {
 	getter := ast.NewFunc("get"+golang.GlobalFlatName(service)).
 		SetRecName(strings.ToLower(app.TypeName)[:1]).
 		SetPtrReceiver(true).
@@ -109,19 +163,32 @@ func makeServiceGetter(app, service *ast.Struct) {
 	serviceField := ast.NewField(golang.MakePrivate(golang.GlobalFlatName(service)), ast.NewTypeDeclPtr(astutil.TypeDecl(service))).
 		SetVisibility(ast.Private)
 
+	body := ast.NewBlock()
+	body.Add(
+		ast.NewIfStmt(
+			ast.NewBinaryExpr(ast.NewSelExpr(ast.NewIdent(getter.RecName()), ast.NewIdent(serviceField.FieldName)), ast.OpNotEqual, ast.NewIdentLit("nil")),
+			ast.NewBlock(
+				ast.NewReturnStmt(ast.NewSelExpr(ast.NewIdent(getter.RecName()), ast.NewIdent(serviceField.FieldName)), ast.NewIdentLit("nil"))),
+		),
+		lang.Term(),
+	)
+
 	factory := service.FactoryRefs[0] // always expecting at least one factory
 	factoryFQN := ast.Name(ast.Name(astutil.FullQualifiedName(service)).Qualifier() + "." + factory.FunName)
 	var callIdents []ast.Expr
 	for _, param := range factory.Params() {
-		getter.AddParams(ast.NewParam(param.ParamName, param.TypeDecl().Clone()))
-		callIdents = append(callIdents, ast.NewIdentLit(param.ParamName))
+		paramGetter, err := makeGetter(app, param.TypeDecl())
+		if err != nil {
+			return fmt.Errorf("invalid service parameter: %w", err)
+		}
+
+		paramGetter.SetRecName(getter.RecName())
+		callParamGetter := ast.NewCallExpr(ast.NewSelExpr(ast.NewSelExpr(ast.NewIdent(getter.RecName()), ast.NewIdent("self")), ast.NewIdent(paramGetter.FunName)))
+		body.Add(lang.TryDefine(ast.NewIdent(param.ParamName), callParamGetter, "cannot get parameter '"+param.ParamName+"'"))
+
+		callIdents = append(callIdents, ast.NewIdent(param.ParamName))
 	}
 
-	body := ast.NewBlock()
-	body.Add(ast.NewIfStmt(ast.NewBinaryExpr(ast.NewSelExpr(ast.NewIdent(getter.RecName()), ast.NewIdent(serviceField.FieldName)), ast.OpNotEqual, ast.NewIdentLit("nil")),
-		ast.NewBlock(
-			ast.NewReturnStmt(ast.NewSelExpr(ast.NewIdent(getter.RecName()), ast.NewIdent(serviceField.FieldName)), ast.NewIdentLit("nil")))),
-	)
 	body.Add(lang.Term())
 	body.Add(lang.TryDefine(ast.NewIdentLit("s"), lang.CallStatic(factoryFQN, callIdents...), "cannot create service '"+service.TypeName+"'"))
 	body.Add(lang.Term())
@@ -133,6 +200,7 @@ func makeServiceGetter(app, service *ast.Struct) {
 	app.AddFields(serviceField)
 	app.AddMethods(getter)
 
+	return nil
 }
 
 // findPrefixPkgs returns all packages using the according prefix.

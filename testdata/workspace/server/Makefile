@@ -101,7 +101,7 @@ clean:
 	rm -rf $(DESTDIR)/bin
 .PHONY: clean
 
-all: generate check dist ## generate, check and build dist
+all: generate check dist html ## generate, check and build dist
 .PHONY: all
 
 .DEFAULT_GOAL := all
