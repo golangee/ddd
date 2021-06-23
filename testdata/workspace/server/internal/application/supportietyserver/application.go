@@ -55,21 +55,36 @@ type defaultApplication struct {
 	ticketsUsecaseTickets *usecase.Tickets
 }
 
-// configure resets, prepares and parses the configuration. The priority of evaluation
+// configure resets, prepares and parses the configuration. The priority of evaluation is:
+//
+//   0. hardcoded defaults
+//   1. values from configuration file
+//   2. values from environment variables
+//   3. values from command flags
 func (d *defaultApplication) configure() error {
-	usrCfgHome, err := os.UserConfigDir()
-	if err == nil {
-		usrCfgHome = filepath.Join(usrCfgHome, ".supportiety-server", "settings.json")
-	}
-
-	filename := flag.String("config", usrCfgHome, "filename to a configuration file in JSON format.")
+	const (
+		appName      = "supportiety-server"
+		fileFlagHelp = "filename to a configuration file in JSON format."
+	)
 
 	// prio 0: hardcoded defaults
 	d.cfg.Reset()
-	d.cfg.ConfigureFlags()
-	flag.Parse()
 
 	// prio 1: values from configuration file
+	usrCfgHome, err := os.UserConfigDir()
+	if err == nil {
+		usrCfgHome = filepath.Join(usrCfgHome, "."+appName, "settings.json")
+	}
+
+	fileFlagSet := flag.NewFlagSet(appName, flag.ContinueOnError)
+	d.cfg.ConfigureFlags(fileFlagSet)
+	filename := fileFlagSet.String("config", usrCfgHome, fileFlagHelp)
+	if err := fileFlagSet.Parse(os.Args[1:]); err != nil {
+		return fmt.Errorf("invalid arguments: %w", err)
+	}
+
+	// note: we now loaded already all flags into the configuration, which is not correct.
+	// therefore we do it later once more, to maintain correct order.
 	if *filename != "" {
 		if err := d.cfg.ParseFile(*filename); err != nil {
 			if *filename != usrCfgHome || !errors.Is(err, os.ErrNotExist) {
@@ -83,7 +98,14 @@ func (d *defaultApplication) configure() error {
 		return fmt.Errorf("cannot parse environment variables: %w", err)
 	}
 
-	// prio 3: values from TODO wrong order
+	// prio 3: finally parse again the values from the actual command line
+	cfgFlagSet := flag.NewFlagSet(appName, flag.ContinueOnError)
+	_ = cfgFlagSet.String("config", usrCfgHome, fileFlagHelp) // announce also the config file flag for proper parsing and help
+	d.cfg.ConfigureFlags(cfgFlagSet)
+	if err := cfgFlagSet.Parse(os.Args[1:]); err != nil {
+		return fmt.Errorf("invalid arguments: %w", err)
+	}
+
 	return nil
 }
 
@@ -100,7 +122,7 @@ func (_ defaultApplication) Run(ctx context.Context) error {
 }
 
 func (d *defaultApplication) getTicketsUsecaseMyConfig() (usecase.MyConfig, error) {
-	panic("assemble super config, parse that once and then poke from that")
+	return d.cfg.Tickets.Usecase.MyConfig, nil
 }
 
 func (d *defaultApplication) getTicketsCoreTickets() (core.Tickets, error) {

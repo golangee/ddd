@@ -9,6 +9,9 @@ const (
 	// e.g. by calling ./myprogram -X=my_var. Value is either nil or a string.
 	kProgramFlagVariable secretKey = "kProgramFlagVariable"
 
+	// kProgramFlag denotes if a field should be used a command line flag in general.
+	kProgramFlag secretKey = "kProgramFlag"
+
 	// denotes if a struct is used for external configuration (env and program flags). Either nil, true or false.
 	kConfiguration secretKey = "kConfiguration"
 

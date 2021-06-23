@@ -47,26 +47,36 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 			appStub.AddMethods(
 				ast.NewFunc("configure").
 					SetVisibility(ast.Private).
-					SetComment("...resets, prepares and parses the configuration. The priority of evaluation").
+					SetComment("...resets, prepares and parses the configuration. The priority of evaluation is:\n\n  0. hardcoded defaults\n  1. values from configuration file\n  2. values from environment variables\n  3. values from command flags").
 					SetPtrReceiver(true).
 					SetRecName(appStub.DefaultRecName).
 					AddResults(ast.NewParam("", ast.NewSimpleTypeDecl(stdlib.Error))).
 					SetBody(
 						ast.NewBlock(
 							ast.NewTpl(
-								`usrCfgHome, err := {{.Use "os.UserConfigDir"}}() 
-								if err == nil{
-									usrCfgHome = {{.Use "path/filepath.Join"}}(usrCfgHome,".{{.Get "appName"}}", "settings.json")
-								}
-		
-								filename := {{.Use "flag.String"}}("config",usrCfgHome,"filename to a configuration file in JSON format.")
+								`const(
+									appName = "{{.Get "appName"}}"
+									fileFlagHelp = "filename to a configuration file in JSON format."
+								)
 
 								// prio 0: hardcoded defaults
 								{{.Get "rec"}}.cfg.Reset()
-								{{.Get "rec"}}.cfg.ConfigureFlags()
-								{{.Use "flag.Parse"}}()
-								
+
 								// prio 1: values from configuration file
+								usrCfgHome, err := {{.Use "os.UserConfigDir"}}() 
+								if err == nil{
+									usrCfgHome = {{.Use "path/filepath.Join"}}(usrCfgHome, "."+appName, "settings.json")
+								}
+
+								fileFlagSet := {{.Use "flag.NewFlagSet"}}(appName, {{.Use "flag.ContinueOnError"}})
+								{{.Get "rec"}}.cfg.ConfigureFlags(fileFlagSet)	
+								filename := fileFlagSet.String("config",usrCfgHome,fileFlagHelp)
+								if err := fileFlagSet.Parse({{.Use "os.Args"}}[1:]); err != nil {
+									return {{.Use "fmt.Errorf"}}("invalid arguments: %w",err)
+								}
+								
+								// note: we now loaded already all flags into the configuration, which is not correct.
+								// therefore we do it later once more, to maintain correct order. 
 								if *filename != "" {
 									if err:={{.Get "rec"}}.cfg.ParseFile(*filename); err!=nil {
 										if *filename != usrCfgHome || !{{.Use "errors.Is"}}(err,os.ErrNotExist) {
@@ -80,7 +90,14 @@ func renderApps(dst *ast.Mod, src *adl.Module) error {
 									return {{.Use "fmt.Errorf"}}("cannot parse environment variables: %w",err)
 								}
 								
-								// prio 3: values from TODO wrong order
+								// prio 3: finally parse again the values from the actual command line
+								cfgFlagSet := {{.Use "flag.NewFlagSet"}}(appName, {{.Use "flag.ContinueOnError"}})
+								_ = cfgFlagSet.String("config",usrCfgHome,fileFlagHelp) // announce also the config file flag for proper parsing and help
+								{{.Get "rec"}}.cfg.ConfigureFlags(cfgFlagSet)	
+								if err:= cfgFlagSet.Parse({{.Use "os.Args"}}[1:]); err != nil {
+									return {{.Use "fmt.Errorf"}}("invalid arguments: %w",err)
+								}
+
 								return nil
 								`,
 							).Put("rec", appStub.DefaultRecName).Put("appName", strings.ToLower(executable.Name.String())),
@@ -207,7 +224,13 @@ func makeGetter(app *ast.Struct, typ ast.TypeDecl) (*ast.Func, error) {
 
 	switch t := resolvedType.(type) {
 	case *ast.Struct:
-		body.Add(ast.NewTpl(`panic("assemble super config, parse that once and then poke from that")`))
+		uberCfg := astutil.Resolve(app, astutil.Pkg(app).Path+".Configuration").(*ast.Struct)
+		selPath := makeSelectorPathForConfig(uberCfg, typ.String())
+		if selPath == "" {
+			body.Add(ast.NewTpl(`panic("not implemented")`))
+		} else {
+			body.Add(ast.NewTpl("return " + app.DefaultRecName + ".cfg." + selPath + ", nil\n"))
+		}
 	case *ast.Interface:
 		body.Add(ast.NewTpl(`panic("find different implementations and make them configurable, e.g. mysql vs postgres")`))
 	default:
@@ -215,6 +238,26 @@ func makeGetter(app *ast.Struct, typ ast.TypeDecl) (*ast.Func, error) {
 	}
 
 	return fun, nil
+}
+
+// inspects the given root fields and tries to find the according typedecl. This is a bit of a poking and returns
+// the empty string, if not found.
+func makeSelectorPathForConfig(root *ast.Struct, typeDecl string) string {
+	for _, field := range root.Fields() {
+		if field.TypeDecl().String() == typeDecl {
+			return field.FieldName
+		}
+
+		nested := astutil.Resolve(root, field.TypeDecl().String())
+		if s, ok := nested.(*ast.Struct); ok {
+			sel := makeSelectorPathForConfig(s, typeDecl)
+			if sel != "" {
+				return field.FieldName + "." + sel
+			}
+		}
+	}
+
+	return ""
 }
 
 func makeServiceGetter(app, service *ast.Struct) error {

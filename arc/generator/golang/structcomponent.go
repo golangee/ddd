@@ -110,6 +110,10 @@ func AddComponent(parent *ast.File, compo *adl.Struct) (component *ast.Struct, _
 			f.SetVisibility(ast.Private)
 		}
 
+		if field.CfgCmdLineFlag {
+			stereotype.FieldFrom(f).SetProgramFlag(true)
+		}
+
 		component.AddFields(f)
 	}
 

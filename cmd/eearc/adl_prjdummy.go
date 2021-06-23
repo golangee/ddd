@@ -65,6 +65,9 @@ func createWorkspace() *Project {
 
 							NewPackage("chat", "...is a supporting subdomain about ticket chats.").AddRepositories(
 								NewInterface("Chats", "...provides CRUD access to Chats."),
+							).AddStructs(
+								NewStruct("AnotherConfig", "...is use case feature flag configuration.", Cfg).
+									AddFields(NewField("BlaFeature", "... is the fancy feature toggle.", NewTypeDecl(stdlib.Bool)).SetCfgCmdLineFlag(true)),
 							),
 
 						).

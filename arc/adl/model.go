@@ -396,10 +396,11 @@ func (d *Struct) AddFields(f ...*Field) *Struct {
 }
 
 type Field struct {
-	Comment token.String
-	Name    token.String
-	Type    *TypeDecl
-	Private bool
+	Comment        token.String
+	Name           token.String
+	Type           *TypeDecl
+	Private        bool
+	CfgCmdLineFlag bool
 }
 
 func NewPrivateField(name, comment string, decl *TypeDecl) *Field {
@@ -418,6 +419,12 @@ func NewField(name, comment string, decl *TypeDecl) *Field {
 		Type:    decl,
 		Private: false,
 	}
+}
+
+// SetCfgCmdLineFlag is only valid within a struct configuration stereotype.
+func (f *Field) SetCfgCmdLineFlag(flag bool) *Field {
+	f.CfgCmdLineFlag = flag
+	return f
 }
 
 func (f *Field) Normalize(ctx Ctx) {

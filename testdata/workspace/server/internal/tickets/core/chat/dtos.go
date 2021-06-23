@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package usecase
+package chat
 
 import (
 	flag "flag"
@@ -23,32 +23,32 @@ import (
 	strconv "strconv"
 )
 
-// MyConfig is use case feature flag configuration.
+// AnotherConfig is use case feature flag configuration.
 //
 // The stereotype of this type is 'cfg'.
-type MyConfig struct {
-	// FancyFeature is the fancy feature toggle.
-	FancyFeature bool
+type AnotherConfig struct {
+	// BlaFeature is the fancy feature toggle.
+	BlaFeature bool
 }
 
 // Reset restores this instance to the default state.
-//  * The default value of FancyFeature is 'false'
-func (m *MyConfig) Reset() {
-	m.FancyFeature = false
+//  * The default value of BlaFeature is 'false'
+func (a *AnotherConfig) Reset() {
+	a.BlaFeature = false
 }
 
 // ParseEnv tries to parse the environment variables into this instance.
 // It will only set those values, which have been actually defined.
 // If values cannot be parsed, an error is returned.
-//  * FancyFeature is parsed from variable 'TICKETS_USECASE_FANCYFEATURE' if it has been set.
-func (m *MyConfig) ParseEnv() error {
-	if value, ok := os.LookupEnv("TICKETS_USECASE_FANCYFEATURE"); ok {
+//  * BlaFeature is parsed from variable 'TICKETS_CORE_BLAFEATURE' if it has been set.
+func (a *AnotherConfig) ParseEnv() error {
+	if value, ok := os.LookupEnv("TICKETS_CORE_BLAFEATURE"); ok {
 		parsed, err := strconv.ParseBool(value)
 		if err != nil {
-			return fmt.Errorf("unable to parse flag 'TICKETS_USECASE_FANCYFEATURE': %w", err)
+			return fmt.Errorf("unable to parse flag 'TICKETS_CORE_BLAFEATURE': %w", err)
 		}
 
-		m.FancyFeature = parsed
+		a.BlaFeature = parsed
 	}
 
 	return nil
@@ -58,13 +58,14 @@ func (m *MyConfig) ParseEnv() error {
 // After calling, use flags.Parse() to load the values.
 // The default values are the field values at calling time.
 // Example:
-//   cfg := MyConfig{}
+//   cfg := AnotherConfig{}
 //   cfg.Reset()
 //   flags := flag.NewFlagSet(`my app`, flag.ExitOnError)
 //   cfg.ConfigureFlags(flags)
 //   flags.Parse(os.Args[1:])
 //
 // The following flags will be tied to this instance:
-//   - there are no flags available.
-func (m *MyConfig) ConfigureFlags(flags *flag.FlagSet) {
+//  * BlaFeature is parsed from flag 'tickets-core-blafeature' if it has been set.
+func (a *AnotherConfig) ConfigureFlags(flags *flag.FlagSet) {
+	flags.BoolVar(&a.BlaFeature, "tickets-core-blafeature", a.BlaFeature, "... is the fancy feature toggle.")
 }

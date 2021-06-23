@@ -30,6 +30,21 @@ func (c Field) EnvironmentVariable() (string, bool) {
 	return val.(string), true
 }
 
+// SetProgramFlag marks this field as a command line flag candidate.
+func (c Field) SetProgramFlag(b bool) {
+	c.field.PutValue(kProgramFlag, b)
+}
+
+// IsProgramFlag returns true if this field is a command line flag candidate.
+func (c Field) IsProgramFlag() bool {
+	v := c.field.Value(kProgramFlag)
+	if f, ok := v.(bool); ok {
+		return f
+	}
+
+	return false
+}
+
 // SetProgramFlagVariable connects the given field with a specific name from the program flag variable.
 func (c Field) SetProgramFlagVariable(flagVariable string) {
 	c.field.PutValue(kProgramFlagVariable, flagVariable)

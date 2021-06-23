@@ -18,7 +18,9 @@ package supportietyserver
 
 import (
 	json "encoding/json"
+	flag "flag"
 	fmt "fmt"
+	chat "github.com/golangee/architecture/testdata/workspace/server/internal/tickets/core/chat"
 	usecase "github.com/golangee/architecture/testdata/workspace/server/internal/tickets/usecase"
 	os "os"
 )
@@ -34,9 +36,8 @@ func (c *Configuration) Reset() {
 }
 
 // ConfigureFlags configures the flags to be ready to get evaluated.
-// You can only use it once, otherwise the flag package will panic.
-func (c *Configuration) ConfigureFlags() {
-	c.Tickets.ConfigureFlags()
+func (c *Configuration) ConfigureFlags(flags *flag.FlagSet) {
+	c.Tickets.ConfigureFlags(flags)
 }
 
 // ParseEnv tries to parse the environment variables into this instance.
@@ -54,6 +55,11 @@ func (c *Configuration) ParseEnv() error {
 //
 //   {
 //     "Tickets": {
+//       "Core": {
+//         "AnotherConfig": {
+//           "BlaFeature": false
+//         }
+//       },
 //       "Usecase": {
 //         "MyConfig": {
 //           "FancyFeature": false
@@ -79,27 +85,56 @@ func (c *Configuration) ParseFile(filename string) error {
 
 // TicketsConfig contains all aggregated configurations for the entire bounded context 'tickets'.
 type TicketsConfig struct {
+	Core    TicketsCoreConfig
 	Usecase TicketsUsecaseConfig
 }
 
 // Reset restores this instance to the default state.
 func (t *TicketsConfig) Reset() {
+	t.Core.Reset()
 	t.Usecase.Reset()
 }
 
 // ConfigureFlags configures the flags to be ready to get evaluated.
-// You can only use it once, otherwise the flag package will panic.
-func (t *TicketsConfig) ConfigureFlags() {
-	t.Usecase.ConfigureFlags()
+func (t *TicketsConfig) ConfigureFlags(flags *flag.FlagSet) {
+	t.Core.ConfigureFlags(flags)
+	t.Usecase.ConfigureFlags(flags)
 }
 
 // ParseEnv tries to parse the environment variables into this instance.
 func (t *TicketsConfig) ParseEnv() error {
+	if err := t.Core.ParseEnv(); err != nil {
+		return fmt.Errorf("cannot parse 'Core': %w", err)
+	}
 	if err := t.Usecase.ParseEnv(); err != nil {
 		return fmt.Errorf("cannot parse 'Usecase': %w", err)
 	}
+	return nil
+
+}
+
+// TicketsCoreConfig contains all configurations for the 'core' layer of 'tickets'.
+type TicketsCoreConfig struct {
+	AnotherConfig chat.AnotherConfig
+}
+
+// Reset restores this instance to the default state.
+func (t *TicketsCoreConfig) Reset() {
+	t.AnotherConfig.Reset()
+}
+
+// ParseEnv tries to parse the environment variables into this instance.
+func (t *TicketsCoreConfig) ParseEnv() error {
+	if err := t.AnotherConfig.ParseEnv(); err != nil {
+		return fmt.Errorf("cannot parse 'AnotherConfig': %w", err)
+	}
 
 	return nil
+}
+
+// ConfigureFlags configures the flags to be ready to get evaluated.
+func (t *TicketsCoreConfig) ConfigureFlags(flags *flag.FlagSet) {
+	t.AnotherConfig.ConfigureFlags(flags)
 }
 
 // TicketsUsecaseConfig contains all configurations for the 'usecase' layer of 'tickets'.
@@ -122,7 +157,6 @@ func (t *TicketsUsecaseConfig) ParseEnv() error {
 }
 
 // ConfigureFlags configures the flags to be ready to get evaluated.
-// You can only use it once, otherwise the flag package will panic.
-func (t *TicketsUsecaseConfig) ConfigureFlags() {
-	t.MyConfig.ConfigureFlags()
+func (t *TicketsUsecaseConfig) ConfigureFlags(flags *flag.FlagSet) {
+	t.MyConfig.ConfigureFlags(flags)
 }

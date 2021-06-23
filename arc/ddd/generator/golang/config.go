@@ -40,7 +40,10 @@ func renderConfigs(dst *ast.Mod, src *adl.Module) error {
 				SetBody(uberResetBody),
 
 			ast.NewFunc("ConfigureFlags").
-				SetComment("...configures the flags to be ready to get evaluated.\nYou can only use it once, otherwise the flag package will panic.").
+				SetComment("...configures the flags to be ready to get evaluated.").
+				AddParams(
+					ast.NewParam("flags", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl("flag.FlagSet"))),
+				).
 				SetPtrReceiver(true).
 				SetRecName(uberCfg.DefaultRecName).
 				SetBody(uberConfigureFlagsBody),
@@ -102,7 +105,10 @@ func renderConfigs(dst *ast.Mod, src *adl.Module) error {
 					SetBody(ast.NewBlock()),
 
 				ast.NewFunc("ConfigureFlags").
-					SetComment("...configures the flags to be ready to get evaluated.\nYou can only use it once, otherwise the flag package will panic.").
+					SetComment("...configures the flags to be ready to get evaluated.").
+					AddParams(
+						ast.NewParam("flags", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl("flag.FlagSet"))),
+					).
 					SetPtrReceiver(true).
 					SetRecName(bcCfg.DefaultRecName).
 					SetBody(ast.NewBlock()),
@@ -115,8 +121,16 @@ func renderConfigs(dst *ast.Mod, src *adl.Module) error {
 					SetBody(ast.NewBlock()),
 			)
 
-			uberResetBody.Add(astutil.CallMember(uberCfg.DefaultRecName, golang.MakePublic(bc.Name), "Reset"))
-			uberConfigureFlagsBody.Add(astutil.CallMember(uberCfg.DefaultRecName, golang.MakePublic(bc.Name), "ConfigureFlags"))
+			uberResetBody.Add(
+				astutil.CallMember(uberCfg.DefaultRecName, golang.MakePublic(bc.Name), "Reset"),
+				lang.Term(),
+			)
+
+			uberConfigureFlagsBody.Add(
+				astutil.CallMember(uberCfg.DefaultRecName, golang.MakePublic(bc.Name), "ConfigureFlags", ast.NewIdent("flags")),
+				lang.Term(),
+			)
+
 			uberParseEnvBody.Add(ast.NewTpl(ifParseEnv).
 				Put("field", golang.MakePublic(bc.Name)).
 				Put("rec", uberCfg.DefaultRecName),
@@ -135,8 +149,8 @@ func renderConfigs(dst *ast.Mod, src *adl.Module) error {
 			uberCfg.AddFields(ast.NewField(golang.MakePublic(bc.Name), ast.NewSimpleTypeDecl(ast.Name(appPkg.Path+"."+bcCfg.TypeName))))
 
 			astutil.MethodByName(bcCfg, "ParseEnv").Body().Add(
-				lang.Term(),
 				ast.NewReturnStmt(ast.NewIdentLit("nil")),
+				lang.Term(),
 			)
 		}
 
@@ -196,7 +210,10 @@ func addConfigHolder(mod *ast.Mod, dst *ast.Struct, bcName, bcPath, pathSuffix s
 		ast.NewFunc("ConfigureFlags").
 			SetPtrReceiver(true).
 			SetRecName(holder.DefaultRecName).
-			SetComment("...configures the flags to be ready to get evaluated.\nYou can only use it once, otherwise the flag package will panic.").
+			SetComment("...configures the flags to be ready to get evaluated.").
+			AddParams(
+				ast.NewParam("flags", ast.NewTypeDeclPtr(ast.NewSimpleTypeDecl("flag.FlagSet"))),
+			).
 			SetBody(configureFlagsBody),
 	)
 
@@ -214,8 +231,8 @@ func addConfigHolder(mod *ast.Mod, dst *ast.Struct, bcName, bcPath, pathSuffix s
 		}
 
 		f := ast.NewField(cfg.TypeName, ast.NewSimpleTypeDecl(ast.Name(astutil.FullQualifiedName(cfg))))
-		resetBody.Add(astutil.CallMember(holder.DefaultRecName, f.FieldName, "Reset"))
-		configureFlagsBody.Add(astutil.CallMember(holder.DefaultRecName, f.FieldName, "ConfigureFlags"))
+		resetBody.Add(astutil.CallMember(holder.DefaultRecName, f.FieldName, "Reset"), lang.Term())
+		configureFlagsBody.Add(astutil.CallMember(holder.DefaultRecName, f.FieldName, "ConfigureFlags", ast.NewIdent("flags")))
 		parseEnvBody.Add(ast.NewTpl(ifParseEnv).
 			Put("field", f.FieldName).
 			Put("rec", holder.DefaultRecName),
@@ -235,11 +252,13 @@ func addConfigHolder(mod *ast.Mod, dst *ast.Struct, bcName, bcPath, pathSuffix s
 	parentReset := astutil.MethodByName(dst, "Reset")
 	parentReset.Body().Add(
 		astutil.CallMember(dst.DefaultRecName, field.FieldName, "Reset"),
+		lang.Term(),
 	)
 
 	parentConfigureFlags := astutil.MethodByName(dst, "ConfigureFlags")
 	parentConfigureFlags.Body().Add(
-		astutil.CallMember(dst.DefaultRecName, field.FieldName, "ConfigureFlags"),
+		astutil.CallMember(dst.DefaultRecName, field.FieldName, "ConfigureFlags", ast.NewIdent("flags")),
+		lang.Term(),
 	)
 
 	parentParseEnv := astutil.MethodByName(dst, "ParseEnv")
