@@ -29,6 +29,22 @@ func MethodByName(f ast.Node, name string) *ast.Func {
 	return nil
 }
 
+func FieldByName(f ast.Node, name string) *ast.Field {
+	type Fielder interface {
+		Fields() []*ast.Field
+	}
+
+	if m, ok := f.(Fielder); ok {
+		for _, a := range m.Fields() {
+			if a.FieldName == name {
+				return a
+			}
+		}
+	}
+
+	return nil
+}
+
 func FindMod(name token.String, prj *ast.Prj) (*ast.Mod, error) {
 	for _, mod := range prj.Mods {
 		if mod.Name == name.String() {
@@ -288,4 +304,25 @@ func CloneFuncSig(f *ast.Func) *ast.Func {
 	}
 
 	return c
+}
+
+// FindImplementations traverses the entire module to find structs which implement the given interface.
+// Note that other types implementing an interface are (not yet) supported.
+func FindImplementations(ctx ast.Node, iface ast.Name) []*ast.Struct {
+	var r []*ast.Struct
+	for _, pkg := range Mod(ctx).Pkgs {
+		for _, file := range pkg.PkgFiles {
+			for _, node := range file.Nodes {
+				if s, ok := node.(*ast.Struct); ok {
+					for _, implement := range s.Implements {
+						if implement == iface {
+							r = append(r, s)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return r
 }

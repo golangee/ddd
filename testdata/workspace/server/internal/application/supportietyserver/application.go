@@ -126,7 +126,7 @@ func (d *defaultApplication) getTicketsUsecaseMyConfig() (usecase.MyConfig, erro
 }
 
 func (d *defaultApplication) getTicketsCoreTickets() (core.Tickets, error) {
-	panic("find different implementations and make them configurable, e.g. mysql vs postgres")
+	panic("no implementation available")
 }
 
 func (d *defaultApplication) getTicketsUsecaseTickets() (*usecase.Tickets, error) {

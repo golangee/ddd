@@ -232,7 +232,11 @@ func makeGetter(app *ast.Struct, typ ast.TypeDecl) (*ast.Func, error) {
 			body.Add(ast.NewTpl("return " + app.DefaultRecName + ".cfg." + selPath + ", nil\n"))
 		}
 	case *ast.Interface:
-		body.Add(ast.NewTpl(`panic("find different implementations and make them configurable, e.g. mysql vs postgres")`))
+		implementations := astutil.FindImplementations(app, ast.Name(typ.String()))
+		if len(implementations) == 0 {
+			body.Add(ast.NewTpl(`panic("no implementation available")`))
+		}
+
 	default:
 		return nil, fmt.Errorf("unsupported resolved getter injection type: %v", t)
 	}

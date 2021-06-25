@@ -126,21 +126,6 @@ func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) erro
 		pkg.SetComment(src.Comment.String())
 	}
 
-	// repos
-	if len(src.Repositories) > 0 {
-		file := ast.NewFile(strings.ToLower("repositories.go"))
-		file.SetPreamble(makePreamble(srcMod.Preamble))
-		for _, repository := range src.Repositories {
-			iface, err := buildInterface(file, srcMod, src, repository)
-			if err != nil {
-				return err
-			}
-
-			_ = iface
-		}
-		pkg.AddFiles(file)
-	}
-
 	// dtos
 	if len(src.DTOs) > 0 {
 		file := ast.NewFile(strings.ToLower("dtos.go"))
@@ -156,6 +141,27 @@ func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) erro
 		}
 	}
 
+	// repos
+	if len(src.Repositories) > 0 {
+		file := ast.NewFile(strings.ToLower("repositories.go"))
+		file.SetPreamble(makePreamble(srcMod.Preamble))
+		pkg.AddFiles(file)
+
+		for _, repository := range src.Repositories {
+			iface, err := buildInterface(file, srcMod, src, repository)
+			if err != nil {
+				return err
+			}
+
+			for _, d := range repository.CRUDs {
+				_, err := renderCrud(file, iface, d)
+				if err != nil {
+					return fmt.Errorf("unable to render CRUD: %w", err)
+				}
+			}
+		}
+	}
+
 	// services
 	if len(src.Services) > 0 {
 		file := ast.NewFile(strings.ToLower("services.go"))
@@ -168,6 +174,7 @@ func renderUserTypes(parent *ast.Pkg, srcMod *adl.Module, src *adl.Package) erro
 				return err
 			}
 		}
+
 	}
 
 	return nil
