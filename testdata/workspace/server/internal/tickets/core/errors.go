@@ -17,18 +17,61 @@
 package core
 
 import (
+	errors "errors"
 	fmt "fmt"
 	uuid "github.com/golangee/uuid"
 )
 
+// TicketsError represents the sum type behavior of all Tickets errors.
+type TicketsError interface {
+	// Tickets returns true, if the error belongs to the sum type of Tickets.
+	Tickets() bool
+
+	// Unwrap unpacks the cause or returns nil.
+	Unwrap() error
+
+	// Error returns the conventional description of this error.
+	Error() string
+}
+
+// AsTicketsError finds the first error in err's chain that matches any TicketsError behavior.
+// Returns nil if no such error is found.
+func AsTicketsError(err error) TicketsError {
+	var match TicketsError
+	if errors.As(err, &match) && match.Tickets() {
+		return match
+	}
+
+	return nil
+}
+
+// TicketsIdNotFoundError indicates that an operation expected an element with the according id.
+type TicketsIdNotFoundError interface {
+	// IdNotFound returns true, if it represents an IdNotFound case.
+	IdNotFound() bool
+
+	TicketsError
+}
+
+// AsTicketsIdNotFoundError finds the first error in err's chain that matches anyTicketsIdNotFoundError behavior.
+// Returns nil if no such error is found.
+func AsTicketsIdNotFoundError(err error) TicketsIdNotFoundError {
+	var match TicketsIdNotFoundError
+	if errors.As(err, &match) && match.Tickets() && match.IdNotFound() {
+		return match
+	}
+
+	return nil
+}
+
 // ticketsIdNotFoundError indicates that an operation expected an element with the according id.
-// ticketsIdNotFoundError is also a Tickets.
+// ticketsIdNotFoundError is also a TicketsError.
 type ticketsIdNotFoundError struct {
 	// cause refers to a causing error or nil.
 	cause error
 }
 
-// Tickets marks this type to belong to the sum type of Tickets.
+// Tickets returns true, if the error belongs to the sum type of Tickets.
 // This implementation always returns true.
 func (_ ticketsIdNotFoundError) Tickets() bool {
 	return true
@@ -50,8 +93,31 @@ func (e ticketsIdNotFoundError) Error() string {
 	return "IdNotFound"
 }
 
+// TicketsDuplicateIdError indicates that an operation expected a unique identifier.
+type TicketsDuplicateIdError interface {
+	// ID returns the value of id.
+	// ID the according identifier
+	ID() uuid.UUID
+
+	// DuplicateId returns true, if it represents a DuplicateId case.
+	DuplicateId() bool
+
+	TicketsError
+}
+
+// AsTicketsDuplicateIdError finds the first error in err's chain that matches anyTicketsDuplicateIdError behavior.
+// Returns nil if no such error is found.
+func AsTicketsDuplicateIdError(err error) TicketsDuplicateIdError {
+	var match TicketsDuplicateIdError
+	if errors.As(err, &match) && match.Tickets() && match.DuplicateId() {
+		return match
+	}
+
+	return nil
+}
+
 // ticketsDuplicateIdError indicates that an operation expected a unique identifier.
-// ticketsDuplicateIdError is also a Tickets.
+// ticketsDuplicateIdError is also a TicketsError.
 type ticketsDuplicateIdError struct {
 	// id the according identifier
 	id uuid.UUID
@@ -66,7 +132,7 @@ func (e ticketsDuplicateIdError) ID() uuid.UUID {
 	return e.id
 }
 
-// Tickets marks this type to belong to the sum type of Tickets.
+// Tickets returns true, if the error belongs to the sum type of Tickets.
 // This implementation always returns true.
 func (_ ticketsDuplicateIdError) Tickets() bool {
 	return true
@@ -88,8 +154,31 @@ func (e ticketsDuplicateIdError) Error() string {
 	return fmt.Sprintf("DuplicateId: id=%v", e.id)
 }
 
+// TicketsStringNotFoundError indicates that an operation expected a exact string element which was not found.
+type TicketsStringNotFoundError interface {
+	// Str returns the value of str.
+	// Str the related string
+	Str() string
+
+	// StringNotFound returns true, if it represents a StringNotFound case.
+	StringNotFound() bool
+
+	TicketsError
+}
+
+// AsTicketsStringNotFoundError finds the first error in err's chain that matches anyTicketsStringNotFoundError behavior.
+// Returns nil if no such error is found.
+func AsTicketsStringNotFoundError(err error) TicketsStringNotFoundError {
+	var match TicketsStringNotFoundError
+	if errors.As(err, &match) && match.Tickets() && match.StringNotFound() {
+		return match
+	}
+
+	return nil
+}
+
 // ticketsStringNotFoundError indicates that an operation expected a exact string element which was not found.
-// ticketsStringNotFoundError is also a Tickets.
+// ticketsStringNotFoundError is also a TicketsError.
 type ticketsStringNotFoundError struct {
 	// str the related string
 	str string
@@ -104,7 +193,7 @@ func (e ticketsStringNotFoundError) Str() string {
 	return e.str
 }
 
-// Tickets marks this type to belong to the sum type of Tickets.
+// Tickets returns true, if the error belongs to the sum type of Tickets.
 // This implementation always returns true.
 func (_ ticketsStringNotFoundError) Tickets() bool {
 	return true
@@ -126,14 +215,33 @@ func (e ticketsStringNotFoundError) Error() string {
 	return fmt.Sprintf("StringNotFound: str=%v", e.str)
 }
 
+// TicketsOtherError indicates any other unclassified error, like I/O failures etc.
+type TicketsOtherError interface {
+	// Other returns true, if it represents a Other case.
+	Other() bool
+
+	TicketsError
+}
+
+// AsTicketsOtherError finds the first error in err's chain that matches anyTicketsOtherError behavior.
+// Returns nil if no such error is found.
+func AsTicketsOtherError(err error) TicketsOtherError {
+	var match TicketsOtherError
+	if errors.As(err, &match) && match.Tickets() && match.Other() {
+		return match
+	}
+
+	return nil
+}
+
 // ticketsOtherError indicates any other unclassified error, like I/O failures etc.
-// ticketsOtherError is also a Tickets.
+// ticketsOtherError is also a TicketsError.
 type ticketsOtherError struct {
 	// cause refers to a causing error or nil.
 	cause error
 }
 
-// Tickets marks this type to belong to the sum type of Tickets.
+// Tickets returns true, if the error belongs to the sum type of Tickets.
 // This implementation always returns true.
 func (_ ticketsOtherError) Tickets() bool {
 	return true
